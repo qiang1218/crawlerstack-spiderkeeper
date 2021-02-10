@@ -1,0 +1,39 @@
+-i http://repo.tendata.com.cn/repository/pypi-all/simple
+--trusted-host repo.tendata.com.cn
+--extra-index-url https://mirrors.aliyun.com/pypi/simple/
+attrs==19.3.0
+automat==20.2.0
+certifi==2020.4.5.1
+cffi==1.14.0
+chardet==3.0.4
+click==7.1.2
+constantly==15.1.0
+cryptography==2.9.2
+cssselect==1.1.0
+flask==1.1.2
+hyperlink==19.0.0
+idna==2.9
+incremental==17.5.0
+itsdangerous==1.1.0
+jinja2==3.0.0a1
+lxml==4.5.0 ; python_version != '3.4'
+markupsafe==2.0.0a1
+parsel==1.5.2
+protego==0.1.16
+pyasn1-modules==0.2.8
+pyasn1==0.4.8
+pycparser==2.20
+pydispatcher==2.0.5
+pyhamcrest==2.0.2
+pyopenssl==19.1.0
+queuelib==1.5.0
+requests==2.23.0
+scrapy==2.1.0
+service-identity==18.1.0
+six==1.14.0
+spiderkeeper-support-scrapy==1.0.0.dev8
+twisted==20.3.0
+urllib3==1.25.9
+w3lib==1.21.0
+werkzeug==1.0.1
+zope.interface==5.1.0

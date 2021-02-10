@@ -1,0 +1,65 @@
+default:
+
+  debug: false
+  verbose: false
+
+  ##########################################################
+  host: localhost
+  port: 8080
+
+  cors_origins:
+    - http://localhost:8080
+
+  ##########################################################
+  # Log
+  # default log path is `/home/<user>/.local/spiderkeeper/log`
+  logpath: logs
+  loglevel: INFO
+
+  ##########################################################
+  # database uri
+  # ref https://docs.sqlalchemy.org/en/13/core/engines.html
+  # eg: mysql://root:root@127.0.0.1:3306/spiderkeeper?charset=utf8
+  # eg: sqlite:///tmp/spiderkeeper.db
+  # eg: postgresql://scott:tiger@localhost:5432/mydatabase
+  database: mysql://root:root@127.0.0.1:3306/spiderkeeper?charset=utf8
+
+  ##########################################################
+  # Kombu
+  mq: amqp://
+
+  ##########################################################
+  # Executor: local / docker
+  executor: local
+
+  ##############
+  # Docker URL #
+  # DOCKER_URL = 'unix:///var/run/docker.sock'
+  docker_url: "unix:///var/run/docker.sock"
+  docker_network: spiderkeeper_container
+  # 服务的外部地址，用于任务容器通信
+  host_addr: '127.0.0.1:8080'
+
+  ##########################################################
+  # Artifact
+  # default path is `/home/<user>/.local/spiderkeeper/artifact`
+  artifact_path: artifacts
+
+  ##########################################################
+  # Local
+  # 指定使用 Python 的路径，避免自动使用系统 python3 命令导致版本过低
+  # 或者用户为了使用 python3.7 修改软连接，导致默认 python3 改变影响系统
+  # TODO: 在系统启动的时候检查版本
+  python_path: /usr/bin/python3.7
+
+development:
+
+production:
+
+test:
+  debug: false
+  verbose: false
+  loglevel: DEBUG
+  database: 'sqlite:////tmp/spiderkeeper.db'
+  executor: local
+  mq: memory://

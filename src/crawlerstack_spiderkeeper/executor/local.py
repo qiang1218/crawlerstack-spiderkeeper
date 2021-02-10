@@ -1,0 +1,293 @@
+import asyncio
+import logging
+import os
+import shutil
+import signal
+from asyncio import AbstractEventLoop, subprocess
+from functools import partial
+from pathlib import Path
+from typing import AsyncIterable, Dict, List, Optional
+
+import aiofiles
+import toml
+from psutil import NoSuchProcess, Process, TimeoutExpired
+
+from crawlerstack_spiderkeeper.config import settings
+from crawlerstack_spiderkeeper.executor.base import (BaseExecuteContext,
+                                                     BaseExecutor)
+from crawlerstack_spiderkeeper.executor.subprocess import \
+    create_subprocess_shell
+from crawlerstack_spiderkeeper.utils import Tail, kill_proc_tree
+from crawlerstack_spiderkeeper.utils.exceptions import (
+    ExecutorStopError, PKGInstallError, RequirementFileNotFound)
+from crawlerstack_spiderkeeper.utils.metadata import ArtifactMetadata
+from crawlerstack_spiderkeeper.utils.states import States
+from crawlerstack_spiderkeeper.utils.virtualenv import cli_run
+
+logger = logging.getLogger(__name__)
+
+
+# TODO change build context cmd use env.
+# 增加构建环境的时候传入 env ，通过增加 PATH 使用虚拟环境下的默认 python 。
+
+class LocalExecuteContext(BaseExecuteContext):
+
+    def __init__(self, artifact: ArtifactMetadata, loop: Optional[AbstractEventLoop] = None):
+        super().__init__(artifact, loop)
+
+        self.virtualenv = Virtualenv(self.artifact, loop)
+
+    async def build(self) -> None:
+        await self.unpack_artifact()
+        await self.virtualenv.init()
+        logger.debug(f'{self.artifact.project_name} context build successfully.')
+
+    async def delete(self) -> None:
+        await self.loop.run_in_executor(None, shutil.rmtree, self.artifact.source_code, True)
+        logger.debug(f'Delete artifact source code path: {self.artifact.source_code}')
+        await self.loop.run_in_executor(None, shutil.rmtree, self.artifact.virtualenv, True)
+        logger.debug(f'Delete artifact virtualenv path: {self.artifact.virtualenv}')
+
+    async def exist(self) -> bool:
+        has_source_code = os.path.exists(self.artifact.source_code)
+        has_virtualenv = os.path.exists(self.artifact.virtualenv)
+        if has_source_code and has_virtualenv:
+            return True
+
+
+class Virtualenv:
+
+    def __init__(self, artifact: ArtifactMetadata, loop: Optional[AbstractEventLoop] = None):
+        self.logger = logging.getLogger(f'{__name__}.{self.__class__.__name__}')
+        self.loop = loop or asyncio.get_running_loop()
+        self.artifact = artifact
+        self.__python_path = None
+
+    async def get_requirements_from_pipfile(self, pipfile: str) -> List[str]:
+        requirements = []
+        async with aiofiles.open(pipfile, 'r') as f:
+            txt = await f.read()
+            pipenv = toml.loads(txt)
+            packages: Dict[str, str] = pipenv.get('packages')
+
+        for key, value in packages.items():
+            if value == "*":
+                req = f'{key}'
+            else:
+                req = f'{key}=="{value}"'
+            requirements.append(req)
+        self.logger.debug(f'Read requirement from {pipfile}. requirements: {requirements}')
+        return requirements
+
+    async def get_requirements_from_txt(self, file: str) -> List[str]:
+        """
+        :param file:
+        :return:
+        """
+        requirements = []
+        async with aiofiles.open(file, 'r') as f:
+            for line in await f.readlines():
+                line = line.strip().replace('\n', '').replace('\r', '')
+                if line:
+                    requirements.append(line)
+            self.logger.debug(f'Read requirement from {file}, requirements: {requirements}')
+        return requirements
+
+    async def get_requirements(self) -> List[str]:
+        """
+        获取归档文件中的依赖包，返回对应的依赖，然后通过 `pip install ` 安装。
+        return eg: ['aiohttp=="*"', 'fastapi=="0.58.1"']
+        :return:
+        """
+        pipenv_file = os.path.join(self.artifact.source_code, 'Pipfile')
+        requirements_txt = os.path.join(self.artifact.source_code, 'requirements.txt')
+        if os.path.isfile(pipenv_file):
+            requirements = await self.get_requirements_from_pipfile(pipenv_file)
+        elif os.path.isfile(requirements_txt):
+            requirements = await self.get_requirements_from_txt(requirements_txt)
+        else:
+            raise RequirementFileNotFound(self.artifact.source_code)
+
+        return requirements
+
+    @property
+    def python_path(self) -> str:
+        """
+        虚拟环境 python 脚本的位置。
+        :return:
+        """
+        if self.__python_path:
+            return self.__python_path
+        return os.path.join(self.artifact.virtualenv, 'bin', 'python')
+
+    async def create(self) -> None:
+        """
+        创建虚拟环境
+        :return:
+        """
+        session = await self.loop.run_in_executor(None, cli_run, self.artifact.virtualenv.split())
+        self.__python_path = session.creator.exe
+        logger.debug(f'Create virtualenv in {self.artifact.virtualenv}')
+
+    async def install(self, requirement, *requirements) -> None:
+        """
+        安装 requirement 。
+        使用异步创建子进程，调用虚拟环境中的 python -m pip install xxx 。如果返回代码不是 0，
+        则说明安装过程出现错误，直接抛出异常
+        :param requirement:
+        :param requirements:
+        :return:
+        """
+        reqs = [requirement, *requirements]
+        req = ' '.join(reqs)
+        self.logger.debug(f'Installing pkg: {", ".join(reqs)}, please waiting...')
+        process = await subprocess.create_subprocess_shell(
+            cmd=f'{self.python_path} '
+                f'-m pip install '
+                f'--index-url http://repo.tendata.com.cn/repository/pypi-all/simple '
+                f'--trusted-host repo.tendata.com.cn '
+                f'{req}',
+            # cmd=f'python -m pip install {req}',
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        code = await process.wait()
+        (stdout_data, stderr_data) = await process.communicate()
+        if code:
+            raise PKGInstallError(stderr_data.decode(), code)
+        self.logger.debug(f'Install pkg: {", ".join(reqs)}, success. \nDetail: {stdout_data.decode("utf-8")}')
+
+    async def init(self) -> None:
+        """
+        初始化虚拟环境目录，然后安装虚拟环境。
+        :return:
+        """
+        self.logger.debug(f'Init virtualenv ...')
+        await self.create()
+        requirements = await self.get_requirements()
+        await self.install(*requirements)
+        self.logger.debug(f'Virtualenv inited.')
+
+
+std_log_path = Path(settings.LOGPATH) / 'containers'
+os.makedirs(std_log_path, exist_ok=True)
+
+
+class LocalExecutor(BaseExecutor):
+    _executor_context_cls = LocalExecuteContext
+
+    def __init__(
+            self,
+            artifact: ArtifactMetadata,
+            pid: str,
+            loop: Optional[AbstractEventLoop] = None
+    ):
+        super().__init__(artifact, pid, loop)
+
+    @property
+    def _process(self):
+        return Process(int(self.pid))
+
+    @classmethod
+    async def run(
+            cls,
+            artifact: ArtifactMetadata,
+            cmdline: List[str],
+            env: Dict[str, str],
+            target: Optional[str] = None,
+            loop: Optional[AbstractEventLoop] = None
+    ) -> 'LocalExecutor':
+        """
+        使用 cmdline 创建子进程运行程序。
+        考虑到 cmdline 可能需要在源码目录的相对路径下运行，所以在创建子进程的时候先切换目录到源码目录
+        然后再运行 cmdline 。
+        :param artifact:
+        :param cmdline:
+        :param env:
+        :param target:
+        :param loop:
+        :return:
+        """
+        executor_context = cls._executor_context_cls(artifact, loop)
+        if not await executor_context.exist():
+            await executor_context.build()
+        cwd = os.getcwd()
+        os.chdir(artifact.source_code)
+
+        env.update({
+            'ARTIFACT_FILENAME': artifact.filename,
+            'VIRTUAL_ENV': artifact.virtualenv,
+            'PATH': f'{artifact.virtualenv}/bin:{os.environ.get("PATH")}'
+        })
+
+        process = await create_subprocess_shell(
+            cmd=' '.join(cmdline),
+            std_path=std_log_path,
+            back_count=10,
+            max_bytes=1024 * 1024 * 20,
+            loop=loop,
+            env=env
+        )
+        os.chdir(cwd)
+        logger.debug(f'Run subprocess {process.pid}. Artifact: {artifact}')
+        return cls(artifact, str(process.pid), loop)
+
+    async def stop(self) -> None:
+        func = partial(
+            kill_proc_tree,
+            pid=int(self.pid),
+            sig=signal.SIGTERM,
+            include_parent=True,
+            timeout=10,
+            on_terminate=None
+        )
+        self.logger.debug(f'Stopping process {self.pid}')
+        try:
+            (gone, alive) = await self.loop.run_in_executor(None, func)
+            if alive:
+                alive_pid = [process.pid for process in alive]
+                self.logger.error(f'Stop process {self.pid} error, some pid is alive: {alive_pid}')
+                raise ExecutorStopError(self.pid, alive_pid)
+        except NoSuchProcess as e:
+            self.logger.warning(e)
+
+    async def delete(self) -> None:
+        self.logger.debug(f'Stop local process {self.pid}...')
+        await self.stop()
+
+    async def running(self) -> bool:
+        try:
+            await self.loop.run_in_executor(None, self._process.wait, 2)
+            return False
+        except TimeoutExpired:
+            if self._process.is_running():
+                return True
+
+    async def status(self) -> Dict:
+        if self._process.is_running():
+            detail = f'Process {self.pid} is running'
+            state = States.Run
+        else:
+            exit_code = await self.loop.run_in_executor(None, self._process.wait, 0)
+            if exit_code < 0:
+                detail = f'Process {self.pid} terminated by a signal'
+                state = States.Stop
+            elif exit_code > 0:
+                detail = f'Process {self.pid} exit, code: {exit_code}'
+                state = States.Stop
+            else:
+                detail = f'Process {self.pid} finished.'
+                state = States.Finish
+        self.logger.debug(detail)
+        return {
+            'state': state,
+            'detail': detail
+        }
+
+    async def log(self, follow=False) -> AsyncIterable[str]:
+        tail = Tail(std_log_path / f'pid-{self.pid}.log')
+        if follow:
+            return tail.follow()
+        else:
+            return tail.last()

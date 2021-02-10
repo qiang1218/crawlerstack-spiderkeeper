@@ -1,0 +1,46 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+# tools
+aio_pydispatch = "*"
+psutil = "*"
+dynaconf = "*"
+click = "*"
+aiodocker = "*"
+# orm
+sqlalchemy = "*"
+mysqlclient = "*"
+# migrate
+alembic = "*"
+# web
+uvicorn = "*"
+fastapi = "*"
+aiofiles = "*"
+python-multipart = "*"
+# metric
+prometheus-client = "*"
+starlette-exporter = "*"
+# mq
+kombu = "*"
+furl = "*"
+toml = "*"
+
+[dev-packages]
+tox = "*"
+pytest = "*"
+pytest-cov = "*"
+isort = "*"
+flake8 = "*"
+pytest-asyncio = "*"
+pytest-mock = "*"
+requests = "*"
+asyncmock = "*"
+
+[requires]
+python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true
