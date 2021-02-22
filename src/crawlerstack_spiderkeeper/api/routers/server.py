@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 
 from crawlerstack_spiderkeeper.schemas.server import ServerCreate, ServerUpdate
 from crawlerstack_spiderkeeper.services import server_service
@@ -10,9 +10,20 @@ router = APIRouter()
 @router.get('/servers')
 async def get_multi(
         *,
+        response: Response,
         commons: CommonQueryParams = Depends(),
 ):
-    return await server_service.get_multi()
+    count = await server_service.count()
+    response.headers['X-Total-Count'] = str(count)
+    data = []
+    if data:
+        data = server_service.get_multi(
+            skip=commons.skip,
+            limit=commons.limit,
+            order=commons.order,
+            sort=commons.sort,
+        )
+    return data
 
 
 @router.get('/servers/{pk}')

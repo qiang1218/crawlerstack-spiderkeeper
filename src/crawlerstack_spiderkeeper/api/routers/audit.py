@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 
 from crawlerstack_spiderkeeper.schemas.audit import Audit
 from crawlerstack_spiderkeeper.services import audit_service
@@ -15,9 +15,20 @@ logger = logging.getLogger(__name__)
 @router.get('/audits', response_model=List[Audit])
 async def get_multi(
         *,
+        response: Response,
         commons: CommonQueryParams = Depends(),
 ):
-    return await audit_service.get_multi()
+    count = await audit_service.count()
+    response.headers['X-Total-Count'] = str(count)
+    data = []
+    if count:
+        data = await audit_service.get_multi(
+            skip=commons.skip,
+            limit=commons.limit,
+            order=commons.order,
+            sort=commons.sort,
+        )
+    return data
 
 
 @router.get('/audits/{pk}')

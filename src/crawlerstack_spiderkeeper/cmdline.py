@@ -2,7 +2,7 @@
 
 import click
 
-from crawlerstack_spiderkeeper import __VERSION__
+from crawlerstack_spiderkeeper import __version__
 from crawlerstack_spiderkeeper.config import settings
 from crawlerstack_spiderkeeper.manage import SpiderKeeper
 
@@ -13,7 +13,7 @@ from crawlerstack_spiderkeeper.manage import SpiderKeeper
 @click.option('-v', '--verbose', is_flag=True, help='Get detailed output')
 def main(ctx, version, verbose):
     if version:
-        click.echo(__VERSION__)
+        click.echo(__version__)
     elif verbose:
         settings.set('VERBOSE', verbose)
     if ctx.invoked_subcommand is None:

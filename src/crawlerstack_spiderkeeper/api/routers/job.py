@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 
 from crawlerstack_spiderkeeper.schemas.job import Job, JobCreate, JobUpdate
 from crawlerstack_spiderkeeper.services import job_service
@@ -22,14 +22,27 @@ async def job_state(
 
 @router.get('/jobs', response_model=List[Job])
 async def get_multi(
+        *,
+        response: Response,
         commons: CommonQueryParams = Depends(),
 ):
     """
     Get jobs
+    :param response
     :param commons:
     :return:
     """
-    return await job_service.get_multi()
+    count = await job_service.count()
+    response.headers['X-Total-Count'] = str(count)
+    data = []
+    if count:
+        data = await job_service.get_multi(
+            skip=commons.skip,
+            limit=commons.limit,
+            order=commons.order,
+            sort=commons.sort
+        )
+    return data
 
 
 @router.get('/jobs/{pk}', response_model=Job)

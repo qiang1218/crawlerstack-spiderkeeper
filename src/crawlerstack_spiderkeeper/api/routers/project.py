@@ -14,11 +14,6 @@ router = APIRouter(route_class=AuditRoute)
 logger = logging.getLogger(__name__)
 
 
-@router.get('/projects/create')
-async def get_():
-    return {'foo': 'bar'}
-
-
 @router.get("/projects", response_model=List[Project])
 async def get_multi(
         *,
