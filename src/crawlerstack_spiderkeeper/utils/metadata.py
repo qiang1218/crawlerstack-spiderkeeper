@@ -1,3 +1,6 @@
+"""
+Metadata util.
+"""
 import os
 from datetime import datetime
 
@@ -48,35 +51,42 @@ from crawlerstack_spiderkeeper.utils import constants
     - 所有东西放在一起，方便用户直接配置开发代码路径
 缺点：
     - docker 构建的时候需要忽略不需要的文件夹
-"""
 
-"""
 settings.ARTIFACT_PATH 为设置的归档目录
 
 当前使用第一种目录格式。
-"""
+"""  # pylint: disable=pointless-string-statement
 
 
 class Metadata:
+    """
+    Metadata.
+    """
     obj = None
 
-    def __new__(cls):
+    def __new__(cls, *args):
         # 关键在于这，每一次实例化的时候，我们都只会返回这同一个instance对象
 
         if not hasattr(cls, '__instance'):
-            cls.__instance = super(Metadata, cls).__new__(cls)
+            cls.__instance = super().__new__(cls, *args)
             cls.artifact_path = settings.ARTIFACT_PATH
-            cls.artifact_files_path = os.path.join(settings.ARTIFACT_PATH, constants.ARTIFACT_FILE_PATHNAME)
+            cls.artifact_files_path = os.path.join(
+                settings.ARTIFACT_PATH,
+                constants.ARTIFACT_FILE_PATHNAME
+            )
             cls.artifact_source_code_path = os.path.join(
                 settings.ARTIFACT_PATH,
                 constants.ARTIFACT_SOURCE_CODE_PATHNAME
             )
-            cls.artifact_virtualenvs_path = os.path.join(settings.ARTIFACT_PATH, constants.ARTIFACT_VIRTUALENV_PATHNAME)
+            cls.artifact_virtualenvs_path = os.path.join(
+                settings.ARTIFACT_PATH,
+                constants.ARTIFACT_VIRTUALENV_PATHNAME
+            )
             os.makedirs(cls.artifact_path, exist_ok=True)
             os.makedirs(cls.artifact_files_path, exist_ok=True)
             os.makedirs(cls.artifact_source_code_path, exist_ok=True)
             os.makedirs(cls.artifact_virtualenvs_path, exist_ok=True)
-            return cls.__instance
+        return cls.__instance
 
 
 # TODO  增加格式支持
@@ -91,6 +101,11 @@ class ArtifactMetadata:
 
     @classmethod
     def from_project(cls, project_name: str) -> 'ArtifactMetadata':
+        """
+        Get artifact from project name.
+        :param project_name:
+        :return:
+        """
         return cls(f'{project_name}-{datetime.now().timestamp()}.zip')
 
     def __init__(self, filename: str):
@@ -101,6 +116,7 @@ class ArtifactMetadata:
         self.metadata = Metadata()
 
     def __repr__(self):
+        """Return artifact str."""
         return self.file_basename
 
     __str__ = __repr__
@@ -123,6 +139,10 @@ class ArtifactMetadata:
 
     @property
     def timestamp(self) -> float:
+        """
+        Timestamp
+        :return:
+        """
         timestamp = float(self._filename.split('-')[1].rstrip('.zip'))
         return timestamp
 

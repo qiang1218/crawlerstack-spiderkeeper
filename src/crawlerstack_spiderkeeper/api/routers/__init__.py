@@ -1,3 +1,6 @@
+"""
+Router.
+"""
 from fastapi import APIRouter, FastAPI
 from starlette_exporter import handle_metrics
 
@@ -29,5 +32,10 @@ def router_v1():
 
 
 def init_router(app: FastAPI):
+    """
+    Init router.
+    :param app:
+    :return:
+    """
     app.add_route("/metrics", handle_metrics)
     app.include_router(router_v1(), prefix='/api/v1')

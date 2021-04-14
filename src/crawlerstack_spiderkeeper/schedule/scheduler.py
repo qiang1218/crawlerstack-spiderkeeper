@@ -1,3 +1,6 @@
+"""
+Scheduler.
+"""
 import asyncio
 import functools
 import logging
@@ -9,6 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 class IntervalTrigger:
+    """
+    Interval trigger.
+    """
 
     def __init__(self, interval: int):
         """
@@ -19,17 +25,33 @@ class IntervalTrigger:
 
     @property
     def interval(self) -> int:
+        """
+        Interval
+        :return:
+        """
         return self.__interval
 
     def fire(self) -> None:
+        """
+        Fire.
+        :return:
+        """
         self.__start_time = datetime.now()
 
     def next_time(self, now: Optional[datetime] = None) -> datetime:
+        """
+        Next time
+        :param now:
+        :return:
+        """
         now = now or self.__start_time
         return now + timedelta(seconds=self.interval)
 
 
 class ScheduleJob:
+    """
+    schedule a job
+    """
 
     def __init__(
             self,
@@ -62,18 +84,25 @@ class ScheduleJob:
 
     @property
     def id(self) -> int:
+        """
+        job id.
+        :return:
+        """
         return self.__id
 
     @property
     def name(self) -> str:
+        """job name"""
         return self.__name
 
     @property
     def trigger(self) -> IntervalTrigger:
+        """trigger"""
         return self.__trigger
 
     @property
     def is_running(self) -> bool:
+        """Job is running ?"""
         return self.__running
 
     async def run(self) -> None:
@@ -83,10 +112,16 @@ class ScheduleJob:
         """
         self.trigger.fire()
         if self.__running:
-            logger.info(f'Job {self.name} is running, skip trigger. Next run time {self.trigger.next_time()}')
+            logger.info(
+                'Job %s is running, skip trigger. Next run time %s.',
+                self.name,
+                self.trigger.next_time()
+            )
         else:
             logger.info(
-                f'Start run job {self.name}, this is {self.__count} times. Next run time {self.trigger.next_time()}'
+                'Start run job %s, this is {self.__count} times. Next run time %s',
+                self.name,
+                self.trigger.next_time()
             )
             self.__running = True
             if asyncio.iscoroutinefunction(self.__func):
@@ -98,11 +133,14 @@ class ScheduleJob:
 
 
 class Scheduler:
+    """
+    Scheduler.
+    """
     __obj = None
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args):
         if cls.__obj is None:
-            cls.__obj = super().__new__(cls)
+            cls.__obj = super().__new__(cls, *args)
         return cls.__obj
 
     def __init__(self, max_interval: int = 5, loop: Optional[AbstractEventLoop] = None):
@@ -135,7 +173,7 @@ class Scheduler:
         """
         job = ScheduleJob(func, interval, id_, name, args, kwargs)
         self.__jobs.append(job)
-        logger.info(f'Submit task {job} to scheduler')
+        logger.info('Submit task %s to scheduler', job)
         return job
 
     def remove(self, job: ScheduleJob) -> None:
@@ -144,10 +182,15 @@ class Scheduler:
         :param job:
         :return:
         """
-        logger.info(f'Remove task {job}')
+        logger.info('Remove task %s', job)
         self.__jobs.remove(job)
 
     def _task_finish(self, task: asyncio.Task) -> None:
+        """
+        Task is finish?
+        :param task:
+        :return:
+        """
         self.__running_jobs.remove(task)
 
     def _run_job(self, job: ScheduleJob):
@@ -160,7 +203,7 @@ class Scheduler:
         处理任务
         :return:
         """
-        logger.info(f'Scheduler start process job......')
+        logger.info('Scheduler start process job......')
         while True:
             if self.__stop:
                 break
@@ -188,33 +231,33 @@ class Scheduler:
                 sleep = round(delta.days * 3600 + delta.seconds + delta.microseconds / 10e6, 2)
 
             if sleep > 0.5:
-                logger.info(f'Scheduler delay {sleep} seconds....')
+                logger.info('Scheduler delay %s seconds....', sleep)
                 await asyncio.sleep(sleep)
             elif sleep < 0:
                 await asyncio.sleep(min_interval)
-                logger.warning(f'Process job delay {sleep}')
+                logger.warning('Process job delay %s', sleep)
             else:
                 continue
             print('')
 
-        logger.info(f'Schedule process job stopping......')
+        logger.info('Schedule process job stopping......')
         for task in self.__running_jobs:
             cancelled = task.cancel()
             if cancelled:
-                logger.info(f'Cancel task {task}.')
+                logger.info('Cancel task %s.', task)
 
     async def start(self) -> None:
         """启动调度器"""
-        logger.info(f'Start scheduler.')
+        logger.info('Start scheduler.')
         self.__process_job_task = self.__loop.create_task(self._process_job())
 
     async def stop(self) -> None:
         """停止调度器"""
         self.__stop = True
-        logger.info(f'Scheduler stopping...')
+        logger.info('Scheduler stopping...')
         if self.__process_job_task:
             await self.__process_job_task
-        logger.info(f'Scheduler is stop.')
+        logger.info('Scheduler is stop.')
 
 
 scheduler = Scheduler()

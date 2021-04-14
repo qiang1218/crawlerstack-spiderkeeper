@@ -1,6 +1,10 @@
+"""
+Log util.
+"""
 import logging
 import os
 from logging.config import dictConfig
+from typing import Dict
 
 from crawlerstack_spiderkeeper.config import settings
 
@@ -8,13 +12,14 @@ DEFAULT_FORMATTER = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 
 
 def verbose_formatter(verbose: bool) -> str:
+    """Get log fmt."""
     if verbose is True:
         return 'verbose'
-    else:
-        return 'simple'
+    return 'simple'
 
 
 def log_level(debug: bool, level: str) -> str:
+    """Get log level."""
     if debug is True:
         level_num = logging.DEBUG
     else:
@@ -23,7 +28,11 @@ def log_level(debug: bool, level: str) -> str:
     return settings.LOGLEVEL
 
 
-def init_logging_config():
+def init_logging_config() -> Dict:
+    """
+    Get log config.
+    :return:
+    """
     level = log_level(settings.DEBUG, settings.LOGLEVEL)
 
     os.makedirs(settings.LOGPATH, exist_ok=True)
@@ -40,7 +49,8 @@ def init_logging_config():
             },
             "access": {
                 "()": "uvicorn.logging.AccessFormatter",
-                "fmt": '%(asctime)s %(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
+                "fmt": '%(asctime)s %(levelprefix)s %(client_addr)s - '
+                       '"%(request_line)s" %(status_code)s',
             },
         },
         "handlers": {
@@ -70,8 +80,16 @@ def init_logging_config():
         },
         "loggers": {
             '': {'level': level, 'handlers': ['console', 'file']},
-            # 'uvicorn.access': {'handlers': ['access_file', 'console'], 'level': level, 'propagate': False},
-            # 'sqlalchemy.engine.base.Engine': {'handlers': ['console'], 'level': LOG_LEVEL, 'propagate': False},
+            # 'uvicorn.access': {
+            #     'handlers': ['access_file', 'console'],
+            #     'level': level,
+            #     'propagate': False
+            # },
+            # 'sqlalchemy.engine.base.Engine': {
+            #     'handlers': ['console'],
+            #     'level': level,
+            #     'propagate': False
+            # },
             'amqp.connection.Connection.heartbeat_tick': {'level': 'INFO'}
         }
     }
@@ -79,4 +97,5 @@ def init_logging_config():
 
 
 def configure_logging():
+    """Config log"""
     dictConfig(init_logging_config())

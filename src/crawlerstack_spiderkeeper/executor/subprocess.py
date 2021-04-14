@@ -1,9 +1,12 @@
+"""
+Customs subprocess
+"""
 import asyncio
 import os
 from asyncio import AbstractEventLoop, StreamReader, SubprocessTransport
 from asyncio.subprocess import Process, SubprocessStreamProtocol
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import aiofiles
 from aiofiles.os import remove, rename
@@ -11,6 +14,9 @@ from aiofiles.threadpool.binary import AsyncFileIO
 
 
 class FileHandle:
+    """
+    File handler
+    """
 
     def __init__(
             self,
@@ -25,6 +31,10 @@ class FileHandle:
         self.closing = False
 
     async def open(self) -> None:
+        """
+        Open file
+        :return:
+        """
         self.writer = await aiofiles.open(
             file=self.filename,
             mode='ab',
@@ -42,21 +52,25 @@ class FileHandle:
         try:
             await self.writer.write(line)
             await self.writer.flush()
-        except Exception as e:
+        except Exception as ex:
             await self.close()
-            raise e
+            raise ex
 
     async def close(self) -> None:
+        """Close file"""
         self.closing = True
         if self.writer is not None:
             await self.writer.close()
 
 
 class RotatingFileHandler(FileHandle):
+    """
+    Rota file handler
+    """
 
     def __init__(
             self,
-            filename: str,
+            filename: Union[str, Path],
             max_bytes: Optional[int] = 0,
             backup_count: Optional[int] = 0,
             loop: Optional[AbstractEventLoop] = None
@@ -67,12 +81,22 @@ class RotatingFileHandler(FileHandle):
         self.max_bytes = max_bytes
 
     async def write(self, line: bytes) -> None:
+        """
+        Write line.
+        :param line:
+        :return:
+        """
         should_rollover = await self.should_rollover(line)
         if should_rollover:
             await self.do_rollover()
         await super().write(line)
 
     async def should_rollover(self, line: bytes) -> bool:
+        """
+        Check if rollover file
+        :param line:
+        :return:
+        """
         if self.writer is None and not self.closing:
             await self.open()
         if self.max_bytes > 0:
@@ -83,6 +107,10 @@ class RotatingFileHandler(FileHandle):
         return False
 
     async def do_rollover(self) -> None:
+        """
+        Rollover file
+        :return:
+        """
         if self.writer:
             await self.writer.close()
             self.writer = None
@@ -112,6 +140,9 @@ class RotatingFileHandler(FileHandle):
 
 
 class SubprocessRotatingFileProtocol(SubprocessStreamProtocol):
+    """
+    Subprocess rota file protocol
+    """
 
     def __init__(
             self,
@@ -131,7 +162,7 @@ class SubprocessRotatingFileProtocol(SubprocessStreamProtocol):
         self.stdout_handler: Optional[FileHandle] = None
         self.stderr_handler: Optional[FileHandle] = None
 
-        self._closing_task: asyncio.Future[None] = loop.create_future()
+        self._closing_task: asyncio.Future = loop.create_future()
 
     def connection_made(self, transport: SubprocessTransport) -> None:
         """
@@ -160,6 +191,12 @@ class SubprocessRotatingFileProtocol(SubprocessStreamProtocol):
         self._loop.create_task(self.transform(self.stderr, self.stderr_handler))
 
     async def transform(self, reader: StreamReader, handler: 'RotatingFileHandler'):
+        """
+        transform
+        :param reader:
+        :param handler:
+        :return:
+        """
         try:
             while True:
                 line = await reader.readline()
@@ -170,15 +207,18 @@ class SubprocessRotatingFileProtocol(SubprocessStreamProtocol):
             await handler.close()
 
 
+_DEFAULT_LIMIT = 2 ** 16  # 64 KiB
+
+
 async def create_subprocess_shell(
         cmd: str,
         std_path: str,
         max_bytes: Optional[int] = 0,
         back_count: Optional[int] = 0,
         loop: Optional[AbstractEventLoop] = None,
-        limit=asyncio.streams._DEFAULT_LIMIT,
+        limit=_DEFAULT_LIMIT,
         **kwargs
-) -> asyncio.subprocess.Process:
+) -> Process:
     """
     此接口参照 `asyncio.subprocess.create_subprocess_shell` 编写，使用自定义 SubprocessRotatingFileProtocol，
     日志将会写入到 `std_path`/pid_100.log 其中 100 是创建进程的 pid 值

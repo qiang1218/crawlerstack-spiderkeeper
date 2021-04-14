@@ -1,10 +1,13 @@
+"""
+Docker executor.
+"""
 import json
 import logging
 import os
-import tempfile
 from asyncio.events import AbstractEventLoop
 from contextlib import asynccontextmanager
 from shutil import make_archive
+from tempfile import TemporaryDirectory
 from typing import AsyncIterable, Dict, List, Optional
 
 from aiodocker import Docker, DockerError
@@ -20,11 +23,14 @@ logger = logging.getLogger(__name__)
 
 
 class SingletonDocker(Docker):
+    """
+    Docker singleton.
+    """
     __instance = None
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args):
         if cls.__instance is None:
-            cls.__instance = super().__new__(cls)
+            cls.__instance = super().__new__(cls, *args)
             signals.server_stop.connect(cls.__instance.close)
         return cls.__instance
 
@@ -38,6 +44,9 @@ class SingletonDocker(Docker):
 
 
 class DocketExecuteContext(BaseExecuteContext):
+    """
+    Docker execute context.
+    """
 
     def __init__(
             self,
@@ -56,8 +65,10 @@ class DocketExecuteContext(BaseExecuteContext):
         :return:
         """
         await self.unpack_artifact()
-        tmp_path = tempfile.TemporaryDirectory(prefix=f'spiderkeeper-docker-build-{self.artifact.project_name}')
-        basename, fmt = self.artifact.filename.rsplit('.', 1)
+        tmp_path = TemporaryDirectory(
+            prefix=f'spiderkeeper-docker-build-{self.artifact.project_name}'
+        )
+        basename, _ = self.artifact.filename.rsplit('.', 1)
         with staging_path(tmp_path.name):
             await self.loop.run_in_executor(
                 None,
@@ -72,46 +83,11 @@ class DocketExecuteContext(BaseExecuteContext):
     async def build(self) -> None:
         """
         https://docs.docker.com/engine/api/v1.40/#operation/ImageBuild
-        status: 200
-            Because of `stream = False`, so it is build stdout.
-            The image tag in last output.
-            [
-                {
-                    "stream": "Step 1/1 : FROM python"
-                },
-                {
-                    "stream": "\n"
-                },
-                {
-                    "stream": " ---> 0a3a95c81a2b\n"
-                },
-                {
-                    "aux": {
-                        "ID": "sha256:0a3a95c81a2bd8d2ee9653097a4e0ae63d8765636874083afb5e9a7d52b6b9f1"
-                    }
-                },
-                {
-                    "stream": "Successfully built 0a3a95c81a2b\n"
-                },
-                {
-                    "stream": "Successfully tagged p_01:20191226113941\n"
-                }
-            ]
-            Or building error, the last one is not `stream`
-             {'errorDetail': {'code': 1, 'message': "The command '/bi......"}}
-        status: 404
-            {
-                "message": "Something went wrong."
-            }
-        status: 500
-            {
-                "message": "Something went wrong."
-            }
         :return: image tag
         """
         async with self._make_docker_tar() as file:
             with open(file, 'rb') as file_obj:
-                self.logger.debug(f'Start build docker image from {file}')
+                self.logger.debug('Start build docker image from %s', file)
                 response = await self.client.images.build(
                     fileobj=file_obj,
                     tag=self.artifact.image_tag,
@@ -121,7 +97,7 @@ class DocketExecuteContext(BaseExecuteContext):
                 )
         last_response = response[-1]
         if last_response.get('stream') and 'Successfully' in last_response.get('stream'):
-            self.logger.debug(f'Build docker image : {self.artifact.image_tag} success.')
+            self.logger.debug('Build docker image : %s success.', self.artifact.image_tag)
         else:  # Build error
             raise Exception(last_response.get('errorDetail') or last_response)
 
@@ -145,133 +121,39 @@ class DocketExecuteContext(BaseExecuteContext):
         :return:
         """
         try:
-            self.logger.debug(f'Start delete docker image: {self.artifact.image_tag}')
+            self.logger.debug('Start delete docker image: %s', self.artifact.image_tag)
             await self.client.images.delete(self.artifact.image_tag)
-            self.logger.debug(f'Delete docker image: {self.artifact.image_tag} success.')
-        except DockerError as e:
-            if e.status == 404:
-                logger.warning(f'Docker image: {self.artifact.image_tag} not found, skip. {e.message}')
+            self.logger.debug('Delete docker image: %s success.', self.artifact.image_tag)
+        except DockerError as ex:
+            if ex.status == 404:
+                logger.warning(
+                    'Docker image: %s not found, skip. %s',
+                    self.artifact.image_tag,
+                    ex.message
+                )
             else:
-                raise e
+                raise ex
 
     async def exist(self) -> bool:
         """
         https://docs.docker.com/engine/api/v1.40/#operation/ImageCreate
-        status 200 :
-            {
-                "Id": "sha256:85f05633ddc1c50679be2b16a0479ab6f7637f8884e0cfe0f4d20e1ebb3d6e7c",
-                "Container": "cb91e48a60d01f1e27028b4fc6819f4f290b3cf12496c8176ec714d0d390984a",
-                "Comment": "",
-                "Os": "linux",
-                "Architecture": "amd64",
-                "Parent": "sha256:91e54dfb11794fad694460162bf0cb0a4fa710cfa3f60979c177d920813e267c",
-                "ContainerConfig": {
-                    "Tty": false,
-                    "Hostname": "e611e15f9c9d",
-                    "Domainname": "",
-                    "AttachStdout": false,
-                    "PublishService": "",
-                    "AttachStdin": false,
-                    "OpenStdin": false,
-                    "StdinOnce": false,
-                    "NetworkDisabled": false,
-                    "OnBuild": [],
-                    "Image": "91e54dfb11794fad694460162bf0cb0a4fa710cfa3f60979c177d920813e267c",
-                    "User": "",
-                    "WorkingDir": "",
-                    "MacAddress": "",
-                    "AttachStderr": false,
-                    "Labels": {
-                        "com.example.license": "GPL",
-                        "com.example.version": "1.0",
-                        "com.example.vendor": "Acme"
-                    },
-                    "Env": [
-                        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-                    ],
-                    "Cmd": [
-                        "/bin/sh",
-                        "-c",
-                        "#(nop) LABEL com.example.vendor=Acme com.example.license=GPL com.example.version=1.0"
-                    ]
-                },
-                "DockerVersion": "1.9.0-dev",
-                "VirtualSize": 188359297,
-                "Size": 0,
-                "Author": "",
-                "Created": "2015-09-10T08:30:53.26995814Z",
-                "GraphDriver": {
-                    "Name": "aufs",
-                    "Data": {}
-                },
-                "RepoDigests": [
-                    "localhost:5000/test/busybox/example@sha256:cbbf2f9a99b47fc460d422812b6a5adff7dfee951d8fa2e4a98caa0382cfbdbf"
-                ],
-                "RepoTags": [
-                    "example:1.0",
-                    "example:latest",
-                    "example:stable"
-                ],
-                "Config": {
-                    "Image": "91e54dfb11794fad694460162bf0cb0a4fa710cfa3f60979c177d920813e267c",
-                    "NetworkDisabled": false,
-                    "OnBuild": [],
-                    "StdinOnce": false,
-                    "PublishService": "",
-                    "AttachStdin": false,
-                    "OpenStdin": false,
-                    "Domainname": "",
-                    "AttachStdout": false,
-                    "Tty": false,
-                    "Hostname": "e611e15f9c9d",
-                    "Cmd": [
-                        "/bin/bash"
-                    ],
-                    "Env": [
-                        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-                    ],
-                    "Labels": {
-                        "com.example.vendor": "Acme",
-                        "com.example.version": "1.0",
-                        "com.example.license": "GPL"
-                    },
-                    "MacAddress": "",
-                    "AttachStderr": false,
-                    "WorkingDir": "",
-                    "User": ""
-                },
-                "RootFS": {
-                    "Type": "layers",
-                    "Layers": [
-                        "sha256:1834950e52ce4d5a88a1bbd131c537f4d0e56d10ff0dd69e66be3b7dfa9df7e6",
-                        "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef"
-                    ]
-                }
-            }
-
-        status 404:
-        {
-            "message": "No such image: someimage (tag: latest)"
-        }
-
-        stat8s 500:
-        {
-            "message": "Something went wrong."
-        }
         :return:
         """
         try:
             await self.client.images.inspect(self.artifact.image_tag)
-            self.logger.debug(f'Docker image: {self.artifact.image_tag} exist.')
+            self.logger.debug('Docker image: %s exist.', self.artifact.image_tag)
             return True
-        except DockerError as e:
-            if e.status == 404:
-                self.logger.debug(f'Docker image: {self.artifact.image_tag} does not exist.')
+        except DockerError as ex:
+            if ex.status == 404:
+                self.logger.debug('Docker image: %s does not exist.', self.artifact.image_tag)
                 return False
-            raise e
+            raise ex
 
 
 class DockerExecutor(BaseExecutor):
+    """
+    Docker executor.
+    """
     _executor_context_cls = DocketExecuteContext
 
     def __init__(
@@ -331,39 +213,55 @@ class DockerExecutor(BaseExecutor):
             'NetworkingConfig': {settings.DOCKER_NETWORK: None},
         }
         _logger = logging.getLogger(f'{__name__}.{cls.__name__}')
-        _logger.debug(f'Start create container. data: {json.dumps(config)}')
+        _logger.debug('Start create container. data: %s', json.dumps(config))
         container = await client.containers.run(config, name=None)
-        _logger.debug(f'Docker container: {container.id} create success.')
+        _logger.debug('Docker container: %s create success.', container.id)
         obj = cls(artifact, str(container.id), loop)
-        obj._container = container
         return obj
 
     @property
     async def container(self) -> DockerContainer:
+        """
+        Docker container.
+        :return:
+        """
         if self._container is None:
             self._container = await self.client.containers.get(self.pid)
-            self.logger.debug(f'Get container from container id: {self.pid} success.')
+            self.logger.debug('Get container from container id: %s success.', self.pid)
         return self._container
 
     @staticmethod
     def _convert_env(env: Dict[str, str]) -> Optional[List[str]]:
+        """
+        Convert env to pass docker.
+        :param env:
+        :return:
+        """
         envs = []
-        for k, v in env.items():
-            envs.append(f'{k}={v}')
+        for key, value in env.items():
+            envs.append(f'{key}={value}')
         return envs
 
     async def stop(self) -> None:
+        """
+        Stop a docker container.
+        :return:
+        """
         container = await self.container
-        self.logger.debug(f'Start stop a container: {container.id}')
+        self.logger.debug('Start stop a container: %s', container.id)
         await container.stop()
-        self.logger.debug(f'Stop a container: {container.id} success.')
+        self.logger.debug('Stop a container: %s success.', container.id)
 
     async def delete(self):
+        """
+        Delete docker
+        :return:
+        """
         await self.stop()
         container = await self.container
-        self.logger.debug(f'Start delete a container: {container.id}')
+        self.logger.debug('Start delete a container: %s', container.id)
         await container.delete()
-        self.logger.debug(f'Delete a container: {container.id} success.')
+        self.logger.debug('Delete a container: %s success.', container.id)
 
     async def running(self) -> bool:
         """
@@ -376,22 +274,31 @@ class DockerExecutor(BaseExecutor):
         """
         container = await self.container
         data = await container.show()
-        self.logger.debug(f'Inspect docker container: {container.id}, response: {data}')
+        self.logger.debug('Inspect docker container: %s, response: %s', container.id, data)
         running = data['State']['Running']
         if running:
             return True
         return False
 
     async def status(self) -> Dict:
+        """
+        Docker container status.
+        :return:
+        """
         container = await self.container
         data = await container.show()
-        self.logger.debug(f'Inspect docker container: {container.id}, response: {data}')
+        self.logger.debug('Inspect docker container: %s, response: %s', container.id, data)
         return {
             'state': data['State']['Status'],
             'detail': data
         }
 
     async def log(self, follow=False) -> AsyncIterable[str]:
+        """
+        Docker container log.
+        :param follow:
+        :return:
+        """
         container: DockerContainer = await self.container
         if follow:
             async for line in container.log(stderr=True, stdout=True, follow=follow, tail=50):

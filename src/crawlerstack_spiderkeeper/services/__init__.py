@@ -1,3 +1,6 @@
+"""
+Service
+"""
 from crawlerstack_spiderkeeper.services.artifact import (ArtifactFileService,
                                                          ArtifactService)
 from crawlerstack_spiderkeeper.services.audit import AuditService

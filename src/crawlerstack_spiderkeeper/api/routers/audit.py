@@ -1,3 +1,6 @@
+"""
+Audit route.
+"""
 import logging
 from typing import List
 
@@ -18,6 +21,12 @@ async def get_multi(
         response: Response,
         commons: CommonQueryParams = Depends(),
 ):
+    """
+    Get multi audits.
+    :param response:
+    :param commons:
+    :return:
+    """
     count = await audit_service.count()
     response.headers['X-Total-Count'] = str(count)
     data = []
@@ -36,6 +45,11 @@ async def get(
         *,
         pk: int,
 ):
+    """
+    Get one audit by id.
+    :param pk:
+    :return:
+    """
     return await audit_service.get(pk=pk)
 
 # @router.post('/audits/')

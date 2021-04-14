@@ -1,3 +1,7 @@
+"""
+Metric service.
+"""
+
 import asyncio
 from typing import Any, Dict, Optional
 
@@ -39,6 +43,11 @@ class MetricService(KombuMixin):
         self.__should_stop: Optional[asyncio.Future] = None
 
     async def server_start(self):
+        """
+        # TODO change method name.
+        Start server
+        :return:
+        """
         await super().server_start()
         self.__should_stop = asyncio.Future()
         # 系统启动后开启监控数据消费任务
@@ -51,27 +60,58 @@ class MetricService(KombuMixin):
         ))
 
     async def server_stop(self):
+        """
+        # TODO change method name.
+        Stop server
+        :return:
+        """
         await super().server_stop()
         if self.__should_stop and not self.__should_stop.done():
             self.__should_stop.set_result(True)
             self.__should_stop = None
 
     def queue_name(self, app_id: Optional[AppId] = None):
+        """
+        Queue name.
+        :param app_id:
+        :return:
+        """
         return self.name
 
     def routing_key(self, app_id: Optional[AppId] = None):
+        """Routing key."""
         return self.name
 
     def consume_on_response(self, body: Dict, message: Message):
+        """
+        Consume message.
+        :param body:
+        :param message:
+        :return:
+        """
+
         app_id = AppId.from_str(body.get('app_id'))
         self.set_metric(job_id=app_id.job_id, task_id=app_id.task_id, data=body.get('data'))
         message.ack()
 
     def set_metric(self, job_id: int, task_id: int, data: Dict[str, Any]):
+        """
+        Set metric.
+        :param job_id:
+        :param task_id:
+        :param data:
+        :return:
+        """
         try:
             for name, value in data.items():
                 metric: Histogram = self.metrics.get(name)
                 if metric:
                     metric.labels(job_id, task_id).observe(value)
-        except Exception as e:
-            self.logger.warning(f'Metric job: {job_id}, task: {task_id} data parser error. data: {data}. {e}')
+        except Exception as ex:  # pylint: disable=broad-except
+            self.logger.warning(
+                'Metric job: %s, task: %s data parser error. data: %s. %s',
+                job_id,
+                task_id,
+                data,
+                ex
+            )

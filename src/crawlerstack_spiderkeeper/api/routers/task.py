@@ -1,3 +1,6 @@
+"""
+Task route.
+"""
 from typing import List
 
 from fastapi import APIRouter, Depends, Response
@@ -52,6 +55,12 @@ async def update(
         pk: int,
         task_in: TaskUpdate,
 ):
+    """
+    Update task by id.
+    :param pk:
+    :param task_in:
+    :return:
+    """
     return await task_service.update(pk, task_in)
 
 

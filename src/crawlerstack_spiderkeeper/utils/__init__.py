@@ -1,3 +1,6 @@
+"""
+Utils
+"""
 import asyncio
 import logging
 import os
@@ -22,6 +25,11 @@ logger = logging.getLogger(__name__)
 
 
 def get_db(request: Request):
+    """
+    从 Request 对象中获取已注入的 db 对象。
+    :param request:
+    :return:
+    """
     return request.state.db
 
 
@@ -43,6 +51,9 @@ UploadFileType = TypeVar('UploadFileType', bound=UploadFile)
 
 
 class AppId:
+    """
+    AppID 对象模型
+    """
     prefix = 'APPID'
     separator = '-'
 
@@ -52,15 +63,24 @@ class AppId:
 
     @classmethod
     def from_str(cls, app_id: str) -> 'AppId':
+        """
+        Get app id from str.
+        :param app_id:
+        :return:
+        """
         _, job_id, task_id = app_id.split(cls.separator)
         return cls(job_id, task_id)
 
     def __repr__(self):
+        """Return str fmt app id."""
         data = [self.prefix, self.job_id, self.task_id]
-        return self.separator.join(map(lambda x: str(x), data))
+        return self.separator.join([str(x) for x in data])
 
 
 class AppData:
+    """
+    AppData 对象
+    """
 
     def __init__(self, app_id: Union[str, AppId], data: Dict):
         self.app_id: AppId = app_id
@@ -77,16 +97,22 @@ async def upload(file: UploadFileType, file_metadata: ArtifactMetadata) -> str:
     :param file_metadata:
     :return:    filename
     """
-    async with aiofiles.open(file_metadata.file, 'wb+') as f:
+    async with aiofiles.open(file_metadata.file, 'wb+') as f_obj:
         while True:
             data = await file.read(1024 * 1024 * 1024)
             if not data:
                 break
-            await f.write(data)
+            await f_obj.write(data)
     return file_metadata.filename
 
 
 def get_host_addr():
+    """
+    获取主机地址。
+    如果已在 settings 配置，则返回配置的主机地址，
+    如果没有配置，则基于 socket 获取当前主机地址。
+    :return:
+    """
     host_addr = settings.HOST_ADDR
     return host_addr if host_addr else socket.gethostname()
 
@@ -95,6 +121,9 @@ MAX_PAGE_SIZE = 10
 
 
 class CommonQueryParams:
+    """
+    通用 URL 查询参数
+    """
     def __init__(
             self,
             _start: int = 0,
@@ -141,23 +170,23 @@ def kill_proc_tree(
     children = parent.children(recursive=True)
     if include_parent:
         children.append(parent)
-    for p in children:
+    for child_process in children:
         # TODO fix delay kill
         # 连发两次 ctrl-c 信号 ，像 scrapy 在发送两次才会强制结束。。
         # 参考 https://docs.scrapy.org/en/latest/_modules/scrapy/crawler.html#CrawlerProcess.start
         # 但这么做会造成处于队列中的数据丢失。
         # 如果发送一次 ctrl-c，会由于 scrapy 处理队列数据耗时太长，造成无法立即返回进程已结束的结果
-        p.send_signal(sig)
-        p.send_signal(sig)
+        child_process.send_signal(sig)
+        child_process.send_signal(sig)
     gone, alive = psutil.wait_procs(
         children,
         timeout=timeout,
         callback=on_terminate
     )
     logger.debug(
-        f'Try SIGTERM ppid: {pid}, '
-        f'alive: {[process.pid for process in alive]} , '
-        f'gone: {[process.pid for process in alive]}'
+        'Try SIGTERM ppid: {pid}, alive: %s , gone: %s',
+        [process.pid for process in alive],
+        [process.pid for process in alive]
     )
     return gone, alive
 
@@ -177,13 +206,21 @@ def staging_path(to_path):
 
 
 class Tail:
+    """
+    Tail 显示文件内容
+    """
     def __init__(self, filename: str):
         self.filename = Path(filename)
 
     async def head(self, line_number: int = 50) -> AsyncIterable[str]:
+        """
+        获取文件钱几行
+        :param line_number:
+        :return:
+        """
         line_count = 0
-        async with aiofiles.open(self.filename, 'rb') as f:
-            async for line in f:
+        async with aiofiles.open(self.filename, 'rb') as f_obj:
+            async for line in f_obj:
                 if line_count >= line_number:
                     break
                 line_count += 1
@@ -197,15 +234,15 @@ class Tail:
         :param min_block_size:
         :return:
         """
-        async with aiofiles.open(self.filename, 'rb') as f:
+        async with aiofiles.open(self.filename, 'rb') as f_obj:
             if self.filename.stat().st_size > abs(min_block_size):
                 block_size = min_block_size
                 block_number = 0
-                await f.seek(0, os.SEEK_END)
+                await f_obj.seek(0, os.SEEK_END)
                 while True:
                     block_number += 1
-                    await f.seek(-min_block_size * block_number, os.SEEK_END)
-                    txt = await f.read()
+                    await f_obj.seek(-min_block_size * block_number, os.SEEK_END)
+                    txt = await f_obj.read()
                     line_count = txt.count(b'\n')
 
                     if line_count < line / 2:
@@ -223,8 +260,8 @@ class Tail:
                     # 如果统计行数大于所需要的行数，跳出循环。
                     if line_count >= line:
                         break
-                await f.seek(-block_size * block_number, os.SEEK_END)
-            async for i in f:
+                await f_obj.seek(-block_size * block_number, os.SEEK_END)
+            async for i in f_obj:
                 yield i.decode()
 
     async def follow(self, block_size=512) -> AsyncIterable[str]:
@@ -233,26 +270,29 @@ class Tail:
         :param block_size:
         :return:
         """
-        async with aiofiles.open(self.filename, 'rb') as f:
+        async with aiofiles.open(self.filename, 'rb') as f_obj:
 
             if self.filename.stat().st_size > abs(block_size):
-                await f.seek(-block_size, os.SEEK_END)
+                await f_obj.seek(-block_size, os.SEEK_END)
             else:
-                await f.seek(0, os.SEEK_SET)
+                await f_obj.seek(0, os.SEEK_SET)
 
-            x = await f.tell()
-            print(x)
             while True:
-                where = await f.tell()
-                line = await f.readline()
+                where = await f_obj.tell()
+                line = await f_obj.readline()
                 if not line:
                     await asyncio.sleep(1)
-                    await f.seek(where)
+                    await f_obj.seek(where)
                 else:
                     yield line.decode()
 
 
 def scoping_session(func: Callable):
+    """
+    ScopedSession 装饰器
+    :param func:
+    :return:
+    """
     @wraps(func)
     def __wrapper(*args, **kwargs):
         ScopedSession()

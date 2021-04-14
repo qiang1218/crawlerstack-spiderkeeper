@@ -1,3 +1,6 @@
+"""
+Log api.
+"""
 # import logging
 #
 # from fastapi import APIRouter

@@ -1,3 +1,6 @@
+"""
+Job route.
+"""
 from typing import Dict, List
 
 from fastapi import APIRouter, Depends, Response
@@ -14,6 +17,11 @@ async def job_state(
         *,
         pk: int
 ) -> Dict[str, str]:
+    """
+    Get job state
+    :param pk:
+    :return:
+    """
     result = await job_service.state(pk)
     return {
         'state': result
@@ -27,8 +35,11 @@ async def get_multi(
         commons: CommonQueryParams = Depends(),
 ):
     """
-    Get jobs
+    Get multi job
     :param response
+    :param commons:
+    :return:
+    :param response:
     :param commons:
     :return:
     """
@@ -77,6 +88,12 @@ async def update(
         pk: int,
         job_in: JobUpdate
 ):
+    """
+    Update job by id.
+    :param pk:
+    :param job_in:
+    :return:
+    """
     return await job_service.update(pk, job_in)
 
 
@@ -98,6 +115,11 @@ async def run(
         *,
         pk: int
 ):
+    """
+    Run job by id
+    :param pk:
+    :return:
+    """
     res = await job_service.run(pk=pk)
     return {'res': res}
 
@@ -107,5 +129,10 @@ async def stop(
         *,
         pk: int,
 ):
+    """
+    Stop job by id
+    :param pk:
+    :return:
+    """
     res = await job_service.stop(pk=pk)
     return {'res': res}

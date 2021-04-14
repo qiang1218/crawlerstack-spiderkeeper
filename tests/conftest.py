@@ -1,3 +1,6 @@
+"""
+Test config.
+"""
 import asyncio
 import io
 import os
@@ -27,10 +30,11 @@ from crawlerstack_spiderkeeper.signals import server_start, server_stop
 from crawlerstack_spiderkeeper.utils.metadata import ArtifactMetadata, Metadata
 from crawlerstack_spiderkeeper.utils.states import States
 
-api_version = 'v1'
+API_VERSION = 'v1'
 
 
 def assert_status_code(response: Response, code=200) -> None:
+    """Check state code is ok."""
     assert response.status_code == code
 
 
@@ -41,13 +45,15 @@ def build_api_url(api: str) -> str:
     :param api:
     :return:
     """
-    return f'/api/{api_version}{api}'
+    return f'/api/{API_VERSION}{api}'
 
 
-@pytest.fixture()
-def url_builder():
+@pytest.fixture(name='url_builder')
+def fixture_url_builder():
+    """Url builder."""
+
     def _(*args):
-        url_segment = ['/api', api_version]
+        url_segment = ['/api', API_VERSION]
         for segment in args:
             url_segment.append(segment.lstrip('/'))
         return '/'.join(url_segment)
@@ -55,8 +61,8 @@ def url_builder():
     return _
 
 
-@pytest.fixture()
-def temp_dir():
+@pytest.fixture(name='temp_dir')
+def fixture_temp_dir():
     """
     初始化测试目录，同时将测试目录赋值到 settings 上
     因为测试中所有内容都会放在这个目录，所以在引用 settings 时除非没有引用这个 fixture
@@ -71,18 +77,20 @@ def temp_dir():
         path.cleanup()
 
 
-@pytest.fixture()
-def base_dir() -> str:
+@pytest.fixture(name='base_dir')
+def fixture_base_dir() -> str:
+    """Base dir fixture."""
     return os.path.dirname(__file__)
 
 
-@pytest.fixture()
-def test_data_dir(base_dir):
+@pytest.fixture(name='test_data_dir')
+def fixture_test_data_dir(base_dir):
+    """Test data dir fixture."""
     return os.path.join(base_dir, 'data')
 
 
-@pytest.fixture()
-def demo_zip(test_data_dir, temp_dir) -> str:
+@pytest.fixture(name='demo_zip')
+def fixture_demo_zip(test_data_dir, temp_dir) -> str:
     """
     只用 test/data/demo 构建的测试数据
     压缩文件中的目录结构
@@ -110,7 +118,15 @@ def demo_zip(test_data_dir, temp_dir) -> str:
     :param temp_dir:
     :return:
     """
-    timestamp = datetime(year=2020, month=1, day=10, hour=18, minute=30, second=20, microsecond=262520).timestamp()
+    timestamp = datetime(
+        year=2020,
+        month=1,
+        day=10,
+        hour=18,
+        minute=30,
+        second=20,
+        microsecond=262520
+    ).timestamp()
     filename = f'demo-{timestamp}.zip'
     base_name, fmt = filename.rsplit('.', 1)
     cwd = os.getcwd()
@@ -128,13 +144,15 @@ def demo_zip(test_data_dir, temp_dir) -> str:
     yield os.path.join(metadata.artifact_files_path, filename)
 
 
-@pytest.fixture()
-def artifact_metadata(demo_zip):
+@pytest.fixture(name='artifact_metadata')
+def fixture_artifact_metadata(demo_zip):
+    """Artifact metadata."""
     yield ArtifactMetadata(os.path.basename(demo_zip))
 
 
-@pytest.fixture
-def uploaded_file(temp_dir):
+@pytest.fixture(name='uploaded_file')
+def fixture_uploaded_file(temp_dir):
+    """Uploaded file fixture."""
     file_obj = tempfile.NamedTemporaryFile(dir=temp_dir)
     file_obj.write(b'Hello world\n')
     file_obj.seek(0)
@@ -142,8 +160,8 @@ def uploaded_file(temp_dir):
     file_obj.close()
 
 
-@pytest.fixture()
-async def docker_tar_file():
+@pytest.fixture(name='docker_tar_file')
+async def fixture_docker_tar_file():
     """
     Mock docker tar file
     :return:
@@ -157,23 +175,27 @@ async def docker_tar_file():
     return mktar_from_dockerfile(docker_file_obj)
 
 
-@pytest.fixture()
-async def signal_send():
+@pytest.fixture(name='signal_send')
+async def fixture_signal_send():
+    """Signal send fixture."""
+
     async def _(signal: Signal, *args, **kwargs):
         await signal.send(*args, **kwargs)
 
     yield _
 
 
-@pytest.fixture()
-async def server_start_signal(signal_send):
+@pytest.fixture(name='server_start_signal')
+async def fixture_server_start_signal(signal_send):
+    """Server start signal fixture."""
     await signal_send(server_start)
     yield
     await signal_send(server_stop)
 
 
-@pytest.fixture()
-def event_loop():
+@pytest.fixture(name='event_loop')
+def fixture_event_loop():
+    """Event loop fixture."""
     loop = asyncio.get_event_loop()
     yield loop
     loop.call_soon(loop.close)
@@ -193,15 +215,16 @@ class AsyncMock(MagicMock):
     ```
     """
 
-    async def __call__(self, *args, **kwargs):
-        return super(AsyncMock, self).__call__(*args, **kwargs)
+    async def __call__(self, *args, **kwargs):  # pylint: disable=invalid-overridden-method, useless-super-delegation
+        return super().__call__(*args, **kwargs)
 
     def __await__(self):
         return self
 
 
-@pytest.fixture()
-def migrate():
+@pytest.fixture(name='migrate')
+def fixture_migrate():
+    """migrate fixture."""
     datetime.now()
     os.chdir(os.path.join(settings.BASE_DIR, 'alembic'))
     alembic_config = AlembicConfig(os.path.join(settings.BASE_DIR, 'alembic', 'alembic.ini'))
@@ -221,30 +244,35 @@ def migrate():
             pass
 
 
-@pytest.fixture(scope='session')
-def session_factory():
-    # enable auto commit
+@pytest.fixture(scope='session', name='session_factory')
+def fixture_session_factory():
+    """Session factory fixture"""
     yield sessionmaker(bind=engine, autocommit=True, autoflush=True)
 
 
-@pytest.fixture
-def session(migrate, session_factory) -> Session:
+@pytest.fixture(name='session')
+def fixture_session(migrate, session_factory) -> Session:
+    """Session fixture."""
     session = session_factory()
     yield session
     session.close()
 
 
-@pytest.fixture
-def client(migrate):
-    sk = SpiderKeeper(settings)
-    sk.api.init()
-    client = TestClient(sk.api.app, raise_server_exceptions=False)
+@pytest.fixture(name='client')
+def fixture_client(migrate):
+    """Api client fixture."""
+    spider_keeper = SpiderKeeper(settings)
+    spider_keeper.api.init()
+    client = TestClient(spider_keeper.api.app, raise_server_exceptions=False)
     yield client
 
 
-@pytest.fixture()
-def count_file_factory():
+@pytest.fixture(name='count_file_factory')
+def fixture_count_file_factory():
+    """Count file factory fixture."""
+
     def count_file(path: str):
+        """Count file."""
         file_count = 0
         files = os.listdir(path)
         for file in files:
@@ -255,8 +283,9 @@ def count_file_factory():
     return count_file
 
 
-@pytest.fixture()
-def init_audit(migrate):
+@pytest.fixture(name='init_audit')
+def fixture_init_audit(migrate):
+    """Init audit fixture."""
     session = SessionFactory()
     audits = [
         Audit(url='http://example.com', method='POST', client='127.0.0.1:25552', detail='foo'),
@@ -267,8 +296,9 @@ def init_audit(migrate):
     yield audits
 
 
-@pytest.fixture()
-def init_server(migrate, temp_dir):
+@pytest.fixture(name='init_server')
+def fixture_init_server(migrate, temp_dir):
+    """Init server fixture."""
     session = SessionFactory()
     servers = [
         Server(name='file', type='file', uri=f'file://{temp_dir}/storage/test.txt'),
@@ -279,8 +309,9 @@ def init_server(migrate, temp_dir):
     session.close()
 
 
-@pytest.fixture
-def init_project(migrate):
+@pytest.fixture(name='init_project')
+def fixture_init_project(migrate):
+    """Init project fixture."""
     session = SessionFactory()
     projects = [
         Project(name="test1", slug="test1"),
@@ -291,8 +322,9 @@ def init_project(migrate):
     session.close()
 
 
-@pytest.fixture
-async def init_artifact(init_project, demo_zip):
+@pytest.fixture(name='init_artifact')
+async def fixture_init_artifact(init_project, demo_zip):
+    """Init artifact fixture."""
     session = SessionFactory()
     project = session.query(Project).first()
     artifacts = [
@@ -304,13 +336,18 @@ async def init_artifact(init_project, demo_zip):
     session.close()
 
 
-@pytest.fixture
-async def init_job(init_server, init_artifact):
+@pytest.fixture(name='init_job')
+async def fixture_init_job(init_server, init_artifact):
+    """Init job fixture."""
     session = SessionFactory()
     artifact = session.query(Artifact).first()
     server = session.query(Server).first()
     jobs = [
-        Job(artifact_id=artifact.id, name='1', cmdline='python -c "print(123)"', server_id=server.id),
+        Job(
+            artifact_id=artifact.id, name='1',
+            cmdline='python -c "print(123)"',
+            server_id=server.id
+        ),
         Job(artifact_id=artifact.id, name='2', cmdline='scrapy crawl example'),
     ]
     session.add_all(jobs)
@@ -318,26 +355,28 @@ async def init_job(init_server, init_artifact):
     session.close()
 
 
-@pytest.fixture
-def init_task(init_job):
+@pytest.fixture(name='init_task')
+def fixture_init_task(init_job):
+    """Init task fixture."""
     session = SessionFactory()
     job = session.query(Job).first()
     tasks = [
-        Task(job_id=job.id, state=States.Running.value),
-        Task(job_id=job.id, state=States.Running.value, container_id='001'),
+        Task(job_id=job.id, state=States.RUNNING.value),
+        Task(job_id=job.id, state=States.RUNNING.value, container_id='001'),
     ]
     session.add_all(tasks)
     session.commit()
     session.close()
 
 
-@pytest.fixture()
-def init_storage(init_job):
+@pytest.fixture(name='init_storage')
+def fixture_init_storage(init_job):
+    """Init storage fixture."""
     session = SessionFactory()
     obj: Job = session.query(Job).first()
     objs = [
-        Storage(count=0, state=States.Running.value, job_id=obj.id),
-        Storage(count=0, state=States.Stopped.value, detail='stop...', job_id=obj.id),
+        Storage(count=0, state=States.RUNNING.value, job_id=obj.id),
+        Storage(count=0, state=States.STOPPED.value, detail='stop...', job_id=obj.id),
     ]
     session.add_all(objs)
     session.commit()

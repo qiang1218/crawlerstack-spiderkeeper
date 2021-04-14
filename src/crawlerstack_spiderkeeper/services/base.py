@@ -1,3 +1,6 @@
+"""
+Base service.
+"""
 import asyncio
 import logging
 import socket
@@ -19,9 +22,11 @@ from crawlerstack_spiderkeeper.utils.types import (CreateSchemaType, ModelType,
 
 
 class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+    """Base service."""
     dao: BaseDAO
 
     async def get(self, pk: Any) -> ModelType:
+        """Get record by primary key."""
         return await run_in_executor(self.dao.get, pk)
 
     async def get_multi(
@@ -33,6 +38,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             sort: str = 'id',
     ) -> List[ModelType]:
         """
+        Get multi record.
         :param skip:
         :param limit:
         :param order:   ASC | DESC
@@ -51,6 +57,11 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             self,
             obj_in: CreateSchemaType
     ) -> ModelType:
+        """
+        Create a record.
+        :param obj_in:
+        :return:
+        """
         return await run_in_executor(self.dao.create, obj_in=obj_in)
 
     async def update(
@@ -58,20 +69,41 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             pk: int,
             obj_in: Union[UpdateSchemaType, Dict[str, Any]]
     ) -> ModelType:
+        """
+        Update a record.
+        :param pk:
+        :param obj_in:
+        :return:
+        """
         return await run_in_executor(self.dao.update_by_id, pk=pk, obj_in=obj_in)
 
     async def delete(self, *, pk: int) -> ModelType:
+        """
+        Delete a record by primary key.
+        :param pk:
+        :return:
+        """
         return await run_in_executor(self.dao.delete_by_id, pk=pk)
 
     async def count(self) -> int:
+        """
+        Count.
+        :return:
+        """
         return await run_in_executor(self.dao.count)
 
 
 class ProjectService(BaseService[Project, ProjectCreate, ProjectUpdate]):
+    """
+    Project service.
+    """
     dao = project_dao
 
 
 class KombuMixin:
+    """
+    Kubo service mixin.
+    """
     name: str = ''
 
     def __init__(self):
@@ -80,13 +112,13 @@ class KombuMixin:
             raise Exception('You should define name')
         try:
             self.connect = Connection(settings.MQ, confirm_publish=True)
-            self.logger.debug(f'Init kombu connect. url: {settings.MQ}')
+            self.logger.debug('Init kombu connect. url: %s', settings.MQ)
             self.exchange = Exchange(self.name)
-            self.logger.debug(f'Init kombu exchange: {self.exchange.name}')
+            self.logger.debug('Init kombu exchange: %s', self.exchange.name)
 
             self.channel = self.connect.channel()
-        except Exception as e:
-            self.logger.exception(f'Init kombu error. MQ url: {settings.MQ}, {e}')
+        except Exception as ex:
+            self.logger.exception('Init kombu error. MQ url: %s, %s', settings.MQ, ex)
             raise
 
         self.__server_running = False
@@ -96,25 +128,42 @@ class KombuMixin:
         server_stop.connect(self.server_stop)
 
     async def server_start(self):
+        """Update server to running."""
         self.__server_running = True
 
     @property
-    def server_running(self):
+    def server_running(self) -> bool:
+        """Server is running?"""
         return self.__server_running
 
     def queue_name(self, app_id: Optional[AppId] = None):
+        """
+        Queue name.
+        :param app_id:
+        :return:
+        """
         if app_id:
             return f'{self.name}-{app_id.job_id}'
-        else:
-            return self.name
+        return self.name
 
     def routing_key(self, app_id: Optional[AppId] = None):
+        """
+        Routing key
+        :param app_id:
+        :return:
+        """
         if app_id:
             return f'{self.name}-{app_id.job_id}'
-        else:
-            return self.name
+        return self.name
 
     def publish(self, queue_name: str, routing_key: str, body: Any):
+        """
+        Publish to mq
+        :param queue_name:
+        :param routing_key:
+        :param body:
+        :return:
+        """
         queue = Queue(name=queue_name, exchange=self.exchange, routing_key=routing_key)
         producer = Producer(self.channel)
         res = producer.publish(
@@ -124,16 +173,21 @@ class KombuMixin:
             routing_key=queue.routing_key,
             declare=[queue]
         )
-        self.logger.debug(f'Publish data to exchange: {queue.exchange.name}, '
-                          f'queue: {queue.name}, routing_key: {routing_key}, '
-                          f'data: {body}')
+        self.logger.debug(
+            'Publish data to exchange: %s, queue: %s, routing_key: %s, data: %s',
+            queue.exchange.name,
+            queue.name,
+            routing_key,
+            body,
+        )
         return res
 
-    def __publish_on_return(self, exception, exchange, routing_key, message):
+    def __publish_on_return(self, exception, exchange, routing_key, message):   # pylint: disable=no-self-use
         # TODO 完善发送确认机制
         raise exception
 
     async def create(self, app_data: AppData):
+        """Create server"""
         await run_in_executor(
             self.publish,
             queue_name=self.queue_name(app_data.app_id),
@@ -169,14 +223,16 @@ class KombuMixin:
         queue = Queue(name=queue_name, exchange=self.exchange, routing_key=routing_key)
         consumer = Consumer(self.connect, queues=[queue])
 
-        for cb in register_callbacks:
-            consumer.register_callback(cb)
+        for callback in register_callbacks:
+            consumer.register_callback(callback)
         consumer.consume()
-        self.logger.debug(
-            f'Consuming from '
-            f'queue: {queue_name}'
+        self.logger.debug('Consuming from queue: %s', queue_name)
+        await self._consuming(
+            limit=limit,
+            timeout=timeout,
+            safety_interval=safety_interval,
+            should_stop=should_stop
         )
-        await self._consuming(limit=limit, timeout=timeout, safety_interval=safety_interval, should_stop=should_stop)
 
     async def _consuming(
             self,
@@ -214,8 +270,9 @@ class KombuMixin:
                     raise
             else:
                 elapsed = 0
-        self.logger.info(f'Stop consuming.')
+        self.logger.info('Stop consuming.')
 
     async def server_stop(self):
-        self.logger.info(f'Stop kombu service')
+        """Stop server"""
+        self.logger.info('Stop kombu service')
         self.__server_running = False

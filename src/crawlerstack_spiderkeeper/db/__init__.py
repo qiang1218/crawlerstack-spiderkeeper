@@ -1,3 +1,8 @@
+"""
+初始化 DB 连接对象
+"""
+from sqlite3 import Connection
+
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -19,8 +24,13 @@ ScopedSession = scoped_session(SessionFactory)
 
 
 @event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    from sqlite3 import Connection
+def set_sqlite_pragma(dbapi_connection, _connection_record):
+    """
+    sqlite 连接适配操作，使其支持外键。
+    :param dbapi_connection:
+    :param _connection_record:
+    :return:
+    """
 
     if isinstance(dbapi_connection, Connection):
         cursor = dbapi_connection.cursor()

@@ -1,3 +1,6 @@
+"""
+Project route
+"""
 import logging
 from typing import List
 

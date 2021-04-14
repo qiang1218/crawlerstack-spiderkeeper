@@ -1,3 +1,6 @@
+"""
+Server route
+"""
 from fastapi import APIRouter, Depends, Response
 
 from crawlerstack_spiderkeeper.schemas.server import ServerCreate, ServerUpdate
@@ -13,6 +16,12 @@ async def get_multi(
         response: Response,
         commons: CommonQueryParams = Depends(),
 ):
+    """
+    Get multi server.
+    :param response:
+    :param commons:
+    :return:
+    """
     count = await server_service.count()
     response.headers['X-Total-Count'] = str(count)
     data = []
@@ -31,6 +40,11 @@ async def get(
         *,
         pk: int,
 ):
+    """
+    Get server by id.
+    :param pk:
+    :return:
+    """
     return await server_service.get(pk=pk)
 
 
@@ -39,6 +53,11 @@ async def create(
         *,
         server_in: ServerCreate,
 ):
+    """
+    Create server
+    :param server_in:
+    :return:
+    """
     return await server_service.create(obj_in=server_in)
 
 
@@ -48,6 +67,12 @@ async def put(
         pk: int,
         obj_in: ServerUpdate
 ):
+    """
+    Update a server.
+    :param pk:
+    :param obj_in:
+    :return:
+    """
     return await server_service.update(pk=pk, obj_in=obj_in)
 
 
@@ -56,4 +81,9 @@ async def delete(
         *,
         pk: int,
 ):
+    """
+    Delete a server.
+    :param pk:
+    :return:
+    """
     return await server_service.delete(pk=pk)
