@@ -203,6 +203,22 @@ def fixture_event_loop():
         loop.close()
 
 
+@pytest.fixture(name='metric_data')
+def fixture_metric_data():
+    """Metric data"""
+    yield {
+        'downloader_request_count': 0,
+        'downloader_request_bytes': 0,
+        'downloader_request_method_count_GET': 0,
+        'downloader_response_count': 0,
+        'downloader_response_status_count_200': 0,
+        'downloader_response_status_count_301': 0,
+        'downloader_response_status_count_302': 0,
+        'downloader_response_bytes': 0,
+        'downloader_exception_count': 10086,
+    }
+
+
 class AsyncMock(MagicMock):
     """
     AsyncMock

@@ -8,7 +8,6 @@ from virtualenv.run import (ActivationSelector, CreatorSelector,
                             SeederSelector, Session, add_version_flag,
                             get_discover, handle_extra_commands, load_app_data)
 
-
 # TODO Delete it. https://github.com/pypa/virtualenv/issues/1896 is solve.
 
 def cli_run(args, options=None):

@@ -4,7 +4,8 @@ Project schema
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, constr, validator  # pylint: disable=no-name-in-module
+from pydantic import (BaseModel, constr,  # pylint: disable=no-name-in-module
+                      validator)
 
 from crawlerstack_spiderkeeper.schemas.base import InDBMixin
 

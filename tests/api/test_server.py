@@ -1,8 +1,12 @@
+"""
+Test server api.
+"""
 from crawlerstack_spiderkeeper.db.models import Server
 from tests.conftest import assert_status_code, build_api_url
 
 
 def test_get_multi(client, session, init_server):
+    """Test get multi server"""
     api = build_api_url('/servers')
     response = client.get(api)
     assert_status_code(response)
@@ -10,6 +14,7 @@ def test_get_multi(client, session, init_server):
 
 
 def test_get(client, session, init_server):
+    """Test get a server."""
     obj = session.query(Server).first()
     api = build_api_url(f'/servers/{obj.id}')
     response = client.get(api)
@@ -17,6 +22,7 @@ def test_get(client, session, init_server):
 
 
 def test_create(client, session):
+    """TEst create a server."""
     data = {
         'name': 'test',
         'type': 'redis',
@@ -29,6 +35,7 @@ def test_create(client, session):
 
 
 def test_update(client, session, init_server):
+    """Test update a server."""
     obj = session.query(Server).first()
     data = {
         'name': 'test_test',
@@ -40,6 +47,7 @@ def test_update(client, session, init_server):
 
 
 def test_delete(client, session, init_server):
+    """Test delete a server."""
     obj = session.query(Server).first()
     count = session.query(Server).count()
     api = build_api_url(f'/servers/{obj.id}')

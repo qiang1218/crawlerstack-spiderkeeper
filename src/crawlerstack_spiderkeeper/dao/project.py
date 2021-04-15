@@ -11,7 +11,6 @@ from crawlerstack_spiderkeeper.db.models import Project
 from crawlerstack_spiderkeeper.schemas.project import ProjectCreate
 from crawlerstack_spiderkeeper.utils import scoping_session
 
-
 # pylint: disable=no-member
 
 class ProjectDAO(BaseDAO):

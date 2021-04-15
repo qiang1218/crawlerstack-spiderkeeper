@@ -3,7 +3,8 @@ Types.
 """
 from typing import TypeVar
 
-from pydantic import BaseModel as SchemaModel   # pylint: disable=no-name-in-module
+from pydantic import \
+    BaseModel as SchemaModel  # pylint: disable=no-name-in-module
 
 from crawlerstack_spiderkeeper.db.models import BaseModel
 

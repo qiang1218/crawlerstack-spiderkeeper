@@ -10,7 +10,6 @@ from crawlerstack_spiderkeeper.schemas.task import TaskCreate, TaskUpdate
 from crawlerstack_spiderkeeper.utils import scoping_session
 from crawlerstack_spiderkeeper.utils.states import States
 
-
 # pylint: disable=no-member
 
 class TaskDAO(BaseDAO[Task, TaskCreate, TaskUpdate]):

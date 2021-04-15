@@ -1,4 +1,6 @@
-
+"""
+Test log config.
+"""
 import pytest
 
 from crawlerstack_spiderkeeper.utils.log import log_level, verbose_formatter
@@ -12,6 +14,7 @@ from crawlerstack_spiderkeeper.utils.log import log_level, verbose_formatter
     ]
 )
 def test_verbose_formatter(verbose, except_value):
+    """Test verbose format."""
     res = verbose_formatter(verbose)
     assert res == except_value
 
@@ -27,5 +30,6 @@ def test_verbose_formatter(verbose, except_value):
     ]
 )
 def test_log_level(debug, level, except_value):
+    """Test log level."""
     res = log_level(debug, level)
     assert res == except_value

@@ -1,3 +1,7 @@
+"""
+Alembic env
+"""
+# pylint: disable=all
 from logging.config import fileConfig
 
 from alembic import context

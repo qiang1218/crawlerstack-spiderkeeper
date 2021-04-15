@@ -10,7 +10,6 @@ from sqlalchemy.orm import relationship
 
 from crawlerstack_spiderkeeper.utils.states import States
 
-
 # pylint: disable=too-few-public-methods
 
 class CustomBase:

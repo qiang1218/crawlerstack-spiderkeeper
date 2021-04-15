@@ -1,3 +1,6 @@
+"""
+Test docker executor.
+"""
 import asyncio
 import logging
 import os
@@ -10,17 +13,19 @@ from crawlerstack_spiderkeeper.signals import server_stop
 
 
 class TestDockerExecutor:
-    @pytest.mark.integration
+    """Test docker executor."""
+
     @pytest.fixture()
     async def image(self, artifact_metadata, server_start_signal):
+        """fixture image."""
         ctx = DocketExecuteContext(artifact_metadata)
         await ctx.build()
         yield
         await ctx.delete()
 
-    @pytest.mark.integration
     @pytest.fixture()
     async def executor(self, artifact_metadata, image):
+        """Fixture executor."""
         executor = await DockerExecutor.run(
             artifact_metadata,
             cmdline=['python', '-c', 'for i in range(100): print(i); import time;time.sleep(0.01)'],
@@ -30,9 +35,10 @@ class TestDockerExecutor:
         container = await executor.container
         await container.delete(force=True)
 
-    @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test(self, artifact_metadata, server_start_signal):
+    @pytest.mark.integration
+    async def test(self, artifact_metadata, server_start_signal):   # pylint: disable=unused-argument
+        """Test."""
         executor = await DockerExecutor.run(
             artifact_metadata,
             cmdline=[
@@ -82,9 +88,11 @@ class TestDockerExecutor:
 
 
 class TestDocketExecuteContext:
+    """Test docker execute context."""
 
     @pytest.fixture()
     async def ctx(self, artifact_metadata, signal_send):
+        """Fixture Execute context."""
         ctx = DocketExecuteContext(artifact_metadata)
         yield ctx
         await signal_send(server_stop)
@@ -92,13 +100,15 @@ class TestDocketExecuteContext:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test__make_docker_tar(self, ctx):
-        async with ctx._make_docker_tar() as tarfile:  # type: str
+        """Fixture docker tar file."""
+        async with ctx._make_docker_tar() as tarfile:  # pylint: disable=protected-access
             assert os.path.exists(tarfile)
             assert tarfile.endswith('.tar.gz')
 
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_build_and_delete(self, ctx):
+        """Test build and delete context."""
         await ctx.build()
         exist = await ctx.exist()
         assert exist
@@ -109,12 +119,14 @@ class TestDocketExecuteContext:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_delete(self, ctx, caplog):
+        """Test delete context."""
         with caplog.at_level(logging.DEBUG):
             await ctx.delete()
-            assert f'not found, skip' in caplog.text
+            assert 'not found, skip' in caplog.text
 
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_exist(self, ctx):
+        """Test if context is exist."""
         exist = await ctx.exist()
         assert not exist

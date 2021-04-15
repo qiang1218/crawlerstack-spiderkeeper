@@ -11,7 +11,6 @@ from crawlerstack_spiderkeeper.schemas.storage import (StorageCreate,
 from crawlerstack_spiderkeeper.utils import scoping_session
 from crawlerstack_spiderkeeper.utils.states import States
 
-
 # pylint: disable=no-member
 
 

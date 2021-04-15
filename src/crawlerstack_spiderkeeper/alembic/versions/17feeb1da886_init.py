@@ -5,6 +5,7 @@ Revises:
 Create Date: 2020-07-27 18:22:48.031747
 
 """
+# pylint: disable=all
 import sqlalchemy as sa
 from alembic import op
 

@@ -11,7 +11,6 @@ from crawlerstack_spiderkeeper.schemas.artifact import (ArtifactCreate,
 from crawlerstack_spiderkeeper.utils import scoping_session
 from crawlerstack_spiderkeeper.utils.exceptions import ObjectDoesNotExist
 
-
 # pylint: disable=no-member
 
 

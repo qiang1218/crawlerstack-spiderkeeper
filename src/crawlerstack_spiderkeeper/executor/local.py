@@ -7,7 +7,7 @@ import logging
 import os
 import shutil
 import signal
-from asyncio import AbstractEventLoop, subprocess, create_subprocess_shell
+from asyncio import AbstractEventLoop, create_subprocess_shell, subprocess
 from functools import partial
 from pathlib import Path
 from typing import AsyncIterable, Dict, List, Optional
