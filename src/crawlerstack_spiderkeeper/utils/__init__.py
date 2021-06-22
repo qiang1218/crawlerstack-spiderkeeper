@@ -131,8 +131,7 @@ class CommonQueryParams:
             _order: str = 'DESC',
             _sort: str = 'id'
     ):
-        if _start < 0:
-            _start = 0
+        _start = max(_start, 0)
         if _end < _start:
             _end = _start + MAX_PAGE_SIZE
 

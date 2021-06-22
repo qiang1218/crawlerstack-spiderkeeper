@@ -69,12 +69,9 @@ def fixture_temp_dir():
     或者使用了这个 fixture 的其他 fixture，否则 settings.ARTIFACT_PATH 都将返回测试目录
     :return:
     """
-    path = tempfile.TemporaryDirectory(prefix='spiderkeeper-test-')
-    settings.ARTIFACT_PATH = path.name
-    try:
+    with tempfile.TemporaryDirectory(prefix='spiderkeeper-test-') as path:
+        settings.ARTIFACT_PATH = path.name
         yield path.name
-    finally:
-        path.cleanup()
 
 
 @pytest.fixture(name='base_dir')
@@ -153,11 +150,10 @@ def fixture_artifact_metadata(demo_zip):
 @pytest.fixture(name='uploaded_file')
 def fixture_uploaded_file(temp_dir):
     """Uploaded file fixture."""
-    file_obj = tempfile.NamedTemporaryFile(dir=temp_dir)
-    file_obj.write(b'Hello world\n')
-    file_obj.seek(0)
-    yield UploadFile(file_obj.name, file_obj)
-    file_obj.close()
+    with  tempfile.NamedTemporaryFile(dir=temp_dir) as file_obj:
+        file_obj.write(b'Hello world\n')
+        file_obj.seek(0)
+        yield UploadFile(file_obj.name, file_obj)
 
 
 @pytest.fixture(name='docker_tar_file')

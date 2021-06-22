@@ -55,7 +55,7 @@ class FileExporter(BaseExporter):
     def __init__(self):
         file_path = str(self.url.path)
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        self.client = open(file_path, 'w')
+        self.client = open(file_path, 'w')  # pylint: disable=consider-using-with
 
     def write(self, item):
         """

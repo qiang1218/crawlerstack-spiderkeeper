@@ -8,7 +8,7 @@ from asyncio.events import AbstractEventLoop
 from contextlib import asynccontextmanager
 from shutil import make_archive
 from tempfile import TemporaryDirectory
-from typing import AsyncIterable, Dict, List, Optional
+from typing import AsyncIterable, Dict, List, Optional, Generator
 
 from aiodocker import Docker, DockerError
 from aiodocker.containers import DockerContainer
@@ -28,9 +28,9 @@ class SingletonDocker(Docker):
     """
     __instance = None
 
-    def __new__(cls, *args):
-        if cls.__instance is None:
-            cls.__instance = super().__new__(cls)
+    def __new__(cls, *args, **kwargs):
+        if not isinstance(cls.__instance, cls):
+            super().__new__(cls, *args, **kwargs)
             signals.server_stop.connect(cls.__instance.close)
         return cls.__instance
 
@@ -55,30 +55,29 @@ class DocketExecuteContext(BaseExecuteContext):
     ):
         super().__init__(artifact, loop)
 
-        self.client = SingletonDocker(settings.DOCKER_URL)
+        self.client = SingletonDocker(settings.DOCKER_URL)  #
 
     @asynccontextmanager
-    async def _make_docker_tar(self) -> str:
+    async def _make_docker_tar(self) -> Generator[..., str]:
         """
         请使用上下文操作。
         从源码构建的 docket tar 文件放在临时目录中，如果不使用上下文，临时文件引用消失就会自动清理，导致后续无法读取该文件，
         :return:
         """
         await self.unpack_artifact()
-        tmp_path = TemporaryDirectory(
-            prefix=f'spiderkeeper-docker-build-{self.artifact.project_name}'
-        )
-        basename, _ = self.artifact.filename.rsplit('.', 1)
-        with staging_path(tmp_path.name):
-            await self.loop.run_in_executor(
-                None,
-                make_archive,
-                basename,
-                'gztar',
-                self.artifact.source_code
-            )
-        yield os.path.join(tmp_path.name, f'{basename}.tar.gz')
-        tmp_path.cleanup()
+        with TemporaryDirectory(
+                prefix=f'spiderkeeper-docker-build-{self.artifact.project_name}'
+        ) as tmp_path:
+            basename, _ = self.artifact.filename.rsplit('.', 1)
+            with staging_path(tmp_path.name):
+                await self.loop.run_in_executor(
+                    None,
+                    make_archive,
+                    basename,
+                    'gztar',
+                    self.artifact.source_code
+                )
+            yield os.path.join(tmp_path.name, f'{basename}.tar.gz')
 
     async def build(self) -> None:
         """
