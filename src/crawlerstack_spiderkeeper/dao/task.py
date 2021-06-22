@@ -31,7 +31,7 @@ class TaskDAO(BaseDAO[Task, TaskCreate, TaskUpdate]):
         :param limit:
         :return:
         """
-        condition = {'state': States.Running.value}
+        condition = {'state': States.RUNNING.value}
         if job_id:
             condition.update({'job_id': job_id})
         return Session.query(self.model).filter_by(**condition).offset(skip).limit(limit).all()
@@ -43,7 +43,7 @@ class TaskDAO(BaseDAO[Task, TaskCreate, TaskUpdate]):
         :param job_id:
         :return:
         """
-        condition = {'state': States.Running.value}
+        condition = {'state': States.RUNNING.value}
         if job_id:
             condition.update({'job_id': job_id})
         return Session.query(self.model).filter_by(**condition).count()

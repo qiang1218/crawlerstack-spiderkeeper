@@ -39,4 +39,4 @@ class StorageDAO(BaseDAO[Storage, StorageCreate, StorageUpdate]):
         Run storage task.
         :return:
         """
-        return Session.query(Storage).filter(Storage.state == States.Running.value).all()
+        return Session.query(Storage).filter(Storage.state == States.RUNNING.value).all()

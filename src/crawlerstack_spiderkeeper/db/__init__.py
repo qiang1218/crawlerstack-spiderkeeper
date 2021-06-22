@@ -19,7 +19,7 @@ SessionFactory = sessionmaker(bind=engine, autocommit=False, autoflush=True)
 # https://docs.sqlalchemy.org/en/13/orm/contextual.html#using-thread-local-scope-with-web-applications
 # 在使用此 ScopedSession 的时候需要先初始化 ScopedSession() 注册 session 对象。然后直接使用 ScopedSession.query(User).all()
 # 因为 ScopedSession 具有代理功能
-# 使用结束后调用 session.remove() 删除前面注册的对象
+# 使用结束后调用 ScopedSession.remove() 删除前面注册的对象
 ScopedSession = scoped_session(SessionFactory)
 
 

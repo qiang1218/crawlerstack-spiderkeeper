@@ -64,7 +64,7 @@ async def test_run_with_no_run_job(
         await job_service.run(job.id)
         assert expect_value in caplog.text
         artifact: Artifact = session.query(Artifact).get(artifact_id)
-        assert artifact.state == States.FINISH
+        assert artifact.state == States.FINISH.value
 
 
 @pytest.fixture()

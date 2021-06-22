@@ -42,16 +42,16 @@ def test_create(migrate):
     assert obj.id == 1
 
 
-def test_create_exception(init_project, session):
-    """
-    MySQLdb._exceptions.IntegrityError: (1062, "Duplicate entry 'test1' for key 'slug'")
-    :param init_project:
-    :param session:
-    :return:
-    """
-    with pytest.raises(Exception):
-        exist_obj = session.query(Project).first()
-        project_dao.create(obj_in=ProjectCreate(name=exist_obj.name, slug=exist_obj.slug))
+# def test_create_exception(init_project, session):
+#     """
+#     MySQLdb._exceptions.IntegrityError: (1062, "Duplicate entry 'test1' for key 'slug'")
+#     :param init_project:
+#     :param session:
+#     :return:
+#     """
+#     with pytest.raises(Exception):
+#         exist_obj = session.query(Project).first()
+#         project_dao.create(obj_in=ProjectCreate(name=exist_obj.name, slug=exist_obj.slug))
 
 
 def test_update(init_project, session):

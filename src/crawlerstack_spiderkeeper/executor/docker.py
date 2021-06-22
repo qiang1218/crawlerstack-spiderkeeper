@@ -30,7 +30,7 @@ class SingletonDocker(Docker):
 
     def __new__(cls, *args):
         if cls.__instance is None:
-            cls.__instance = super().__new__(cls, *args)
+            cls.__instance = super().__new__(cls)
             signals.server_stop.connect(cls.__instance.close)
         return cls.__instance
 
