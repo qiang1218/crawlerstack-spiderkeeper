@@ -1,14 +1,7 @@
 """
 Metadata util.
-"""
-import os
-from datetime import datetime
-from pathlib import Path
 
-from crawlerstack_spiderkeeper.config import settings
-from crawlerstack_spiderkeeper.utils import constants
-
-"""
+存储结构：
 .
 ├── artifacts
 │         ├── artifact
@@ -47,7 +40,7 @@ from crawlerstack_spiderkeeper.utils import constants
 │   │         │                           └── pip
 │   │         ├── demo-20201215152202
 
-有点：
+优点：
     - 便于管理，一次删除归档下的所有东西
     - 所有东西放在一起，方便用户直接配置开发代码路径
 缺点：
@@ -56,7 +49,13 @@ from crawlerstack_spiderkeeper.utils import constants
 settings.ARTIFACT_PATH 为设置的归档目录
 
 当前使用第一种目录格式。
-"""  # pylint: disable=pointless-string-statement
+"""
+import os
+from datetime import datetime
+from pathlib import Path
+
+from crawlerstack_spiderkeeper.config import settings
+from crawlerstack_spiderkeeper.utils import constants
 
 
 class Metadata:

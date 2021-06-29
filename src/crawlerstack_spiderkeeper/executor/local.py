@@ -181,7 +181,6 @@ class Virtualenv:
                 f'--index-url http://repo.tendata.com.cn/repository/pypi-all/simple '
                 f'--trusted-host repo.tendata.com.cn '
                 f'{req}',
-            # cmd=f'python -m pip install {req}',
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )

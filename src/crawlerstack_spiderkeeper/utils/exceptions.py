@@ -1,7 +1,8 @@
 """
 Exceptions.
 """
-from typing import List, Optional
+from pathlib import Path
+from typing import List, Optional, Union
 
 from fastapi import HTTPException
 from starlette import status
@@ -39,7 +40,7 @@ class DeleteConstraintError(HTTPException):
 class RequirementFileNotFound(Exception):
     """Requirement file not found error"""
 
-    def __init__(self, path: Optional[str] = None):
+    def __init__(self, path: Optional[Union[str, Path]] = None):
         super().__init__()
         self.path = path
 
