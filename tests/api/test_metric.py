@@ -8,13 +8,13 @@ from crawlerstack_spiderkeeper.utils import AppId
 from tests.conftest import assert_status_code, build_api_url
 
 
-def test_metric(init_task, session, client, server_start_signal, metric_data):
+def test_metric(init_task, session, client, server_start_signal):
     """Test metric."""
     task: Task = session.query(Task).first()
 
     data = {
         'app_id': str(AppId(task.job_id, task.id)),
-        'data': metric_data
+        'data': {'downloader_exception_count': 10086}
     }
     metric_create_api = build_api_url('/metric')
     metric_creat_response = client.post(metric_create_api, json=data)

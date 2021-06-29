@@ -97,7 +97,7 @@ class JobService(BaseService[Job, JobCreate, JobUpdate]):
             await run_in_executor(
                 self.artifact_dao.update,
                 db_obj=artifact,
-                obj_in=ArtifactUpdate(state=States.FAILURE)
+                obj_in=ArtifactUpdate(state=States.FINISH)
             )
             logger.debug('%s context build finish.', artifact_meta)
 

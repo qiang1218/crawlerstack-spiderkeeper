@@ -5,7 +5,6 @@ from typing import Dict
 
 import pytest
 from kombu import Message
-from pydantic import ValidationError
 
 from crawlerstack_spiderkeeper.db.models import Project
 from crawlerstack_spiderkeeper.schemas.project import (ProjectCreate,
@@ -49,23 +48,6 @@ class TestBaseService:
         obj = await project_service.create(obj_in=ProjectCreate(name='foo', slug='foo'))
         assert obj
         assert isinstance(obj, Project)
-
-    # @pytest.mark.asyncio
-    # async def test_create_obj_exist(self, init_project, session):
-    #     """Test create a exist object."""
-    #     # from MySQLdb._exceptions import IntegrityError
-    #     # from sqlalchemy.exc import IntegrityError
-    #     with pytest.raises(Exception):
-    #         exist_obj = session.query(Project).first()
-    #         await project_service.create(
-    #             obj_in=ProjectCreate(name=exist_obj.name, slug=exist_obj.slug)
-    #         )
-
-    @pytest.mark.asyncio
-    async def test_create_exception(self):
-        """Test raise exception when create a object."""
-        with pytest.raises(ValidationError):
-            await project_service.create(obj_in=ProjectCreate(name='foo'))
 
     @pytest.mark.asyncio
     async def test_update(self, init_project, session):

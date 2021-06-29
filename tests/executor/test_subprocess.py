@@ -10,7 +10,25 @@ import pytest
 
 from crawlerstack_spiderkeeper.executor.subprocess import (
     FileHandle, RotatingFileHandler, create_subprocess_shell)
-from tests.conftest import AsyncMock
+from crawlerstack_spiderkeeper.utils.mock import AsyncMock
+
+
+@pytest.fixture()
+def log_dir(temp_dir):
+    """Fixture log dir"""
+    path = os.path.join(temp_dir, 'test_rotating_handler')
+    os.makedirs(path, exist_ok=True)
+    yield path
+    shutil.rmtree(path)
+
+
+@pytest.fixture()
+def create_subprocess_shell_log_dir(temp_dir, log_dir):
+    """Fixture subprocess shell log dir."""
+    path = os.path.join(temp_dir, 'create_subprocess_shell')
+    os.makedirs(path)
+    yield log_dir
+    shutil.rmtree(path)
 
 
 @pytest.mark.asyncio
@@ -44,15 +62,6 @@ async def test_file_handle_write(mocker, event_loop, side_effect):
     assert writer_mocker.close.called
 
 
-@pytest.fixture()
-def log_dir(temp_dir):
-    """Fixture log dir"""
-    path = os.path.join(temp_dir, 'test_rotating_handler')
-    os.makedirs(path, exist_ok=True)
-    yield path
-    shutil.rmtree(path)
-
-
 @pytest.mark.asyncio
 async def test_rotating_file_handle_write(log_dir, count_file_factory):
     """Test rotating file handle write."""
@@ -68,15 +77,6 @@ async def test_rotating_file_handle_write(log_dir, count_file_factory):
     for i in data:
         await handler.write(f'{i}\n'.encode())
     assert count_file_factory(log_dir) == back_count
-
-
-@pytest.fixture()
-def create_subprocess_shell_log_dir(temp_dir):
-    """Fixture subprocess shell log dir."""
-    path = os.path.join(temp_dir, 'create_subprocess_shell')
-    os.makedirs(path)
-    yield log_dir
-    shutil.rmtree(path)
 
 
 @pytest.mark.asyncio

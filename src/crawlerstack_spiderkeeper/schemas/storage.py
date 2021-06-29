@@ -2,6 +2,7 @@
 Storage schema
 """
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, constr  # pylint: disable=no-name-in-module
 
@@ -11,8 +12,8 @@ from crawlerstack_spiderkeeper.utils.states import States
 
 class StorageBase(BaseModel):
     """Storage base schema."""
-    create_time: datetime = None
-    update_time: datetime = None
+    create_time: Optional[datetime] = None
+    update_time: Optional[datetime] = None
     count: int = 0
     state: States = None
     detail: constr(max_length=500) = None
@@ -34,4 +35,4 @@ class StorageCreate(StorageBase):
 
 class StorageUpdate(StorageBase):
     """Storage update schema."""
-    count: int = None
+    count: Optional[int] = None

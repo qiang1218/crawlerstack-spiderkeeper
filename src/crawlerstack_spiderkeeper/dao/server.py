@@ -9,8 +9,6 @@ from crawlerstack_spiderkeeper.db.models import Job, Server
 from crawlerstack_spiderkeeper.schemas.server import ServerCreate, ServerUpdate
 from crawlerstack_spiderkeeper.utils import scoping_session
 
-# pylint: disable=no-member
-
 
 class ServerDAO(BaseDAO[Server, ServerCreate, ServerUpdate]):
     """

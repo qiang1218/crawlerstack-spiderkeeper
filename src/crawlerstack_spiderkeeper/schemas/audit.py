@@ -30,3 +30,7 @@ class AuditCreate(AuditBase):
 
 class AuditUpdate(AuditBase):
     """Audit update schema."""
+    url: Optional[str] = None
+    method: Optional[str] = None
+    client: Optional[str] = None
+    detail: Optional[str] = None

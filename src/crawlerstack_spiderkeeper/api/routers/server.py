@@ -25,8 +25,8 @@ async def get_multi(
     count = await server_service.count()
     response.headers['X-Total-Count'] = str(count)
     data = []
-    if data:
-        data = server_service.get_multi(
+    if count:
+        data = await server_service.get_multi(
             skip=commons.skip,
             limit=commons.limit,
             order=commons.order,

@@ -15,6 +15,7 @@ from crawlerstack_spiderkeeper.schemas.storage import (StorageCreate,
                                                        StorageUpdate)
 from crawlerstack_spiderkeeper.services.base import KombuMixin
 from crawlerstack_spiderkeeper.utils import AppData, AppId, run_in_executor
+from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
 from crawlerstack_spiderkeeper.utils.states import States
 
 
@@ -50,10 +51,10 @@ class StorageService(KombuMixin):
             exporter_cls = exporters_factory(server.type)
             if exporter_cls:
                 return exporter_cls.from_url(server.uri)
-            raise Exception(
+            raise SpiderkeeperError(
                 f'Exporter schema: {server.type} is not support. Please implementation',
             )
-        raise Exception(f'Job<id: {job_id}> not config server info.')
+        raise SpiderkeeperError(f'Job<id: {job_id}> not config server info.')
 
     def callback(self, func: Callable, storage_id: int, body: Dict, message: Message):
         """
@@ -72,7 +73,7 @@ class StorageService(KombuMixin):
         # 如果没有异常，则更新状态，同时 ack
         else:
             # 由于 kombu consume 的回调不支持异步，所以这里使用同步操作。
-            storage_dao.increase_storage_count_by_id(storage_id)
+            storage_dao.increase_storage_count(storage_id)
             message.ack()
 
     async def consume_task(

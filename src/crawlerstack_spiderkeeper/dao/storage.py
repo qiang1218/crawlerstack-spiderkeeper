@@ -1,5 +1,5 @@
 """
-Storate dao.
+Storage dao.
 """
 from typing import List
 
@@ -11,8 +11,6 @@ from crawlerstack_spiderkeeper.schemas.storage import (StorageCreate,
 from crawlerstack_spiderkeeper.utils import scoping_session
 from crawlerstack_spiderkeeper.utils.states import States
 
-# pylint: disable=no-member
-
 
 class StorageDAO(BaseDAO[Storage, StorageCreate, StorageUpdate]):
     """
@@ -20,7 +18,7 @@ class StorageDAO(BaseDAO[Storage, StorageCreate, StorageUpdate]):
     """
 
     @scoping_session
-    def increase_storage_count_by_id(self, pk: int) -> Storage:
+    def increase_storage_count(self, pk: int) -> Storage:
         """
         Increase storage count by count.
         :param pk:

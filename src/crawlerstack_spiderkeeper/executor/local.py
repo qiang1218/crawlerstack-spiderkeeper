@@ -158,7 +158,7 @@ class Virtualenv:
         session = await self.loop.run_in_executor(
             None,
             partial_cli_run,
-            self.artifact.virtualenv.split()
+            [str(self.artifact.virtualenv)]
         )
         self.__python_path = session.creator.exe
         logger.debug('Create virtualenv in %s', self.artifact.virtualenv)
@@ -227,14 +227,9 @@ class LocalExecutor(BaseExecutor):
         return Process(int(self.pid))
 
     @classmethod
-    async def run(
-            cls,
-            artifact: ArtifactMetadata,
-            cmdline: List[str],
-            env: Dict[str, str],
-            target: Optional[str] = None,
-            loop: Optional[AbstractEventLoop] = None
-    ) -> 'LocalExecutor':
+    async def run(cls, artifact: ArtifactMetadata, cmdline: List[str], env: Dict[str, str],
+                  target: Optional[str] = None, loop: Optional[AbstractEventLoop] = None
+                  ) -> 'LocalExecutor':
         """
         使用 cmdline 创建子进程运行程序。
         考虑到 cmdline 可能需要在源码目录的相对路径下运行，所以在创建子进程的时候先切换目录到源码目录

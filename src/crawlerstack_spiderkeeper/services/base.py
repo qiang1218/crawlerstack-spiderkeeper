@@ -17,6 +17,7 @@ from crawlerstack_spiderkeeper.schemas.project import (ProjectCreate,
                                                        ProjectUpdate)
 from crawlerstack_spiderkeeper.signals import server_start, server_stop
 from crawlerstack_spiderkeeper.utils import AppData, AppId, run_in_executor
+from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
 from crawlerstack_spiderkeeper.utils.types import (CreateSchemaType, ModelType,
                                                    UpdateSchemaType)
 
@@ -30,12 +31,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return await run_in_executor(self.dao.get, pk)
 
     async def get_multi(
-            self,
-            *,
-            skip: int = 0,
-            limit: int = 100,
-            order: str = 'DESC',
-            sort: str = 'id',
+            self, *, skip: int = 0, limit: int = 100, order: str = 'DESC', sort: str = 'id'
     ) -> List[ModelType]:
         """
         Get multi record.
@@ -109,8 +105,9 @@ class KombuMixin:
     def __init__(self):
         self.logger = logging.getLogger(f'{__name__}.{self.__class__.__name__}')
         if not self.name:
-            raise Exception('You should define name')
+            raise SpiderkeeperError('You should define name')
         try:
+            # TODO fix 不要在初始化对象时，初始化连接。
             self.connect = Connection(settings.MQ, confirm_publish=True)
             self.logger.debug('Init kombu connect. url: %s', settings.MQ)
             self.exchange = Exchange(self.name)
@@ -182,7 +179,7 @@ class KombuMixin:
         )
         return res
 
-    def __publish_on_return(self, exception, exchange, routing_key, message):   # pylint: disable=no-self-use
+    def __publish_on_return(self, exception, exchange, routing_key, message):  # pylint: disable=no-self-use
         # TODO 完善发送确认机制
         raise exception
 

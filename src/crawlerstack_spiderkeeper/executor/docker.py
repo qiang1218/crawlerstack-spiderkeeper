@@ -8,7 +8,7 @@ from asyncio.events import AbstractEventLoop
 from contextlib import asynccontextmanager
 from shutil import make_archive
 from tempfile import TemporaryDirectory
-from typing import AsyncIterable, Dict, List, Optional, Generator
+from typing import AsyncGenerator, AsyncIterable, Dict, List, Optional
 
 from aiodocker import Docker, DockerError
 from aiodocker.containers import DockerContainer
@@ -18,6 +18,7 @@ from crawlerstack_spiderkeeper.config import settings
 from crawlerstack_spiderkeeper.executor.base import (BaseExecuteContext,
                                                      BaseExecutor)
 from crawlerstack_spiderkeeper.utils import ArtifactMetadata, staging_path
+from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +29,9 @@ class SingletonDocker(Docker):
     """
     __instance = None
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):  # pylint: disable=unused-argument
         if not isinstance(cls.__instance, cls):
-            super().__new__(cls, *args, **kwargs)
+            cls.__instance = object.__new__(cls)
             signals.server_stop.connect(cls.__instance.close)
         return cls.__instance
 
@@ -55,10 +56,10 @@ class DocketExecuteContext(BaseExecuteContext):
     ):
         super().__init__(artifact, loop)
 
-        self.client = SingletonDocker(settings.DOCKER_URL)  #
+        self.client = SingletonDocker(settings.DOCKER_URL)
 
     @asynccontextmanager
-    async def _make_docker_tar(self) -> Generator[..., str]:
+    async def _make_docker_tar(self) -> AsyncGenerator[str, None]:
         """
         请使用上下文操作。
         从源码构建的 docket tar 文件放在临时目录中，如果不使用上下文，临时文件引用消失就会自动清理，导致后续无法读取该文件，
@@ -69,7 +70,7 @@ class DocketExecuteContext(BaseExecuteContext):
                 prefix=f'spiderkeeper-docker-build-{self.artifact.project_name}'
         ) as tmp_path:
             basename, _ = self.artifact.filename.rsplit('.', 1)
-            with staging_path(tmp_path.name):
+            with staging_path(tmp_path):
                 await self.loop.run_in_executor(
                     None,
                     make_archive,
@@ -77,7 +78,7 @@ class DocketExecuteContext(BaseExecuteContext):
                     'gztar',
                     self.artifact.source_code
                 )
-            yield os.path.join(tmp_path.name, f'{basename}.tar.gz')
+            yield os.path.join(tmp_path, f'{basename}.tar.gz')
 
     async def build(self) -> None:
         """
@@ -98,7 +99,7 @@ class DocketExecuteContext(BaseExecuteContext):
         if last_response.get('stream') and 'Successfully' in last_response.get('stream'):
             self.logger.debug('Build docker image : %s success.', self.artifact.image_tag)
         else:  # Build error
-            raise Exception(last_response.get('errorDetail') or last_response)
+            raise SpiderkeeperError(last_response.get('errorDetail') or last_response)
 
     async def delete(self) -> None:
         """

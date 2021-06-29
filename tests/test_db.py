@@ -2,20 +2,22 @@
 Tests.
 """
 import pytest
+from sqlalchemy import inspect
 
 from crawlerstack_spiderkeeper.db.models import Artifact, Job
 
 
-def test_migrate(migrate, session):
+def test_migrate(session):
     """
     Test migrate.
-    :param migrate:
     :param session:
     :return:
     """
-    table_names = session.bind.table_names()
-    print(table_names)
-    assert table_names
+    with session.bind.connect() as connection:
+        inspector = inspect(connection)
+        table_names = inspector.get_table_names()
+        assert table_names
+        assert 'audit' in table_names
 
 
 @pytest.mark.asyncio

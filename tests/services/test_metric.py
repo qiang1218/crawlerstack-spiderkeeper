@@ -2,7 +2,6 @@
 Test metric service.
 """
 import asyncio
-from datetime import datetime
 
 import pytest
 from prometheus_client import REGISTRY, generate_latest
@@ -13,22 +12,22 @@ from crawlerstack_spiderkeeper.utils import AppData, AppId
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    'except_value',
-    [
-        datetime.now().second,
-        None
-    ]
-)
-async def test_start(init_task, session, server_start_signal, metric_data, except_value, caplog):
+async def test_start(init_task, session, server_start_signal, caplog):
     """Test start metric task."""
+    metric_data = {
+        'downloader_request_count': 0,
+        'downloader_request_bytes': 0,
+        'downloader_request_method_count_GET': 0,
+        'downloader_response_count': 0,
+        'downloader_response_status_count_200': 0,
+        'downloader_response_status_count_301': 0,
+        'downloader_response_status_count_302': 0,
+        'downloader_response_bytes': 0,
+        'downloader_exception_count': 10086,
+    }
     obj: Task = session.query(Task).first()
     app_data = AppData(AppId(obj.job_id, obj.id), metric_data)
     await metric_service.create(app_data)
     await asyncio.sleep(2)
     txt = generate_latest(REGISTRY).decode()
-    if except_value:
-        assert str(except_value) in txt
-    else:
-        assert str(except_value) not in txt
-        assert 'data parser error.' in caplog.text
+    assert 'downloader_exception_count' in txt

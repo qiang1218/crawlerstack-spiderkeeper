@@ -7,10 +7,15 @@ from fastapi import HTTPException
 from starlette import status
 
 
+class SpiderkeeperError(Exception):
+    """SpiderkeeperError"""
+
+
 class ObjectDoesNotExist(HTTPException):
     """
     Object does not exist.
     """
+
     # TODO 增加传入 model 参数，异常返回对应 model.id=1 不存在。
     def __init__(
             self,
@@ -33,6 +38,7 @@ class DeleteConstraintError(HTTPException):
 
 class RequirementFileNotFound(Exception):
     """Requirement file not found error"""
+
     def __init__(self, path: Optional[str] = None):
         super().__init__()
         self.path = path
@@ -45,6 +51,7 @@ class RequirementFileNotFound(Exception):
 
 class PKGInstallError(Exception):
     """Pkg install error"""
+
     def __init__(self, detail: Optional[str] = None, exit_code: Optional[int] = None):
         self.detail = detail
         self.exit_code = exit_code
@@ -58,6 +65,7 @@ class PKGInstallError(Exception):
 
 class ExecutorStopError(Exception):
     """Executor stop error"""
+
     def __init__(self, pid: str, alive: List[int]):
         self.pid = pid
         self.alive = alive

@@ -8,8 +8,8 @@ import pytest
 from crawlerstack_spiderkeeper.db import SessionFactory
 from crawlerstack_spiderkeeper.db.models import Artifact, Job, Task
 from crawlerstack_spiderkeeper.services import job_service
+from crawlerstack_spiderkeeper.utils.mock import AsyncMock
 from crawlerstack_spiderkeeper.utils.states import States
-from tests.conftest import AsyncMock
 
 
 def update_artifact_state(job_id: int, state: States):

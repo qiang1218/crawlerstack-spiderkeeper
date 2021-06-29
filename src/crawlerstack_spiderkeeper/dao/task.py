@@ -10,7 +10,6 @@ from crawlerstack_spiderkeeper.schemas.task import TaskCreate, TaskUpdate
 from crawlerstack_spiderkeeper.utils import scoping_session
 from crawlerstack_spiderkeeper.utils.states import States
 
-# pylint: disable=no-member
 
 class TaskDAO(BaseDAO[Task, TaskCreate, TaskUpdate]):
     """
@@ -37,7 +36,7 @@ class TaskDAO(BaseDAO[Task, TaskCreate, TaskUpdate]):
         return Session.query(self.model).filter_by(**condition).offset(skip).limit(limit).all()
 
     @scoping_session
-    def count_running_task(self, job_id: Optional[int]) -> int:
+    def count_running_task(self, job_id: Optional[int] = None) -> int:
         """
         Get running task count.
         :param job_id:
@@ -57,7 +56,5 @@ class TaskDAO(BaseDAO[Task, TaskCreate, TaskUpdate]):
         """
         obj: Task = self.get(pk)
         obj.item_count += 1
-        Session.add(obj)
-        Session.commit()
-        Session.refresh(obj)
+        self._save(obj)
         return obj

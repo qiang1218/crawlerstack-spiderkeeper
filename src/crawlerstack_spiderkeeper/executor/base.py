@@ -83,10 +83,7 @@ class BaseExecutor:
     _executor_context_cls = BaseExecuteContext
 
     def __init__(
-            self,
-            artifact: ArtifactMetadata,
-            pid: str,
-            loop: Optional[AbstractEventLoop] = None
+            self, artifact: ArtifactMetadata, pid: str, loop: Optional[AbstractEventLoop] = None
     ):
         """
         :param artifact:
@@ -120,12 +117,8 @@ class BaseExecutor:
 
     @classmethod
     async def run(
-            cls,
-            artifact: ArtifactMetadata,
-            cmdline: List[str],
-            env: Dict[str, str],
-            target: Optional[str] = None,
-            loop: Optional[AbstractEventLoop] = None
+            cls, artifact: ArtifactMetadata, cmdline: List[str], env: Dict[str, str],
+            target: Optional[str] = None, loop: Optional[AbstractEventLoop] = None
     ) -> 'BaseExecutor':
         """
         Run a executor.

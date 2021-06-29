@@ -9,12 +9,11 @@ from sqlalchemy.orm import Query
 
 from crawlerstack_spiderkeeper.db import ScopedSession as Session
 from crawlerstack_spiderkeeper.utils import scoping_session
-from crawlerstack_spiderkeeper.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper.utils.exceptions import (ObjectDoesNotExist,
+                                                        SpiderkeeperError)
 from crawlerstack_spiderkeeper.utils.types import (CreateSchemaType, ModelType,
                                                    UpdateSchemaType)
 
-
-# pylint: disable=no-member
 
 class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     """
@@ -69,7 +68,9 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         :raise If sort field not in table, raise exception
         """
         if sort not in self.model.__table__.columns:
-            raise Exception(f'Sort field <{sort}> not in table <{self.model.__tablename__}>')
+            raise SpiderkeeperError(
+                f'Sort field <{sort}> not in table <{self.model.__tablename__}>'
+            )
         query: Query = Session.query(self.model)
         if order == 'ASC':
             query = query.order_by(asc(sort))
@@ -77,6 +78,11 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             query = query.order_by(desc(sort))
         query: Query = query.offset(skip).limit(limit)
         return query.all()
+
+    def _save(self, db_obj: ModelType) -> None:  # pylint: disable=no-self-use
+        Session.add(db_obj)
+        Session.commit()
+        Session.refresh(db_obj)
 
     @scoping_session
     def create(self, *, obj_in: CreateSchemaType) -> ModelType:
@@ -86,10 +92,8 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         :return:
         """
         obj_in_data = jsonable_encoder(obj_in)
-        db_obj = self.model(**obj_in_data)  # type: ignore
-        Session.add(db_obj)
-        Session.commit()
-        Session.refresh(db_obj)
+        db_obj = self.model(**obj_in_data)
+        self._save(db_obj)
         return db_obj
 
     @scoping_session
@@ -107,7 +111,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         return self._update(db_obj=db_obj, obj_in=obj_in)
 
-    def _update(  # pylint: disable=no-self-use
+    def _update(
             self,
             *,
             db_obj: ModelType,
@@ -119,17 +123,13 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         :param obj_in:
         :return:
         """
-        obj_data = jsonable_encoder(db_obj)
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
             update_data = obj_in.dict(exclude_unset=True)
-        for field in obj_data:
-            if field in update_data:
-                setattr(db_obj, field, update_data[field])
-        Session.add(db_obj)
-        Session.commit()
-        Session.refresh(db_obj)
+        for field, value in update_data.items():
+            setattr(db_obj, field, value)
+        self._save(db_obj)
         return db_obj
 
     @scoping_session

@@ -1,13 +1,12 @@
 """Test project api"""
-import json
 
 from crawlerstack_spiderkeeper.db.models import Artifact, Project
 from tests.conftest import assert_status_code, build_api_url
 
 
-def test_get_multi(client, init_project, url_builder, session):
+def test_get_multi(client, init_project, session):
     """Test get multi projects"""
-    response = client.get(url_builder('/projects'))
+    response = client.get(build_api_url('/projects'))
     assert_status_code(response)
     assert len(response.json()) == session.query(Project).count()
 
@@ -28,10 +27,10 @@ def test_create(client, migrate):
         'name': 'demo-1',
         'slug': 'demo_1',
     }
-    response = client.post(api, data=json.dumps(data))
+    response = client.post(api, json=data)
+    print(response.text)
     assert_status_code(response)
     assert response.json().get('name') == 'demo-1'
-    assert response.json().get('slug') == 'demo_1'
 
 
 def test_put(client, init_project, session):
@@ -41,7 +40,7 @@ def test_put(client, init_project, session):
     data = {
         'name': 'xxx'
     }
-    response = client.put(api, data=json.dumps(data))
+    response = client.put(api, json=data)
     assert_status_code(response)
     assert response.json().get('name') == 'xxx'
 

@@ -64,7 +64,6 @@ async def create(
 ):
     """
     create project
-    :param db:
     :param project_in:
     :return:
     """

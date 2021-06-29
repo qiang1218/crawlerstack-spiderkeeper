@@ -11,8 +11,6 @@ from crawlerstack_spiderkeeper.schemas.artifact import (ArtifactCreate,
 from crawlerstack_spiderkeeper.utils import scoping_session
 from crawlerstack_spiderkeeper.utils.exceptions import ObjectDoesNotExist
 
-# pylint: disable=no-member
-
 
 class ArtifactDAO(BaseDAO[Artifact, ArtifactCreate, ArtifactUpdate]):
     """Artifact dao"""
@@ -27,7 +25,7 @@ class ArtifactDAO(BaseDAO[Artifact, ArtifactCreate, ArtifactUpdate]):
         return Session.query(self.model).filter(self.model.project_id == project_id).all()
 
     @scoping_session
-    def get_artifact_from_job_id(self, job_id: int) -> List[Artifact]:  #pylint: disable=no-self-use
+    def get_artifact_from_job_id(self, job_id: int) -> List[Artifact]:  # pylint: disable=no-self-use
         """
         Get artifact from job id
         :param job_id:

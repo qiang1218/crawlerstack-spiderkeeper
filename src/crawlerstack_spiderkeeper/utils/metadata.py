@@ -3,6 +3,7 @@ Metadata util.
 """
 import os
 from datetime import datetime
+from pathlib import Path
 
 from crawlerstack_spiderkeeper.config import settings
 from crawlerstack_spiderkeeper.utils import constants
@@ -10,13 +11,13 @@ from crawlerstack_spiderkeeper.utils import constants
 """
 .
 ├── artifacts
-│   ├── artifact
-│   │   └── demo-20191215152202.zip
-│   ├── workspaces
-│   │   └── demo-20191215152202
-│   └── virtual_env
-│   │   └── demo-20191215152202
-│   └── logs
+│         ├── artifact
+│   │         └── demo-20191215152202.zip
+│         ├── workspaces
+│   │         └── demo-20191215152202
+│         └── virtual_env
+│   │      └── demo-20191215152202
+│         └── logs
 │       └── demo-20191215152202
 │           └── out.log
 
@@ -31,20 +32,20 @@ from crawlerstack_spiderkeeper.utils import constants
 
 .
 ├── spiderkeeper-artifact
-│   ├── demo
-│   │   ├── demo-20191215152202
-│   │   │   ├── demo-20191215152202.zip
-│   │   │   └── demo-20191215152202
-│   │   │       ├── boot.py
-│   │   │       ├── setup.py
-│   │   │       ├── log
-│   │   │       │   ├── out.log
-│   │   │       │   └── err.log
-│   │   │       └── venv
-│   │   │           └── bin
-│   │   │               ├── python
-│   │   │               └── pip
-│   │   ├── demo-20201215152202
+│         ├── demo
+│   │         ├── demo-20191215152202
+│   │         │         ├── demo-20191215152202.zip
+│   │         │         └── demo-20191215152202
+│   │         │                   ├── boot.py
+│   │         │                   ├── setup.py
+│   │         │                   ├── log
+│   │         │                   │         ├── out.log
+│   │         │                   │         └── err.log
+│   │         │                   └── venv
+│   │         │                       └── bin
+│   │         │                           ├── python
+│   │         │                           └── pip
+│   │         ├── demo-20201215152202
 
 有点：
     - 便于管理，一次删除归档下的所有东西
@@ -70,15 +71,16 @@ class Metadata:
         if not hasattr(cls, '__instance'):
             cls.__instance = super().__new__(cls, *args)
             cls.artifact_path = settings.ARTIFACT_PATH
-            cls.artifact_files_path = os.path.join(
+            cls.artifact_files_path = Path(
                 settings.ARTIFACT_PATH,
                 constants.ARTIFACT_FILE_PATHNAME
             )
-            cls.artifact_source_code_path = os.path.join(
+
+            cls.artifact_source_code_path = Path(
                 settings.ARTIFACT_PATH,
                 constants.ARTIFACT_SOURCE_CODE_PATHNAME
             )
-            cls.artifact_virtualenvs_path = os.path.join(
+            cls.artifact_virtualenvs_path = Path(
                 settings.ARTIFACT_PATH,
                 constants.ARTIFACT_VIRTUALENV_PATHNAME
             )
@@ -96,8 +98,6 @@ class ArtifactMetadata:
     归档文件元信息。
     将归档文件所对应元信息的规则独立出来，当调整规则时，不影响相关引用逻辑。
     """
-
-    ARTIFACT_PATH = settings.ARTIFACT_PATH
 
     @classmethod
     def from_project(cls, project_name: str) -> 'ArtifactMetadata':
@@ -147,7 +147,7 @@ class ArtifactMetadata:
         return timestamp
 
     @property
-    def file_basename(self):
+    def file_basename(self) -> str:
         """
         not contain file format
         :return:
@@ -155,35 +155,28 @@ class ArtifactMetadata:
         return f'{self.project_name}-{self.timestamp}'
 
     @property
-    def file(self) -> str:
+    def file(self) -> Path:
         """
         Artifact 文件目录
         :return:
         """
-        return os.path.join(self.metadata.artifact_files_path, self._filename)
+        return self.metadata.artifact_files_path / self.filename
 
     @property
-    def source_code(self) -> str:
+    def source_code(self) -> Path:
         """
         Artifact 解压目录
         :return:
         """
-        return os.path.join(
-            self.metadata.artifact_source_code_path,
-            self.file_basename
-        )
+        return self.metadata.artifact_source_code_path / self.file_basename
 
     @property
-    def virtualenv(self) -> str:
+    def virtualenv(self) -> Path:
         """
         Artifact 的虚拟环境目录
         :return:
         """
-        artifact_virtualenv_path = os.path.join(
-            self.metadata.artifact_virtualenvs_path,
-            self.file_basename
-        )
-        return artifact_virtualenv_path
+        return self.metadata.artifact_virtualenvs_path / self.file_basename
 
     @property
     def image_tag(self) -> str:

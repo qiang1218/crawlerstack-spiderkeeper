@@ -2,7 +2,6 @@
 Test job api
 """
 import asyncio
-import json
 
 import pytest
 
@@ -39,7 +38,7 @@ def test_create(client, session, init_project, init_server, init_artifact):
         'cmdline': 'python -c "print(10086)"'
     }
     api = build_api_url('/jobs')
-    response = client.post(api, data=json.dumps(data))
+    response = client.post(api, json=data)
     assert_status_code(response)
     assert response.json().get('concurrent') == data.get('concurrent')
 

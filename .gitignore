@@ -216,5 +216,4 @@ cython_debug/
 .vscode
 
 **/*.local.yaml
-
 demo.py

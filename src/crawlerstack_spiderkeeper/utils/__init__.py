@@ -6,14 +6,16 @@ import logging
 import os
 import signal
 import socket
+from asyncio import Future
 from contextlib import contextmanager
 from functools import partial, wraps
 from pathlib import Path
-from typing import (Any, AsyncIterable, Callable, Dict, List, Tuple, TypeVar,
-                    Union)
+from typing import (Any, AsyncIterable, Callable, Dict, List, Optional, Tuple,
+                    TypeVar, Union)
 
 import aiofiles
 import psutil
+from aiofiles.threadpool.binary import AsyncBufferedReader
 from starlette.datastructures import UploadFile
 from starlette.requests import Request
 
@@ -33,7 +35,7 @@ def get_db(request: Request):
     return request.state.db
 
 
-async def run_in_executor(func, *args, **kwargs) -> Any:
+async def run_in_executor(func: Callable, *args, **kwargs) -> Any:
     """
     如果自定义 executor 请在 kwargs 中传入。
     :param func:
@@ -70,6 +72,12 @@ class AppId:
         """
         _, job_id, task_id = app_id.split(cls.separator)
         return cls(job_id, task_id)
+
+    def __eq__(self, other) -> bool:
+        """eq"""
+        if self.__repr__() == other.__repr__():
+            return True
+        return False
 
     def __repr__(self):
         """Return str fmt app id."""
@@ -124,25 +132,26 @@ class CommonQueryParams:
     """
     通用 URL 查询参数
     """
+
     def __init__(
             self,
-            _start: int = 0,
-            _end: int = 100,
-            _order: str = 'DESC',
-            _sort: str = 'id'
+            start: int = 0,
+            end: int = MAX_PAGE_SIZE,
+            order: str = 'DESC',
+            sort: str = 'id'
     ):
-        _start = max(_start, 0)
-        if _end < _start:
-            _end = _start + MAX_PAGE_SIZE
+        start = max(start, 0)
+        if end < start:
+            end = start + MAX_PAGE_SIZE
 
-        limit = _end - _start
+        limit = end - start
         if limit > MAX_PAGE_SIZE or limit < 0:
             limit = MAX_PAGE_SIZE
 
-        self.skip = _start
+        self.skip = start
         self.limit = limit
-        self.order = _order
-        self.sort = _sort
+        self.order = order
+        self.sort = sort
 
 
 def kill_proc_tree(
@@ -208,6 +217,7 @@ class Tail:
     """
     Tail 显示文件内容
     """
+
     def __init__(self, filename: str):
         self.filename = Path(filename)
 
@@ -225,48 +235,33 @@ class Tail:
                 line_count += 1
                 yield line.decode()
 
-    async def last(self, line: int = 50, min_block_size=1024) -> AsyncIterable[str]:
+    async def last(self, line: int = 50, buffer_size=1024) -> AsyncIterable[str]:
         """
-        通过 block_size 不断从文件最后往前查找所出现的 `\n` 行分隔符，统计出所需要行数位置，然后从该出读取文件。
+        通过 buffer_size 不断从文件最后往前查找所出现的 `\n` 行分隔符，统计出所需要行数位置，然后从该出读取文件。
         注意：行分隔符使用的是 `\n`
         :param line:
-        :param min_block_size:
+        :param buffer_size:
         :return:
         """
-        async with aiofiles.open(self.filename, 'rb') as f_obj:
-            if self.filename.stat().st_size > abs(min_block_size):
-                block_size = min_block_size
-                block_number = 0
-                await f_obj.seek(0, os.SEEK_END)
-                while True:
-                    block_number += 1
-                    await f_obj.seek(-min_block_size * block_number, os.SEEK_END)
-                    txt = await f_obj.read()
-                    line_count = txt.count(b'\n')
 
-                    if line_count < line / 2:
-                        # 当统计行数小于所需要行数的一般是
-                        # 每当进行 40 的倍数次调整时，将 block_size 增大 min_block_size
-                        # 这么做可以更快速的向前调整
-                        if block_number % 40 == 0:
-                            block_size += min_block_size
-                    # 当统计行数大于所需要行数的一般时，
-                    # 如果 block_size 大于 min_block_size 则不断缩小范围
-                    # 目的是获取更精确的行数，而不会和预期行数偏差太大
-                    elif block_size > min_block_size:
-                        block_size -= min_block_size
-
-                    # 如果统计行数大于所需要的行数，跳出循环。
-                    if line_count >= line:
-                        break
-                await f_obj.seek(-block_size * block_number, os.SEEK_END)
-            async for i in f_obj:
+        async with aiofiles.open(self.filename, 'rb') as reader:
+            # 判断文件大小是否大于最小缓冲大小
+            # 如果大于，则根据缓冲区大小不断向前调整
+            # 直到找到最后 n 行
+            if self.filename.stat().st_size > abs(buffer_size):
+                await forward_fd(reader, buffer_size, line)
+            async for i in reader:
                 yield i.decode()
 
-    async def follow(self, block_size=512) -> AsyncIterable[str]:
+    async def follow(
+            self,
+            block_size=512,
+            stop: Optional[Future] = None,
+    ) -> AsyncIterable[str]:
         """
         tail -f xxx.txt
         :param block_size:
+        :param stop:
         :return:
         """
         async with aiofiles.open(self.filename, 'rb') as f_obj:
@@ -277,13 +272,62 @@ class Tail:
                 await f_obj.seek(0, os.SEEK_SET)
 
             while True:
+                if stop and stop.done():
+                    break
                 where = await f_obj.tell()
                 line = await f_obj.readline()
-                if not line:
+                if line:
+                    yield line.decode()
+                else:
                     await asyncio.sleep(1)
                     await f_obj.seek(where)
-                else:
-                    yield line.decode()
+
+
+async def forward_fd(reader: AsyncBufferedReader, buffer_size: int, line: int):
+    """
+    调整文件读取对象的读取偏移量，从文件最后向前调整 line 行的偏移量
+    :param reader:
+    :param buffer_size:
+    :param line:
+    :return:
+    """
+    offset = buffer_size  # 调整的偏移量
+    offset_times = 0  # 基于 buffer_size 调整的次数
+    await reader.seek(0, os.SEEK_END)  # 调整到文件末尾
+    offset_line = 0
+    # 开始调整位置
+    while True:
+        await reader.seek(-offset, os.SEEK_CUR)  # 从当前位置向钱调整偏移量
+        # 从调整位置读取所有内容，然后统计操作系统的换行符数量
+        txt = await reader.read(offset)
+        temp_offset_line = txt.count(os.linesep.encode('utf-8')) + offset_line
+
+        if temp_offset_line >= line:
+            # 如果统计行数大于所需要的行数
+            if offset > buffer_size:
+                # 如果 offset 大于 buffer_size ，则调整 offset 重新查找
+                offset -= buffer_size
+            else:
+                await reader.seek(-offset, os.SEEK_CUR)
+                break
+        # 动态调整 buffer_size 大小，以加快速度查找速度
+        else:
+            offset_times += int(offset / buffer_size)
+            offset_line = temp_offset_line
+            await reader.seek(-offset, os.SEEK_CUR)
+
+            if temp_offset_line < line / 2:
+                # 当统计行数小于所需要行数的一半时
+                # 每当进行 40 次调整时，将 buffer_size 增大一倍
+                # 这么做可以更快速的向前调整
+                if offset_times % 10 == 0:
+                    offset += buffer_size
+            else:
+                if offset > buffer_size and offset_times % 10 == 0:
+                    # 当统计行数大于所需要行数的一般时，
+                    # 如果 offset 大于 buffer_size 则不断缩小范围
+                    # 目的是获取更精确的行数，而不会和预期行数偏差太大
+                    offset -= buffer_size
 
 
 def scoping_session(func: Callable):
@@ -292,6 +336,7 @@ def scoping_session(func: Callable):
     :param func:
     :return:
     """
+
     @wraps(func)
     def __wrapper(*args, **kwargs):
         ScopedSession()

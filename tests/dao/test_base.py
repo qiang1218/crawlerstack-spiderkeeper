@@ -3,118 +3,145 @@ Test base dao.
 """
 import pytest
 
-from crawlerstack_spiderkeeper.dao import project_dao
-from crawlerstack_spiderkeeper.db.models import Project
-from crawlerstack_spiderkeeper.schemas.project import (ProjectCreate,
-                                                       ProjectUpdate)
-from crawlerstack_spiderkeeper.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper.dao import audit_dao
+from crawlerstack_spiderkeeper.db.models import Audit
+from crawlerstack_spiderkeeper.schemas.audit import AuditCreate, AuditUpdate
+from crawlerstack_spiderkeeper.utils.exceptions import (ObjectDoesNotExist,
+                                                        SpiderkeeperError)
 
 
-def test_get(init_project, session):
+@pytest.fixture()
+def dao():
+    """dao fixture"""
+    yield audit_dao
+
+
+def test_get(init_audit, session, dao):
     """Test get a object."""
-    exist_obj = session.query(Project).first()
-    obj = project_dao.get(exist_obj.id)
+    exist_obj = session.query(Audit).first()
+    obj = dao.get(exist_obj.id)
     assert obj
     assert exist_obj.id == obj.id
 
 
-def test_get_not_exist(migrate):
+def test_get_not_exist(migrate, dao):
     """Test get not exist object."""
     with pytest.raises(ObjectDoesNotExist):
-        project_dao.get(1)
+        dao.get(1)
 
 
-def test_get_multi_not_exist(migrate):
+def test_get_multi_not_exist(migrate, dao):
     """Test get multi not exist objects."""
-    objs = project_dao.get_multi()
+    objs = dao.get_multi()
     assert not objs
 
 
-def test_get_multi(init_project, session):
+@pytest.mark.parametrize(
+    ['order', 'sort', 'expect_value'],
+    [
+        (None, None, 'gt'),
+        ('DESC', None, 'gt'),
+        ('ASC', None, 'lt'),
+        (None, 'datetime', 'gt'),
+        (None, 'foo', SpiderkeeperError),
+    ]
+)
+def test_get_multi(init_audit, session, dao, order, sort, expect_value):
     """Test get multi object."""
-    objs = project_dao.get_multi()
-    assert len(objs) == session.query(Project).count()
+    kwargs = {}
+    if order:
+        kwargs.setdefault('order', order)
+    if sort:
+        kwargs.setdefault('sort', sort)
+    if expect_value is SpiderkeeperError:
+        with pytest.raises(SpiderkeeperError):
+            dao.get_multi(**kwargs)
+    else:
+        objs = dao.get_multi(**kwargs)
+        assert len(objs) == session.query(Audit).count()
+        if expect_value == 'gt':
+            assert objs[0].id > objs[1].id
+        elif expect_value == 'lt':
+            assert objs[0].id < objs[1].id
 
 
-def test_create(migrate):
+def test_create(migrate, dao):
     """Test create a object."""
-    obj = project_dao.create(obj_in=ProjectCreate(name='xx', slug='xx'))
+    obj = dao.create(
+        obj_in=AuditCreate(url='https://example.com', method='GET', client='0.0.0.0', detail='foo')
+    )
     assert obj.id == 1
 
 
-# def test_create_exception(init_project, session):
-#     """
-#     MySQLdb._exceptions.IntegrityError: (1062, "Duplicate entry 'test1' for key 'slug'")
-#     :param init_project:
-#     :param session:
-#     :return:
-#     """
-#     with pytest.raises(Exception):
-#         exist_obj = session.query(Project).first()
-#         project_dao.create(obj_in=ProjectCreate(name=exist_obj.name, slug=exist_obj.slug))
-
-
-def test_update(init_project, session):
+@pytest.mark.parametrize(
+    'is_dict',
+    [True, False]
+)
+def test_update(init_audit, session, dao, is_dict):
     """Test update a object"""
-    exist_obj = session.query(Project).first()
-    before_name = exist_obj.name
-    changed_name = 'test_update'
-    obj = project_dao.update(
-        db_obj=project_dao.get(pk=exist_obj.id),
-        obj_in=ProjectUpdate(name=changed_name)
+
+    exist_obj = session.query(Audit).first()
+    before = exist_obj.detail
+    changed = f'updated_{before}'
+    obj_in = {'detail': changed}
+    if not is_dict:
+        obj_in = AuditUpdate(**obj_in)
+    obj = dao.update(
+        db_obj=dao.get(pk=exist_obj.id),
+        obj_in=obj_in,
     )
-    assert obj.name == changed_name
-    assert before_name != obj.name
+    assert obj.detail == changed
+    assert before != obj.detail
 
 
-def test_update_use_dict_data(init_project, session):
-    """TEst update a object by dict data."""
-    exist_obj = session.query(Project).first()
-    before_name = exist_obj.name
-    changed_name = 'test_update'
-    obj = project_dao.update(db_obj=project_dao.get(pk=exist_obj.id), obj_in={'name': changed_name})
-    assert obj.name == changed_name
-    assert before_name != obj.name
-
-
-def test_update_by_id(init_project, session):
+@pytest.mark.parametrize(
+    'exist',
+    [True, False]
+)
+def test_update_by_id(init_audit, session, dao, exist):
     """Test update a object by id."""
-    exist_obj = session.query(Project).first()
-    before_name = exist_obj.name
-    changed_name = 'test_update'
-    obj = project_dao.update_by_id(pk=exist_obj.id, obj_in=ProjectUpdate(name=changed_name))
-    assert obj.name == changed_name
-    assert before_name != obj.name
+    if exist:
+        exist_obj = session.query(Audit).first()
+        before = exist_obj.detail
+        changed = f'changed_{before}'
+        obj = dao.update_by_id(pk=exist_obj.id, obj_in={'detail': changed})
+        assert obj.detail == changed
+        assert before != obj.detail
+    else:
+        with pytest.raises(ObjectDoesNotExist):
+            dao.update_by_id(pk=500, obj_in={})
 
 
-def test_update_by_id_obj_not_exist(migrate):
-    """Test update a not exist object by id."""
-    with pytest.raises(ObjectDoesNotExist):
-        project_dao.update_by_id(pk=1, obj_in=ProjectUpdate(name='x'))
-
-
-def test_delete(init_project, session):
+def test_delete(init_audit, session, dao):
     """Test delete a object."""
-    exist_obj = session.query(Project).first()
-    count = session.query(Project).count()
-    project_dao.delete(db_obj=project_dao.get(pk=exist_obj.id))
-    assert project_dao.count() == count - 1
+    exist_obj = session.query(Audit).first()
+    count = session.query(Audit).count()
+    dao.delete(db_obj=dao.get(exist_obj.id))
+    assert dao.count() == count - 1
 
 
-def test_delete_by_id(init_project, session):
+@pytest.mark.parametrize(
+    'exist',
+    [True, False]
+)
+def test_delete_by_id(init_audit, session, dao, exist):
     """Test delete a object by id."""
-    exist_obj = session.query(Project).first()
-    count = session.query(Project).count()
-    project_dao.delete_by_id(pk=exist_obj.id)
-    assert project_dao.count() == count - 1
+    if exist:
+        exist_obj = session.query(Audit).first()
+        count = session.query(Audit).count()
+        dao.delete_by_id(pk=exist_obj.id)
+        assert dao.count() == count - 1
+    else:
+        with pytest.raises(ObjectDoesNotExist):
+            dao.delete_by_id(pk=100)
 
 
-def test_delete_by_id_obj_not_exist(migrate):
+def test_delete_by_id_obj_not_exist(migrate, dao):
     """Delete a not exist object by id."""
     with pytest.raises(ObjectDoesNotExist):
-        project_dao.delete_by_id(pk=1)
+        dao.delete_by_id(pk=1)
 
 
-def test_count(migrate):
+def test_count(migrate, dao):
     """Test count objects."""
-    assert not project_dao.count()
+    assert not dao.count()

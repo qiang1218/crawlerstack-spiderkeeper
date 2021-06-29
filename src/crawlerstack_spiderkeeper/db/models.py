@@ -10,7 +10,6 @@ from sqlalchemy.orm import relationship
 
 from crawlerstack_spiderkeeper.utils.states import States
 
-# pylint: disable=too-few-public-methods
 
 class CustomBase:
     """
@@ -52,7 +51,6 @@ class Project(BaseModel):
     artifacts = relationship(
         "Artifact",
         backref="project",
-        # cascade='all, delete-orphan',   # 代码级别的级联操作，适用于需要级联删除的关系，可以保证不出异常。
         passive_deletes=True  # 在删除父记录的时候检查子记录的约束。如果 ON DELETE 为 RESTRICT 则抛出异常。对于非数据库
     )
 
