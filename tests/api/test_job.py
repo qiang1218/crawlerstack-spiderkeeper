@@ -1,5 +1,7 @@
+"""
+Test job api
+"""
 import asyncio
-import json
 
 import pytest
 
@@ -9,6 +11,7 @@ from tests.conftest import assert_status_code, build_api_url
 
 
 def test_get_multi(client, session, init_job):
+    """Test get multi jobs."""
     api = build_api_url('/jobs')
     response = client.get(api)
     assert_status_code(response)
@@ -16,6 +19,7 @@ def test_get_multi(client, session, init_job):
 
 
 def test_get(client, session, init_job):
+    """Test get a job."""
     obj = session.query(Job).first()
     api = build_api_url(f'/jobs/{obj.id}')
     response = client.get(api)
@@ -25,6 +29,7 @@ def test_get(client, session, init_job):
 
 @pytest.mark.integration
 def test_create(client, session, init_project, init_server, init_artifact):
+    """Test create a job."""
     obj = session.query(Artifact).first()
     data = {
         'artifact_id': obj.id,
@@ -33,13 +38,14 @@ def test_create(client, session, init_project, init_server, init_artifact):
         'cmdline': 'python -c "print(10086)"'
     }
     api = build_api_url('/jobs')
-    response = client.post(api, data=json.dumps(data))
+    response = client.post(api, json=data)
     assert_status_code(response)
     assert response.json().get('concurrent') == data.get('concurrent')
 
 
 @pytest.mark.integration
 def test_delete(client, init_job, session):
+    """Test delete a job."""
     obj: Job = session.query(Job).first()
     count = session.query(Job).count()
     response = client.delete(build_api_url(f'/jobs/{obj.id}'))
@@ -49,6 +55,7 @@ def test_delete(client, init_job, session):
 
 @pytest.mark.integration
 def test_job_start_and_stop(client, init_job, session):
+    """Test job start, then stop this job."""
     obj: Job = session.query(Job).first()
     response = client.post(build_api_url(f'/jobs/{obj.id}/_run'))
     assert_status_code(response)
@@ -59,4 +66,4 @@ def test_job_start_and_stop(client, init_job, session):
     assert_status_code(response)
     assert session.query(Task).count() == 1
     task: Task = session.query(Task).first()
-    assert task.state == States.Stopped
+    assert task.state == States.STOPPED

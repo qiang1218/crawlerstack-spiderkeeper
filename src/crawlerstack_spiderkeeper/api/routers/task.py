@@ -1,6 +1,9 @@
+"""
+Task route.
+"""
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 
 from crawlerstack_spiderkeeper.schemas.task import Task, TaskUpdate
 from crawlerstack_spiderkeeper.services import task_service
@@ -11,14 +14,26 @@ router = APIRouter()
 
 @router.get('/tasks', response_model=List[Task])
 async def get_multi(
-        common: CommonQueryParams = Depends(),
+        response: Response,
+        commons: CommonQueryParams = Depends(),
 ):
     """
     Get tasks
-    :param common:
+    :param response:
+    :param commons:
     :return:
     """
-    return await task_service.get_multi()
+    count = await task_service.count()
+    response.headers['X-Total-Count'] = str(count)
+    data = []
+    if count:
+        data = await task_service.get_multi(
+            skip=commons.skip,
+            limit=commons.limit,
+            order=commons.order,
+            sort=commons.sort
+        )
+    return data
 
 
 @router.get('/tasks/{pk}', response_model=Task)
@@ -40,6 +55,12 @@ async def update(
         pk: int,
         task_in: TaskUpdate,
 ):
+    """
+    Update task by id.
+    :param pk:
+    :param task_in:
+    :return:
+    """
     return await task_service.update(pk, task_in)
 
 

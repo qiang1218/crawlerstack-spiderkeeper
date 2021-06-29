@@ -1,3 +1,6 @@
+"""
+Artifact service
+"""
 import asyncio
 import logging
 import os
@@ -17,13 +20,24 @@ from crawlerstack_spiderkeeper.utils.metadata import ArtifactMetadata
 
 
 class ArtifactService(BaseService[Artifact, ArtifactCreate, ArtifactUpdate]):
+    """
+    Artifact service
+    """
     dao = artifact_dao
 
     async def get_project_of_artifacts(self, project_id: int) -> List[Artifact]:
+        """
+        Get project of artifacts
+        :param project_id:
+        :return:
+        """
         return await run_in_executor(self.dao.get_project_of_artifacts, project_id=project_id)
 
 
 class ArtifactFileService:
+    """
+    Artifact file service
+    """
 
     def __init__(self):
         self.logger = logging.getLogger(f'{__name__}.{self.__class__.__name__}')
@@ -34,7 +48,7 @@ class ArtifactFileService:
             file: UploadFile
     ) -> str:
         """
-
+        Create artifact file
         :param session:
         :param project_id:
         :param file:    aiofile obj
@@ -42,16 +56,23 @@ class ArtifactFileService:
         """
         project = await run_in_executor(project_dao.get, pk=project_id)
         file_metadata = ArtifactMetadata.from_project(project.slug)
-        self.logger.debug(f'Write artifact to {file_metadata.file}.')
+        self.logger.debug('Write artifact to %s.', file_metadata.file)
         return await upload(file, file_metadata)
 
     async def delete(
             self,
             filename: str
     ) -> None:
+        """
+        Delete artifact file.
+        :param filename:
+        :return:
+        """
         file_metadata = ArtifactMetadata(filename)
         try:
             await asyncio.get_running_loop().run_in_executor(None, os.remove, file_metadata.file)
-        except FileNotFoundError as e:
-            self.logger.error(e)
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No such file or directory: {filename}')
+        except FileNotFoundError as ex:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f'No such file or directory: {filename}'
+            ) from ex

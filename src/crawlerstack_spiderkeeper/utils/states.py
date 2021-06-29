@@ -11,13 +11,16 @@ from enum import IntEnum
 
 
 class States(IntEnum):
-    Created = 1
-    Building = 2
-    Pending = 3
-    Started = 4
-    Running = 5
+    """
+    State enum
+    """
+    CREATED = 1
+    BUILDING = 2
+    PENDING = 3
+    STARTED = 4
+    RUNNING = 5
 
-    Finish = 0
+    FINISH = 0
 
-    Stopped = -1
-    Failure = -2
+    STOPPED = -1
+    FAILURE = -2

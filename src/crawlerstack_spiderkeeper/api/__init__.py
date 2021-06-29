@@ -1,3 +1,6 @@
+"""
+Service API
+"""
 from typing import Callable, Optional
 
 from fastapi import FastAPI
@@ -9,6 +12,9 @@ from crawlerstack_spiderkeeper.utils.log import init_logging_config
 
 
 class Api:
+    """
+    Service API
+    """
 
     def __init__(
             self,
@@ -27,6 +33,10 @@ class Api:
         self.app = FastAPI(title="SpiderKeeper", version="2.0", )
 
     def init(self):
+        """
+        初始化 API
+        :return:
+        """
         init_middleware(self.app)
         init_router(self.app)
 
@@ -40,6 +50,10 @@ class Api:
         self.app.router.add_event_handler(event_type, func)
 
     async def start_server(self):
+        """
+        启动服务
+        :return:
+        """
         config = Config(
             self.app,
             host=self.host,

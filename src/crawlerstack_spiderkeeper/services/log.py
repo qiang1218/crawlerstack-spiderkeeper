@@ -1,3 +1,6 @@
+"""
+Log service.
+"""
 import functools
 from typing import Any, Dict, List
 
@@ -13,6 +16,12 @@ class LogService(KombuMixin):
     exchange_name = 'log'
 
     async def get(self, app_id=None, limit=1):
+        """
+        Get log.
+        :param app_id:
+        :param limit:
+        :return:
+        """
         _buffered_data = []
         consume_on_response = functools.partial(self.consume_on_response, _buffered_data)
         await self.consume(
@@ -35,7 +44,7 @@ class LogService(KombuMixin):
         :return:
         """
         buffered_data.append(body)
-        self.logger.debug(f'Consuming data: {body}')
+        self.logger.debug('Consuming data: %s', body)
         message.ack()
 
 # log = LogService()

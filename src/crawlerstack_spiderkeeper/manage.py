@@ -1,3 +1,6 @@
+"""
+Manager.
+"""
 import asyncio
 import logging
 import signal as system_signal
@@ -13,7 +16,7 @@ HANDLED_SIGNALS = (
 
 
 class SpiderKeeper:
-    """"""
+    """Spiderkeeper manager"""
 
     def __init__(self, settings):
         configure_logging()
@@ -28,10 +31,12 @@ class SpiderKeeper:
         self.api = Api(host=self.settings.HOST, port=self.settings.PORT, debug=self.settings.DEBUG)
 
     async def start_api(self):
+        """Start api"""
         self.api.init()
         await self.api.start_server()
 
     def run(self):
+        """Run"""
         self.__loop.create_task(server_start.send())
         self.__loop.run_until_complete(self.start_api())
         self.__loop.create_task(server_stop.send())

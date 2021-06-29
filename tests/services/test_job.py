@@ -1,3 +1,6 @@
+"""
+Test job service.
+"""
 import logging
 
 import pytest
@@ -5,11 +8,12 @@ import pytest
 from crawlerstack_spiderkeeper.db import SessionFactory
 from crawlerstack_spiderkeeper.db.models import Artifact, Job, Task
 from crawlerstack_spiderkeeper.services import job_service
+from crawlerstack_spiderkeeper.utils.mock import AsyncMock
 from crawlerstack_spiderkeeper.utils.states import States
-from tests.conftest import AsyncMock
 
 
 def update_artifact_state(job_id: int, state: States):
+    """Update artifact state."""
     session = SessionFactory()
     job = session.query(Job).get(job_id)
     artifact = job.artifact
@@ -23,9 +27,9 @@ def update_artifact_state(job_id: int, state: States):
 @pytest.mark.parametrize(
     ['executor_context_exist', 'artifact_state', 'expect_value'],
     [
-        (True, States.Finish, 'skip'),
-        (False, States.Finish, 'finish'),
-        (False, States.Created, 'finish'),
+        (True, States.FINISH, 'skip'),
+        (False, States.FINISH, 'finish'),
+        (False, States.CREATED, 'finish'),
     ]
 )
 async def test_run_with_no_run_job(
@@ -37,13 +41,18 @@ async def test_run_with_no_run_job(
         expect_value,
         caplog,
 ):
+    """Test run a not exist job."""
     mocker.patch.object(
-        job_service.executor_cls._executor_context_cls,
+        job_service.executor_cls._executor_context_cls,  # pylint: disable=protected-access
         'exist',
         return_value=executor_context_exist,
         new_callable=AsyncMock
     )
-    mocker.patch.object(job_service.executor_cls._executor_context_cls, 'build', new_callable=AsyncMock)
+    mocker.patch.object(
+        job_service.executor_cls._executor_context_cls,  # pylint: disable=protected-access
+        'build',
+        new_callable=AsyncMock
+    )
     async_mocker = AsyncMock
     async_mocker.pid = 'foo'
     mocker.patch.object(job_service.executor_cls, 'run', new_callable=async_mocker)
@@ -55,16 +64,17 @@ async def test_run_with_no_run_job(
         await job_service.run(job.id)
         assert expect_value in caplog.text
         artifact: Artifact = session.query(Artifact).get(artifact_id)
-        assert artifact.state == States.Finish
+        assert artifact.state == States.FINISH.value
 
 
 @pytest.fixture()
 def init_job_have_no_running_task(init_job):
+    """Test init a job, that have no running task."""
     session = SessionFactory()
     jobs = session.query(Job).all()
     tasks = [
-        Task(job_id=jobs[0].id, state=States.Stopped.value),
-        Task(job_id=jobs[1].id, state=States.Running.value, container_id='001'),
+        Task(job_id=jobs[0].id, state=States.STOPPED.value),
+        Task(job_id=jobs[1].id, state=States.RUNNING.value, container_id='001'),
     ]
     session.add_all(tasks)
     session.commit()
@@ -73,9 +83,10 @@ def init_job_have_no_running_task(init_job):
 
 @pytest.mark.asyncio
 async def test_run_with_run_job(init_task, session, caplog):
-    job = session.query(Job).join(Task).filter(Task.state == States.Running.value).first()
+    """Test run a running job."""
+    job = session.query(Job).join(Task).filter(Task.state == States.RUNNING.value).first()
     res = await job_service.run(job.id)
-    assert 'Job already run.' == res
+    assert res == 'Job already run.'
 
 
 @pytest.mark.asyncio
@@ -96,8 +107,14 @@ async def test_stop(
         stop_error,
         caplog
 ):
-    mocker.patch.object(job_service.executor_cls, 'stop', new_callable=AsyncMock, side_effect=stop_error)
-    state = States.Running.value if have_running_task else States.Stopped.value
+    """Test stop a job."""
+    mocker.patch.object(
+        job_service.executor_cls,
+        'stop',
+        new_callable=AsyncMock,
+        side_effect=stop_error
+    )
+    state = States.RUNNING.value if have_running_task else States.STOPPED.value
     job = session.query(Job).join(Task).filter(Task.state == state).first()
     with caplog.at_level(level=logging.DEBUG, logger='crawlerstack_spiderkeeper.services.job'):
         res = await job_service.stop(job.id)

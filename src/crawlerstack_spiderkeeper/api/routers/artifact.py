@@ -1,6 +1,9 @@
+"""
+Artifact route.
+"""
 from typing import List
 
-from fastapi import APIRouter, Body, Depends, File, UploadFile, Response
+from fastapi import APIRouter, Body, Depends, File, Response, UploadFile
 
 from crawlerstack_spiderkeeper.api.route_class import AuditRoute
 from crawlerstack_spiderkeeper.schemas.artifact import (Artifact,
@@ -45,6 +48,11 @@ async def get_project_of_artifacts(
         *,
         project_id: int,
 ):
+    """
+    Get project of artifacts
+    :param project_id:
+    :return:
+    """
     return await artifact_service.get_project_of_artifacts(project_id=project_id)
 
 
@@ -87,7 +95,7 @@ async def upload_artifact(
     :return:
     """
     filename = await artifact_file_service.create(project_id, file)
-    return filename
+    return {'id': project_id, 'filename': filename}
 
 
 @router.delete('/artifacts/files/{filename}')
@@ -95,7 +103,11 @@ async def delete_artifact(
         *,
         filename: str,
 ):
-    """"""
+    """
+    Delete artifact file.
+    :param filename:
+    :return:
+    """
     await artifact_file_service.delete(filename)
 
 

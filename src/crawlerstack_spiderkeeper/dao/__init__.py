@@ -1,3 +1,6 @@
+"""
+Data access object interface.
+"""
 from crawlerstack_spiderkeeper.dao.artifact import ArtifactDAO
 from crawlerstack_spiderkeeper.dao.base import BaseDAO
 from crawlerstack_spiderkeeper.dao.job import JobDAO
@@ -8,6 +11,8 @@ from crawlerstack_spiderkeeper.dao.task import TaskDAO
 from crawlerstack_spiderkeeper.db.models import (Artifact, Audit, Job, Project,
                                                  Server, Storage, Task)
 
+# pylint: disable=no-member
+
 project_dao = ProjectDAO(Project)
 artifact_dao = ArtifactDAO(Artifact)
 job_dao = JobDAO(Job)
@@ -17,11 +22,11 @@ server_dao = ServerDAO(Server)
 audit_dao = BaseDAO(Audit)
 
 __all__ = [
-    project_dao,
-    artifact_dao,
-    job_dao,
-    task_dao,
-    storage_dao,
-    server_dao,
-    audit_dao,
+    'project_dao',
+    'artifact_dao',
+    'job_dao',
+    'task_dao',
+    'storage_dao',
+    'server_dao',
+    'audit_dao',
 ]

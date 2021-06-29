@@ -1,3 +1,6 @@
+"""
+Test local executor.
+"""
 import logging
 import os
 
@@ -12,20 +15,25 @@ from crawlerstack_spiderkeeper.utils.exceptions import (
     PKGInstallError, RequirementFileNotFound)
 
 
-class TestVirtualenv:
+def write(file, data):
+    """Write data to file."""
+    with open(file, 'w') as f_obj:
+        f_obj.write(data)
 
-    def write(self, file, data):
-        with open(file, 'w') as f:
-            f.write(data)
+
+class TestVirtualenv:
+    """Test virtualenv."""
 
     @pytest.fixture()
     async def venv_path(self, temp_dir, event_loop):
+        """Fixture virtualenv path"""
         venv_path = os.path.join(temp_dir, 'venv')
         await event_loop.run_in_executor(None, cli_run, [venv_path])
         yield venv_path
 
     @pytest.fixture()
     async def pipfile(self, temp_dir, event_loop):
+        """Fixture pipenv file."""
         pipfile = os.path.join(temp_dir, 'Pipfile')
         data = """
 [[source]]
@@ -37,26 +45,29 @@ name = "aliyun"
 setuptools = "*"
 six = "1.15.0"
         """
-        await event_loop.run_in_executor(None, self.write, pipfile, data)
+        await event_loop.run_in_executor(None, write, pipfile, data)
         yield pipfile
 
     @pytest.fixture()
     async def req_file(self, temp_dir, event_loop):
+        """Fixture requirements file."""
         req_file = os.path.join(temp_dir, 'requirements.txt')
         data = """setuptools
 six=="1.15.0"
     """
-        await event_loop.run_in_executor(None, self.write, req_file, data)
+        await event_loop.run_in_executor(None, write, req_file, data)
         yield req_file
 
     @pytest.mark.asyncio
     async def test_get_requirement_from_pipfile(self, mocker, pipfile):
+        """Test get requirements from pipfile"""
         virtualenv = Virtualenv(mocker.MagicMock())
         requirements = await virtualenv.get_requirements_from_pipfile(pipfile)
         assert requirements == ['setuptools', 'six=="1.15.0"']
 
     @pytest.mark.asyncio
     async def test_get_requirements_from_txt(self, mocker, req_file):
+        """Test get requirements from requirements.txt"""
         virtualenv = Virtualenv(mocker.MagicMock())
         requirements = await virtualenv.get_requirements_from_txt(req_file)
         assert requirements == ['setuptools', 'six=="1.15.0"']
@@ -71,6 +82,7 @@ six=="1.15.0"
         ]
     )
     async def test_get_requirements(self, mocker, req_file, pipfile, req_name, raise_exception):
+        """Test get requirements."""
         artifact = mocker.MagicMock()
         if req_name == 'pipfile':
             artifact.source_code = os.path.dirname(pipfile)
@@ -96,6 +108,7 @@ six=="1.15.0"
         ]
     )
     async def test_install(self, mocker, venv_path, reqs, raise_exception, caplog):
+        """Test install requirements."""
         with caplog.at_level(logging.DEBUG):
             artifact = mocker.MagicMock()
             artifact.virtualenv = venv_path
@@ -110,6 +123,7 @@ six=="1.15.0"
 
     @pytest.mark.asyncio
     async def test_init(self, mocker, temp_dir, pipfile):
+        """Test init virtualenv."""
         artifact = mocker.MagicMock()
         artifact.source_code = os.path.dirname(pipfile)
         artifact.virtualenv = os.path.join(temp_dir, 'venv')
@@ -117,15 +131,19 @@ six=="1.15.0"
         await virtualenv.init()
 
 
-class TestLocalExecuteContext:
+@pytest.fixture()
+def local_ctx(artifact_metadata, event_loop):
+    """Fixture local context."""
+    ctx = LocalExecuteContext(artifact_metadata, event_loop)
+    yield ctx
 
-    @pytest.fixture()
-    def local_ctx(self, artifact_metadata, event_loop):
-        local_ctx = LocalExecuteContext(artifact_metadata, event_loop)
-        yield local_ctx
+
+class TestLocalExecuteContext:
+    """Test local execute context."""
 
     @pytest.mark.asyncio
     async def test_build(self, local_ctx, caplog):
+        """Test build context."""
         with caplog.at_level(logging.DEBUG):
             await local_ctx.build()
             assert os.path.isfile(local_ctx.artifact.file)
@@ -135,6 +153,7 @@ class TestLocalExecuteContext:
 
     @pytest.mark.asyncio
     async def test_delete(self, local_ctx, caplog):
+        """Test delete context."""
         with caplog.at_level(logging.DEBUG):
             await local_ctx.build()
             await local_ctx.delete()
@@ -145,19 +164,19 @@ class TestLocalExecuteContext:
 
     @pytest.mark.asyncio
     async def test_exist(self, local_ctx):
+        """Test if context is exist."""
         await local_ctx.build()
         exist = await local_ctx.exist()
         assert exist
 
 
-class TestLocalExecutor:
-
-    @pytest.mark.asyncio
-    async def test_delete(self, artifact_metadata):
-        executor = await LocalExecutor.run(
-            artifact=artifact_metadata,
-            cmdline='scrapy crawl example'.split(),
-            env={},
-        )
-        await executor.delete()
-        assert not int(executor.pid) in psutil.pids()
+@pytest.mark.asyncio
+async def test_delete(artifact_metadata):
+    """Test delete local executor."""
+    executor = await LocalExecutor.run(
+        artifact=artifact_metadata,
+        cmdline='scrapy crawl example'.split(),
+        env={},
+    )
+    await executor.delete()
+    assert not int(executor.pid) in psutil.pids()

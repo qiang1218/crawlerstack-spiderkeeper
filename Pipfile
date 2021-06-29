@@ -27,17 +27,21 @@ starlette-exporter = "*"
 kombu = "*"
 furl = "*"
 toml = "*"
+pydantic = "*"
+starlette = "*"
+virtualenv = "*"
 
 [dev-packages]
 tox = "*"
 pytest = "*"
 pytest-cov = "*"
 isort = "*"
-flake8 = "*"
 pytest-asyncio = "*"
 pytest-mock = "*"
 requests = "*"
 asyncmock = "*"
+pylint = "*"
+pylint-pytest = "*"
 
 [requires]
 python_version = "3.7"
