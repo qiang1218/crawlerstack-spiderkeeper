@@ -1,13 +1,13 @@
 """
 Manager.
 """
-import asyncio
 import logging
 import signal as system_signal
 
-from crawlerstack_spiderkeeper.api import Api
+from crawlerstack_spiderkeeper.api import ApiServer
 from crawlerstack_spiderkeeper.signals import server_start, server_stop
 from crawlerstack_spiderkeeper.utils.log import configure_logging
+from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
 
 HANDLED_SIGNALS = (
     system_signal.SIGINT,  # Unix signal 2. Sent by Ctrl+C.
@@ -20,24 +20,32 @@ class SpiderKeeper:
 
     def __init__(self, settings):
         configure_logging()
-        self.__should_exit = False
-        self.__force_exit = False
-        self.__loop = asyncio.get_event_loop()
 
         self.logger = logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
         self.settings = settings
 
-        self.api = Api(host=self.settings.HOST, port=self.settings.PORT, debug=self.settings.DEBUG)
+        self.api = ApiServer(
+            host=self.settings.HOST,
+            port=self.settings.PORT,
+            debug=self.settings.DEBUG
+        )
 
-    async def start_api(self):
+    async def start(self):
         """Start api"""
+        await server_start.send()
         self.api.init()
-        await self.api.start_server()
+        await self.api.start()
 
-    def run(self):
+    async def run(self):
         """Run"""
-        self.__loop.create_task(server_start.send())
-        self.__loop.run_until_complete(self.start_api())
-        self.__loop.create_task(server_stop.send())
-        self.__loop.stop()
+        try:
+            await self.start()
+        except SpiderkeeperError as ex:
+            logging.exception(ex)
+        finally:
+            await self.stop()
+
+    async def stop(self):
+        """Stop spiderkeeper"""
+        await server_stop.send()

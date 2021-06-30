@@ -1,7 +1,7 @@
 """
 Service API
 """
-from typing import Callable, Optional
+from typing import Optional
 
 from fastapi import FastAPI
 from uvicorn import Config, Server
@@ -11,7 +11,7 @@ from crawlerstack_spiderkeeper.api.routers import init_router
 from crawlerstack_spiderkeeper.utils.log import init_logging_config
 
 
-class Api:
+class ApiServer:
     """
     Service API
     """
@@ -30,7 +30,7 @@ class Api:
         self.debug = debug
         self.reload = reload
 
-        self.app = FastAPI(title="SpiderKeeper", version="2.0", )
+        self.app = FastAPI(title="SpiderKeeper", version="2.0")
 
     def init(self):
         """
@@ -40,27 +40,17 @@ class Api:
         init_middleware(self.app)
         init_router(self.app)
 
-    def add_event_handler(self, event_type: str, func: Callable) -> None:
-        """
-        https://fastapi.tiangolo.com/advanced/events/#events-startup-shutdown
-        :param event_type:  `startup` / `shutdown`
-        :param func:
-        :return:
-        """
-        self.app.router.add_event_handler(event_type, func)
-
-    async def start_server(self):
+    async def start(self):
         """
         启动服务
         :return:
         """
-        config = Config(
+        server = Server(Config(
             self.app,
             host=self.host,
             port=self.port,
             reload=self.reload,
             debug=self.debug,
             log_config=init_logging_config(),
-        )
-        server = Server(config)
+        ))
         await server.serve()

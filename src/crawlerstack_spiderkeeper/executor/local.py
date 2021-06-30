@@ -24,7 +24,7 @@ from crawlerstack_spiderkeeper.executor.subprocess import \
     create_subprocess_shell as customs_create_subprocess_shell
 from crawlerstack_spiderkeeper.utils import Tail, kill_proc_tree
 from crawlerstack_spiderkeeper.utils.exceptions import (
-    ExecutorStopError, PKGInstallError, RequirementFileNotFound)
+    ExecutorStopError, PKGInstallError, RequirementsFileNotFound)
 from crawlerstack_spiderkeeper.utils.metadata import ArtifactMetadata
 from crawlerstack_spiderkeeper.utils.states import States
 
@@ -134,7 +134,7 @@ class Virtualenv:
         elif os.path.isfile(requirements_txt):
             requirements = await self.get_requirements_from_txt(requirements_txt)
         else:
-            raise RequirementFileNotFound(self.artifact.source_code)
+            raise RequirementsFileNotFound(self.artifact.source_code)
 
         return requirements
 

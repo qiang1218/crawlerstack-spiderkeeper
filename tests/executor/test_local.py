@@ -12,7 +12,7 @@ from crawlerstack_spiderkeeper.executor.local import (LocalExecuteContext,
                                                       LocalExecutor,
                                                       Virtualenv)
 from crawlerstack_spiderkeeper.utils.exceptions import (
-    PKGInstallError, RequirementFileNotFound)
+    PKGInstallError, RequirementsFileNotFound)
 
 
 def write(file, data):
@@ -93,7 +93,7 @@ six=="1.15.0"
             artifact.source_code = '/tmp/foo'
         virtualenv = Virtualenv(artifact)
         if raise_exception:
-            with pytest.raises(RequirementFileNotFound):
+            with pytest.raises(RequirementsFileNotFound):
                 await virtualenv.get_requirements()
         else:
             requirements = await virtualenv.get_requirements()
