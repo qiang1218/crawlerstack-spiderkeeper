@@ -8,7 +8,6 @@ import pytest
 from crawlerstack_spiderkeeper.db import SessionFactory
 from crawlerstack_spiderkeeper.db.models import Artifact, Job, Task
 from crawlerstack_spiderkeeper.services import job_service
-from crawlerstack_spiderkeeper.utils.mock import AsyncMock
 from crawlerstack_spiderkeeper.utils.states import States
 
 
@@ -46,14 +45,14 @@ async def test_run_with_no_run_job(
         job_service.executor_cls._executor_context_cls,  # pylint: disable=protected-access
         'exist',
         return_value=executor_context_exist,
-        new_callable=AsyncMock
+        new_callable=mocker.AsyncMock
     )
     mocker.patch.object(
         job_service.executor_cls._executor_context_cls,  # pylint: disable=protected-access
         'build',
-        new_callable=AsyncMock
+        new_callable=mocker.AsyncMock
     )
-    async_mocker = AsyncMock
+    async_mocker = mocker.AsyncMock
     async_mocker.pid = 'foo'
     mocker.patch.object(job_service.executor_cls, 'run', new_callable=async_mocker)
 
@@ -111,7 +110,7 @@ async def test_stop(
     mocker.patch.object(
         job_service.executor_cls,
         'stop',
-        new_callable=AsyncMock,
+        new_callable=mocker.AsyncMock,
         side_effect=stop_error
     )
     state = States.RUNNING.value if have_running_task else States.STOPPED.value

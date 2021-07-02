@@ -76,7 +76,7 @@ class ScheduleJob:
         self.__trigger = IntervalTrigger(interval)
 
         self.__running = False
-        self.__count = 0
+        self.__count = 0  # pylint: disable=unused-private-member
         self.__loop = asyncio.get_running_loop()
 
     def __repr__(self) -> str:
@@ -129,7 +129,7 @@ class ScheduleJob:
             else:
                 await self.__loop.run_in_executor(None, self.__wrapper_func())
             self.__running = False
-            self.__count += 1
+            self.__count += 1  # pylint: disable=unused-private-member
 
 
 class Scheduler:

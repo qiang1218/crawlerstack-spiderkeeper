@@ -11,7 +11,6 @@ from crawlerstack_spiderkeeper.db.models import Storage, Task
 from crawlerstack_spiderkeeper.services import storage_service
 from crawlerstack_spiderkeeper.signals import server_stop
 from crawlerstack_spiderkeeper.utils import AppData, AppId
-from crawlerstack_spiderkeeper.utils.mock import AsyncMock
 from crawlerstack_spiderkeeper.utils.states import States
 
 
@@ -46,7 +45,7 @@ async def test__exporter_error(mocker, server, exporter_cls, except_value):
     """Test export error."""
     mocker.patch(
         'crawlerstack_spiderkeeper.services.storage.run_in_executor',
-        new_callable=AsyncMock,
+        new_callable=mocker.AsyncMock,
         return_value=mocker.MagicMock() if server else server
     )
     exporter_cls_mocker = mocker.MagicMock()
@@ -75,7 +74,7 @@ async def test_consume_task(mocker, app_data, session, caplog, exception, state)
     mocker.patch.object(
         storage_service,
         'consume',
-        new_callable=AsyncMock,
+        new_callable=mocker.AsyncMock,
         side_effect=exception
     )
     fut = asyncio.Future()
@@ -119,7 +118,7 @@ async def test_has_running_task(init_storage, session, app_data):
 @pytest.mark.asyncio
 async def test_start(mocker, app_data):
     """Test start storage task."""
-    mocker.patch.object(storage_service, 'consume_task', new_callable=AsyncMock)
+    mocker.patch.object(storage_service, 'consume_task', new_callable=mocker.AsyncMock)
     result = await storage_service.start(app_data.app_id)
     assert result == 'Run storage task.'
     result = await storage_service.start(app_data.app_id)
@@ -133,7 +132,7 @@ async def test_start(mocker, app_data):
 @pytest.mark.asyncio
 async def test_server_stop(mocker, app_data, signal_send):
     """Test server stop."""
-    mocker.patch.object(storage_service, 'consume_task', new_callable=AsyncMock)
+    mocker.patch.object(storage_service, 'consume_task', new_callable=mocker.AsyncMock)
     await storage_service.start(app_data.app_id)
     await signal_send(server_stop)
     assert not storage_service.storage_tasks

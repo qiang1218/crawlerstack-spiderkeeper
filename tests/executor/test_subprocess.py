@@ -10,7 +10,6 @@ import pytest
 
 from crawlerstack_spiderkeeper.executor.subprocess import (
     FileHandle, RotatingFileHandler, create_subprocess_shell)
-from crawlerstack_spiderkeeper.utils.mock import AsyncMock
 
 
 @pytest.fixture()
@@ -41,13 +40,13 @@ def create_subprocess_shell_log_dir(temp_dir, log_dir):
 )
 async def test_file_handle_write(mocker, event_loop, side_effect):
     """Test write"""
-    writer_mocker = AsyncMock()
-    writer_mocker.write = AsyncMock(side_effect=side_effect)
+    writer_mocker = mocker.AsyncMock()
+    writer_mocker.write = mocker.AsyncMock(side_effect=side_effect)
     open_mocker = mocker.patch.object(
         aiofiles,
         'open',
         return_value=writer_mocker,
-        new_callable=AsyncMock
+        new_callable=mocker.AsyncMock
     )
     handler = FileHandle('foo.txt', event_loop)
     await handler.open()

@@ -179,9 +179,9 @@ class KombuMixin:
         )
         return res
 
-    def __publish_on_return(self, exception, exchange, routing_key, message):  # pylint: disable=no-self-use
-        # TODO 完善发送确认机制
-        raise exception
+    # def __publish_on_return(self, exception, exchange, routing_key, message):  # pylint: disable=no-self-use
+    #     # TODO 完善发送确认机制
+    #     raise exception
 
     async def create(self, app_data: AppData):
         """Create server"""

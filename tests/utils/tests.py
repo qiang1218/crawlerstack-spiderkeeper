@@ -15,7 +15,6 @@ from crawlerstack_spiderkeeper.utils import (AppData, AppId, ArtifactMetadata,
                                              get_host_addr, kill_proc_tree,
                                              run_in_executor, staging_path,
                                              upload)
-from crawlerstack_spiderkeeper.utils.mock import AsyncMock
 
 
 @pytest.fixture()
@@ -192,7 +191,7 @@ async def test_tail(tail, event_loop, mocker, block_size, expect_value):
     mocker.patch.object(
         crawlerstack_spiderkeeper.utils.asyncio,
         'sleep',
-        new_callable=AsyncMock
+        new_callable=mocker.AsyncMock
     )
 
     async def follow(fut):

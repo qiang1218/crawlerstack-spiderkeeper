@@ -6,8 +6,8 @@ import signal as system_signal
 
 from crawlerstack_spiderkeeper.api import ApiServer
 from crawlerstack_spiderkeeper.signals import server_start, server_stop
-from crawlerstack_spiderkeeper.utils.log import configure_logging
 from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
+from crawlerstack_spiderkeeper.utils.log import configure_logging
 
 HANDLED_SIGNALS = (
     system_signal.SIGINT,  # Unix signal 2. Sent by Ctrl+C.

@@ -40,7 +40,7 @@ class SingletonDocker(Docker):
         将 close 绑定到 server_stop 事件上，在事件触发时，先移除此单利对象然后停止 Docker 的连接。
         :return:
         """
-        self.__instance = None
+        self.__instance = None  # pylint: disable=unused-private-member
         await super().close()
 
 

@@ -81,16 +81,17 @@ def test_artifacts_file_upload(client, demo_zip, session, init_project):
     data = {
         'project_id': project.id
     }
-    files = {
-        'file': open(demo_zip, 'rb')
-    }
-    response = client.post(
-        build_api_url('/artifacts/files'),
-        data=data,
-        files=files,
-    )
-    assert_status_code(response)
-    assert project.name in response.text
+    with open(demo_zip, 'rb') as file:
+        files = {
+            'file': file
+        }
+        response = client.post(
+            build_api_url('/artifacts/files'),
+            data=data,
+            files=files,
+        )
+        assert_status_code(response)
+        assert project.name in response.text
 
 
 def test_artifact_files_delete(client, demo_zip):
