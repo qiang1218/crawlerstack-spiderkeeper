@@ -4,11 +4,9 @@ Base dao.
 from typing import Any, Dict, Generic, List, Type, Union
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import asc, desc
-from sqlalchemy.orm import Query
+from sqlalchemy import asc, desc, select, update, delete, func
 
-from crawlerstack_spiderkeeper.db import ScopedSession as Session
-from crawlerstack_spiderkeeper.utils import scoping_session
+from crawlerstack_spiderkeeper.db import ScopedSession
 from crawlerstack_spiderkeeper.utils.exceptions import (ObjectDoesNotExist,
                                                         SpiderkeeperError)
 from crawlerstack_spiderkeeper.utils.types import (CreateSchemaType, ModelType,
@@ -19,38 +17,23 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     """
     Base dao
     """
+    model: Type[ModelType]
 
-    def __init__(self, model: Type[ModelType]):
-        """
-        CRUD object with default methods to Create, Read, Update, Delete (CRUD).
-        **Parameters**
-        * `model`: A SQLAlchemy model class
-        * `schema`: A Pydantic model (schema) class
-        """
-        self.model = model
+    def __init__(self, session=None, *args, **kwargs):
+        """"""
 
-    @scoping_session
-    def get(self, pk: Any) -> ModelType:
+    async def get(self, pk: Any) -> ModelType:
         """
         Get one object by id
         :param pk:
         :return:
         """
-        return self._get(pk)
-
-    def _get(self, pk: int) -> ModelType:
-        """
-        Get one object by id.
-        :param pk:
-        :return:
-        """
-        obj = Session.query(self.model).get(pk)
+        obj = await ScopedSession.get(self.model, pk)
         if not obj:
             raise ObjectDoesNotExist()
         return obj
 
-    @scoping_session
-    def get_multi(
+    async def get_multi(
             self,
             *,
             skip: int = 0,
@@ -71,21 +54,16 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             raise SpiderkeeperError(
                 f'Sort field <{sort}> not in table <{self.model.__tablename__}>'
             )
-        query: Query = Session.query(self.model)
+        stmt = select(self.model)
         if order == 'ASC':
-            query = query.order_by(asc(sort))
+            stmt = stmt.order_by(asc(sort))
         elif order == 'DESC':
-            query = query.order_by(desc(sort))
-        query: Query = query.offset(skip).limit(limit)
-        return query.all()
+            stmt = stmt.order_by(desc(sort))
+        stmt = stmt.offset(skip).limit(limit)
+        result = await ScopedSession.execute(stmt)
+        return result.scalars().all()
 
-    def _save(self, db_obj: ModelType) -> None:  # pylint: disable=no-self-use
-        Session.add(db_obj)
-        Session.commit()
-        Session.refresh(db_obj)
-
-    @scoping_session
-    def create(self, *, obj_in: CreateSchemaType) -> ModelType:
+    async def create(self, *, obj_in: CreateSchemaType) -> ModelType:
         """
         Create a object.
         :param obj_in:
@@ -93,11 +71,10 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         obj_in_data = jsonable_encoder(obj_in)
         db_obj = self.model(**obj_in_data)
-        self._save(db_obj)
+        ScopedSession.add(db_obj)
         return db_obj
 
-    @scoping_session
-    def update(
+    async def update(
             self,
             *,
             db_obj: ModelType,
@@ -109,31 +86,17 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         :param obj_in:
         :return:
         """
-        return self._update(db_obj=db_obj, obj_in=obj_in)
-
-    def _update(
-            self,
-            *,
-            db_obj: ModelType,
-            obj_in: Union[UpdateSchemaType, Dict[str, Any]]
-    ) -> ModelType:
-        """
-        Update object.
-        :param db_obj:
-        :param obj_in:
-        :return:
-        """
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
             update_data = obj_in.dict(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_obj, field, value)
-        self._save(db_obj)
+        stmt = update(self.model).where(self.model.id == db_obj.id).values(**update_data)
+        await ScopedSession.execute(stmt)
         return db_obj
 
-    @scoping_session
-    def update_by_id(
+    async def update_by_id(
             self,
             *,
             pk: int,
@@ -145,42 +108,31 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         :param obj_in:
         :return:
         """
-        obj = self._get(pk)
-        return self._update(db_obj=obj, obj_in=obj_in)
+        obj = await self.get(pk)
+        return self.update(db_obj=obj, obj_in=obj_in)
 
-    @scoping_session
-    def delete(self, *, db_obj: ModelType) -> ModelType:
+    async def delete(self, *, db_obj: ModelType) -> None:
         """
         Delete a object.
         :param db_obj:
         :return:
         """
-        return self._delete(db_obj=db_obj)
+        stmt = delete(self.model).where(self.model.id == db_obj.id)
+        await ScopedSession.execute(stmt)
 
-    def _delete(self, *, db_obj: ModelType) -> ModelType:  # pylint: disable=no-self-use
-        """
-        Delete a object.
-        :param db_obj:
-        :return:
-        """
-        Session.delete(db_obj)
-        Session.commit()
-        return db_obj
-
-    @scoping_session
-    def delete_by_id(self, pk: int) -> ModelType:
+    async def delete_by_id(self, pk: int) -> ModelType:
         """
         Delete object by id.
         :param pk:
         :return:
         """
-        obj = self._get(pk)
-        return self._delete(db_obj=obj)
+        obj = await self.get(pk)
+        return await self.delete(db_obj=obj)
 
-    @scoping_session
-    def count(self) -> int:
+    async def count(self) -> int:
         """
         Get total .
         :return:
         """
-        return Session.query(self.model).count()
+        stmt = select(func.count()).select_from(self.model)
+        return await ScopedSession.scalar(stmt)

@@ -2,7 +2,7 @@
 Data access object interface.
 """
 from crawlerstack_spiderkeeper.dao.artifact import ArtifactDAO
-from crawlerstack_spiderkeeper.dao.base import BaseDAO
+from crawlerstack_spiderkeeper.dao.audit import AuditDAO
 from crawlerstack_spiderkeeper.dao.job import JobDAO
 from crawlerstack_spiderkeeper.dao.project import ProjectDAO
 from crawlerstack_spiderkeeper.dao.server import ServerDAO
@@ -19,7 +19,7 @@ job_dao = JobDAO(Job)
 task_dao = TaskDAO(Task)
 storage_dao = StorageDAO(Storage)
 server_dao = ServerDAO(Server)
-audit_dao = BaseDAO(Audit)
+audit_dao = AuditDAO(Audit)
 
 __all__ = [
     'project_dao',

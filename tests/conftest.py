@@ -14,11 +14,13 @@ from alembic.command import downgrade as alembic_downgrade
 from alembic.command import upgrade as alembic_upgrade
 from alembic.config import Config as AlembicConfig
 from fastapi import Response, UploadFile
+from sqlalchemy import select
+from sqlalchemy.engine import Engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 from starlette.testclient import TestClient
 
 from crawlerstack_spiderkeeper.config import settings
-from crawlerstack_spiderkeeper.db import engine
 from crawlerstack_spiderkeeper.db.models import (Artifact, Audit, Job, Project,
                                                  Server, Storage, Task)
 from crawlerstack_spiderkeeper.manage import SpiderKeeper
@@ -102,10 +104,21 @@ def demo_zip(data_dir, temp_dir) -> Generator[str, None, None]:
     yield os.path.join(metadata.artifact_files_path, filename)
 
 
-@pytest.fixture(scope='session', name='session_factory')
-def session_factory():
+@pytest.fixture()
+async def session_factory():
     """Session factory fixture"""
-    yield sessionmaker(bind=engine, autocommit=True, autoflush=True)
+    engine: Engine = create_async_engine(
+        settings.DATABASE,
+        echo=True,
+    )
+    yield sessionmaker(
+        bind=engine,
+        autoflush=True,
+        expire_on_commit=False,
+        class_=AsyncSession
+    )
+
+    await engine.dispose()
 
 
 @pytest.fixture(name='uploaded_file')
@@ -138,17 +151,16 @@ def migrate():
 
 
 @pytest.fixture()
-def session(migrate, session_factory) -> Session:
+async def session(migrate, session_factory) -> Session:
     """Session fixture."""
-    _session = session_factory()
-    yield _session
-    _session.close()
+    async with session_factory() as _session:
+        yield _session
 
 
 @pytest.fixture()
-def init_audit(session):
+async def init_audit(session):
     """Init audit fixture."""
-    with session.begin():
+    async with session.begin():
         audits = [
             Audit(
                 url='https://example.com',
@@ -164,25 +176,24 @@ def init_audit(session):
             ),
         ]
         session.add_all(audits)
-    yield audits
 
 
 @pytest.fixture()
-def init_server(session, temp_dir):
+async def init_server(session, temp_dir):
     """Init server fixture."""
-    with session.begin():
+    async with session.begin_nested():
         servers = [
             Server(name='file', type='file', uri=f'file://{temp_dir}/storage/test.txt'),
             Server(name='redis2', type='redis', uri='redis://localhost'),
         ]
         session.add_all(servers)
-    yield servers
+        yield servers
 
 
 @pytest.fixture()
-def init_project(session):
+async def init_project(session):
     """Init project fixture."""
-    with session.begin():
+    async with session.begin_nested():
         projects = [
             Project(name="test1", slug="test1"),
             Project(name="test2", slug="test2"),
@@ -193,54 +204,50 @@ def init_project(session):
 @pytest.fixture()
 async def init_artifact(session, init_project, demo_zip):
     """Init artifact fixture."""
-    project = session.query(Project).first()
-    with session.begin():
-        artifacts = [
-            Artifact(project_id=project.id, filename=os.path.basename(demo_zip)),
-            Artifact(project_id=project.id, filename=os.path.basename(demo_zip)),
-        ]
-        session.add_all(artifacts)
+    project = await session.scalar(select(Project))
+    artifacts = [
+        Artifact(project_id=project.id, filename=os.path.basename(demo_zip)),
+        Artifact(project_id=project.id, filename=os.path.basename(demo_zip)),
+    ]
+    session.add_all(artifacts)
 
 
 @pytest.fixture()
 async def init_job(session, init_server, init_artifact):
     """Init job fixture."""
-    artifact = session.query(Artifact).first()
-    server = session.query(Server).first()
-    with session.begin():
-        jobs = [
-            Job(
-                artifact_id=artifact.id, name='1',
-                cmdline='python -c "print(123)"',
-                server_id=server.id
-            ),
-            Job(artifact_id=artifact.id, name='2', cmdline='scrapy crawl example'),
-        ]
-        session.add_all(jobs)
+    artifact = await session.scalar(select(Artifact))
+    server = await session.scalar(select(Server))
+    jobs = [
+        Job(
+            artifact_id=artifact.id, name='1',
+            cmdline='python -c "print(123)"',
+            server_id=server.id
+        ),
+        Job(artifact_id=artifact.id, name='2', cmdline='scrapy crawl example'),
+    ]
+    session.add_all(jobs)
 
 
 @pytest.fixture()
-def init_task(session, init_job):
+async def init_task(session, init_job):
     """Init task fixture."""
-    job = session.query(Job).first()
-    with session.begin():
-        tasks = [
-            Task(job_id=job.id, state=States.RUNNING.value),
-            Task(job_id=job.id, state=States.RUNNING.value, container_id='001'),
-        ]
-        session.add_all(tasks)
+    job = await session.scalar(select(Job))
+    tasks = [
+        Task(job_id=job.id, state=States.RUNNING.value),
+        Task(job_id=job.id, state=States.RUNNING.value, container_id='001'),
+    ]
+    session.add_all(tasks)
 
 
 @pytest.fixture()
-def init_storage(session, init_job):
+async def init_storage(session, init_job):
     """Init storage fixture."""
-    obj: Job = session.query(Job).first()
-    with session.begin():
-        objs = [
-            Storage(count=0, state=States.RUNNING.value, job_id=obj.id),
-            Storage(count=0, state=States.STOPPED.value, detail='stop...', job_id=obj.id),
-        ]
-        session.add_all(objs)
+    obj: Job = await session.scalar(select(Job)).first()
+    objs = [
+        Storage(count=0, state=States.RUNNING.value, job_id=obj.id),
+        Storage(count=0, state=States.STOPPED.value, detail='stop...', job_id=obj.id),
+    ]
+    session.add_all(objs)
 
 
 def assert_status_code(response: Response, code=200) -> None:

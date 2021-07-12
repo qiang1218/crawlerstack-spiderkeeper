@@ -60,6 +60,6 @@ test:
   debug: false
   verbose: false
   loglevel: DEBUG
-  database: 'sqlite:////tmp/spiderkeeper.db'
+  database: 'sqlite+aiosqlite:////tmp/spiderkeeper.db'
   executor: local
   mq: memory://

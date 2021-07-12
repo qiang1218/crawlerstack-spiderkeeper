@@ -2,35 +2,33 @@
 Tests.
 """
 import pytest
-from sqlalchemy import inspect
+from sqlalchemy import select
 
-from crawlerstack_spiderkeeper.db.models import Artifact, Job
+from crawlerstack_spiderkeeper.db.models import Audit
 
 
-def test_migrate(session):
+@pytest.mark.asyncio
+async def test_migrate(session):
     """
     Test migrate.
     :param session:
     :return:
     """
-    with session.bind.connect() as connection:
-        inspector = inspect(connection)
-        table_names = inspector.get_table_names()
-        assert table_names
-        assert 'audit' in table_names
+    async with session.bind.connect() as connection:
+        tables_name = await connection.run_sync(session.bind.dialect.get_table_names)
+        assert tables_name
+        assert 'audit' in tables_name
 
 
 @pytest.mark.asyncio
-async def test_db(session, init_artifact, init_job):
+async def test_db(session, init_audit, init_job):
     """
     Test database connect.
     :param session:
-    :param init_artifact:
+    :param init_audit:
     :param init_job:
     :return:
     """
-    artifact: Artifact = session.query(Artifact).first()
-    job = Job(name='xxx', artifact_id=artifact.id)
-    session.add(job)
-    jobs = session.query(Artifact).all()
-    assert len(jobs) == 2
+    obj = await session.scalar(select(Audit))
+    assert obj
+    assert isinstance(obj, Audit)

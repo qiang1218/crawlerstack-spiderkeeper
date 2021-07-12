@@ -1,12 +1,18 @@
 """Test project dao"""
-from crawlerstack_spiderkeeper.dao import project_dao
+import pytest
+
+from crawlerstack_spiderkeeper.dao.project import ProjectDAO
 from crawlerstack_spiderkeeper.db.models import Project
 from crawlerstack_spiderkeeper.schemas.project import ProjectCreate
 
 
-def test_create(session):
+@pytest.mark.asyncio
+async def test_create(session):
     """Test create"""
-    project_dao.create(
+    dao = ProjectDAO()
+    project = await dao.create(
         obj_in=ProjectCreate(name='foo')
     )
-    assert session.query(Project).count() == 1
+    assert isinstance(project, Project)
+    assert project
+    assert project.name == 'foo'

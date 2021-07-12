@@ -3,18 +3,18 @@
 """
 from sqlite3 import Connection
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import event
 from sqlalchemy.engine import Engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from crawlerstack_spiderkeeper.config import settings
 
-engine: Engine = create_engine(
-    settings.DATABASE,
-    # echo=True,
-)
+engine: Engine = create_async_engine(settings.DATABASE, echo=True)
 
-SessionFactory = sessionmaker(bind=engine, autocommit=False, autoflush=True)
+SessionFactory = sessionmaker(
+    engine, expire_on_commit=False, class_=AsyncSession
+)
 
 # https://docs.sqlalchemy.org/en/13/orm/contextual.html#using-thread-local-scope-with-web-applications
 # 在使用此 ScopedSession 的时候需要先初始化 ScopedSession() 注册 session 对象。然后直接使用 ScopedSession.query(User).all()
