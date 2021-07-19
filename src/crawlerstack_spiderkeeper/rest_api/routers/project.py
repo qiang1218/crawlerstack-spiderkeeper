@@ -6,7 +6,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, Response
 
-from crawlerstack_spiderkeeper.api.route_class import AuditRoute
+from crawlerstack_spiderkeeper.rest_api.route_class import AuditRoute
 from crawlerstack_spiderkeeper.schemas.project import (Project, ProjectCreate,
                                                        ProjectUpdate)
 from crawlerstack_spiderkeeper.services import project_service

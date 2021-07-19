@@ -20,10 +20,19 @@ from starlette.datastructures import UploadFile
 from starlette.requests import Request
 
 from crawlerstack_spiderkeeper.config import settings
-from crawlerstack_spiderkeeper.db import ScopedSession
 from crawlerstack_spiderkeeper.utils.metadata import ArtifactMetadata
 
 logger = logging.getLogger(__name__)
+
+
+class SingletonMeta(type):
+    __instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls.__instances:
+            instance = super().__call__(*args, **kwargs)
+            cls.__instances[cls] = instance
+        return cls.__instances[cls]
 
 
 def get_db(request: Request):
@@ -328,21 +337,3 @@ async def forward_fd(reader: AsyncBufferedReader, buffer_size: int, line: int):
                     # 如果 offset 大于 buffer_size 则不断缩小范围
                     # 目的是获取更精确的行数，而不会和预期行数偏差太大
                     offset -= buffer_size
-
-
-def scoping_session(func: Callable):
-    """
-    ScopedSession 装饰器
-    :param func:
-    :return:
-    """
-
-    @wraps(func)
-    def __wrapper(*args, **kwargs):
-        ScopedSession()
-        try:
-            return func(*args, **kwargs)
-        finally:
-            ScopedSession.remove()
-
-    return __wrapper

@@ -2,7 +2,7 @@
 Tests.
 """
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, inspect
 
 from crawlerstack_spiderkeeper.db.models import Audit
 
@@ -15,9 +15,9 @@ async def test_migrate(session):
     :return:
     """
     async with session.bind.connect() as connection:
-        tables_name = await connection.run_sync(session.bind.dialect.get_table_names)
-        assert tables_name
-        assert 'audit' in tables_name
+        table_names = await connection.run_sync(session.bind.dialect.get_table_names)
+        assert table_names
+        assert 'audit' in table_names
 
 
 @pytest.mark.asyncio

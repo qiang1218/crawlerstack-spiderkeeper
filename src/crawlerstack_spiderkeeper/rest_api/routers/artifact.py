@@ -5,7 +5,7 @@ from typing import List
 
 from fastapi import APIRouter, Body, Depends, File, Response, UploadFile
 
-from crawlerstack_spiderkeeper.api.route_class import AuditRoute
+from crawlerstack_spiderkeeper.rest_api.route_class import AuditRoute
 from crawlerstack_spiderkeeper.schemas.artifact import (Artifact,
                                                         ArtifactCreate,
                                                         ArtifactUpdate)

@@ -3,12 +3,12 @@ Storage dao.
 """
 from typing import List
 
+from sqlalchemy import select
+
 from crawlerstack_spiderkeeper.dao.base import BaseDAO
-from crawlerstack_spiderkeeper.db import ScopedSession as Session
 from crawlerstack_spiderkeeper.db.models import Storage
 from crawlerstack_spiderkeeper.schemas.storage import (StorageCreate,
                                                        StorageUpdate)
-from crawlerstack_spiderkeeper.utils import scoping_session
 from crawlerstack_spiderkeeper.utils.states import States
 
 
@@ -16,25 +16,23 @@ class StorageDAO(BaseDAO[Storage, StorageCreate, StorageUpdate]):
     """
     Storage dao.
     """
+    model = Storage
 
-    @scoping_session
-    def increase_storage_count(self, pk: int) -> Storage:
+    async def increase_storage_count(self, pk: int) -> Storage:
         """
         Increase storage count by count.
         :param pk:
         :return:
         """
-        obj = self._get(pk)
+        obj = await self.get_by_id(pk)
         obj.count += 1
-        Session.add(obj)
-        Session.commit()
-        Session.refresh(obj)
         return obj
 
-    @scoping_session
-    def running_storage(self) -> List[Storage]:  # pylint: disable=no-self-use
+    async def running_storage(self) -> List[Storage]:
         """
         Run storage task.
         :return:
         """
-        return Session.query(Storage).filter(Storage.state == States.RUNNING.value).all()
+        stmt = select(self.model).filter(self.model.state == States.RUNNING.value)
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
