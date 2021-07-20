@@ -327,7 +327,7 @@ def client(migrate):
     yield _client
 
 
-@pytest.fixture()
+@pytest.fixture(autouse=True)
 async def spiderkeeper():
     sk = SpiderKeeper(settings)
     await sk.start()
