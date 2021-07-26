@@ -11,8 +11,7 @@ from sqlalchemy.sql.functions import count, func
 from crawlerstack_spiderkeeper.dao.audit import AuditDAO
 from crawlerstack_spiderkeeper.db.models import Audit
 from crawlerstack_spiderkeeper.schemas.audit import AuditCreate, AuditUpdate
-from crawlerstack_spiderkeeper.utils.exceptions import (ObjectDoesNotExist,
-                                                        SpiderkeeperError)
+from crawlerstack_spiderkeeper.utils.exceptions import ObjectDoesNotExist
 
 
 @pytest.fixture()

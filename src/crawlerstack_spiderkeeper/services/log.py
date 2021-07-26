@@ -46,5 +46,3 @@ class LogService(KombuMixin):
         buffered_data.append(body)
         self.logger.debug('Consuming data: %s', body)
         message.ack()
-
-# log = LogService()

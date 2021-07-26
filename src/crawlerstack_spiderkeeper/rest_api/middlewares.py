@@ -17,12 +17,12 @@ def init_middleware(app: FastAPI):
     # app.add_middleware(BaseHTTPMiddleware, dispatch=db_session_middleware)
     app.add_middleware(PrometheusMiddleware)
 
-    if settings.CORS_ORIGINS and len(settings.CORS_ORIGINS) > 0:
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=settings.CORS_ORIGINS,
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-            expose_headers=['x-total-count'],
-        )
+    # if settings.CORS_ORIGINS and len(settings.CORS_ORIGINS) > 0:
+    #     app.add_middleware(
+    #         CORSMiddleware,
+    #         allow_origins=settings.CORS_ORIGINS,
+    #         allow_credentials=True,
+    #         allow_methods=["*"],
+    #         allow_headers=["*"],
+    #         expose_headers=['x-total-count'],
+    #     )

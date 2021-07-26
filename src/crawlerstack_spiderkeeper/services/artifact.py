@@ -7,10 +7,11 @@ import os
 from typing import List
 
 from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.datastructures import UploadFile
 
-from crawlerstack_spiderkeeper.dao import artifact_dao, project_dao
+from crawlerstack_spiderkeeper.dao import ArtifactDAO, ProjectDAO
 from crawlerstack_spiderkeeper.db.models import Artifact
 from crawlerstack_spiderkeeper.schemas.artifact import (ArtifactCreate,
                                                         ArtifactUpdate)
@@ -23,7 +24,7 @@ class ArtifactService(BaseService[Artifact, ArtifactCreate, ArtifactUpdate]):
     """
     Artifact service
     """
-    dao = artifact_dao
+    DAO_CLASS = ArtifactDAO
 
     async def get_project_of_artifacts(self, project_id: int) -> List[Artifact]:
         """
@@ -34,32 +35,39 @@ class ArtifactService(BaseService[Artifact, ArtifactCreate, ArtifactUpdate]):
         return await run_in_executor(self.dao.get_project_of_artifacts, project_id=project_id)
 
 
-class ArtifactFileService:
+class ArtifactFileService(BaseService):
     """
     Artifact file service
     """
+    DAO_CLASS = ArtifactDAO
 
-    def __init__(self):
+    def __init__(self, session: AsyncSession):
+        super().__init__(session)
+        self._artifact_dao = ArtifactDAO(self.session)
+        self._project_dao = ProjectDAO(self.session)
         self.logger = logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
-    async def create(
+    @property
+    def project_dao(self) -> ProjectDAO:
+        return self._project_dao
+
+    async def create_file(
             self,
             project_id: int,
             file: UploadFile
     ) -> str:
         """
         Create artifact file
-        :param session:
         :param project_id:
         :param file:    aiofile obj
         :return:    Uploaded filename
         """
-        project = await run_in_executor(project_dao.get, pk=project_id)
+        project = await self.project_dao.get_by_id(project_id)
         file_metadata = ArtifactMetadata.from_project(project.slug)
         self.logger.debug('Write artifact to %s.', file_metadata.file)
         return await upload(file, file_metadata)
 
-    async def delete(
+    async def delete_file(
             self,
             filename: str
     ) -> None:

@@ -10,7 +10,8 @@ About handle exception:
 """
 from fastapi import FastAPI
 
-from crawlerstack_spiderkeeper.rest_api.handler import exception_handlers as exh
+from crawlerstack_spiderkeeper.rest_api.handler import \
+    exception_handlers as exh
 from crawlerstack_spiderkeeper.utils import exceptions as exs
 
 

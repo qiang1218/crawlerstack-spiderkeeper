@@ -4,8 +4,10 @@ Job service.
 import logging
 from typing import List
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from crawlerstack_spiderkeeper.config import settings
-from crawlerstack_spiderkeeper.dao import artifact_dao, job_dao, task_dao
+from crawlerstack_spiderkeeper.dao import ArtifactDAO, JobDAO, TaskDAO
 from crawlerstack_spiderkeeper.db.models import Artifact, Job, Task
 from crawlerstack_spiderkeeper.executor import executor_factory
 from crawlerstack_spiderkeeper.schemas.artifact import ArtifactUpdate
@@ -23,12 +25,27 @@ class JobService(BaseService[Job, JobCreate, JobUpdate]):
     """
     Job service
     """
-    dao = job_dao
-    task_dao = task_dao
-    artifact_dao = artifact_dao
+    DAO_CLASS = JobDAO
 
-    def __init__(self):
+    def __init__(self, session: AsyncSession):
+        super().__init__(session)
+        self._job_dao = JobDAO(self.session)
+        self._artifact_dao = ArtifactDAO(self.session)
+        self._task_dao = TaskDAO(self.session)
+
         self.executor_cls = executor_factory()
+
+    @property
+    def artifact_dao(self) -> ArtifactDAO:
+        return self._artifact_dao
+
+    @property
+    def task_dao(self) -> TaskDAO:
+        return self._task_dao
+
+    @property
+    def job_dao(self) -> JobDAO:
+        return self._job_dao
 
     async def state(self, pk: int) -> str:
         """
@@ -36,7 +53,7 @@ class JobService(BaseService[Job, JobCreate, JobUpdate]):
         :param pk:
         :return:
         """
-        state = await job_dao.state(pk=pk)
+        state = await self.dao.state(pk=pk)
         if state:
             return state.key
         return 'No run job'
@@ -47,16 +64,16 @@ class JobService(BaseService[Job, JobCreate, JobUpdate]):
         :param pk:
         :return:
         """
-        obj: Job = await run_in_executor(self.dao.get, pk=pk)
-        artifact: Artifact = await run_in_executor(self.artifact_dao.get, pk=obj.artifact_id)
+        obj = await self.dao.get_by_id(pk)
+        artifact = await self.artifact_dao.get_artifact_from_job_id(obj.artifact_id)
         artifact_meta = ArtifactMetadata(artifact.filename)
 
-        running_task_count = await run_in_executor(self.task_dao.count_running_task, job_id=pk)
+        running_task_count = await self.task_dao.count_running_task(pk)
 
         if running_task_count:
             return 'Job already run.'
 
-        task = await run_in_executor(self.task_dao.create, obj_in=TaskCreate(job_id=pk))
+        task = await self.task_dao.create(obj_in=TaskCreate(job_id=pk))
         app_id = AppId(job_id=pk, task_id=task.id)
         await self._build_context(job_id=pk, artifact_meta=artifact_meta)
         # TODO 优化 obj.cmdline 数据因 ` ` 分隔符造成错误。将此数据改为json即可，但要做格式判断
@@ -68,36 +85,31 @@ class JobService(BaseService[Job, JobCreate, JobUpdate]):
     async def _build_context(self, job_id: int, artifact_meta: ArtifactMetadata):
         """如果执行环境不存在，则构建"""
         executor_context = self.executor_cls.executor_context(artifact_meta)
-        artifact: Artifact = await run_in_executor(
-            self.artifact_dao.get_artifact_from_job_id,
-            job_id=job_id
-        )
+        artifact = await self.artifact_dao.get_artifact_from_job_id(job_id=job_id)
 
         # 之后环境存在，并且数据库状态为完成时，才不重新构建
-        if await executor_context.exist() and artifact.state == States.FINISH:
+        if await executor_context.exist() and artifact.state == States.FINISH.value:
             logger.debug('%s context had exist, skip build.', artifact_meta)
         else:
             logger.debug('%s context not exist, building...', artifact_meta)
             # 更新 Job 状态
-            await run_in_executor(
-                self.artifact_dao.update,
+            await self.artifact_dao.update(
                 db_obj=artifact,
-                obj_in=ArtifactUpdate(state=States.BUILDING)
+                obj_in=ArtifactUpdate(state=States.BUILDING.value)
             )
+
             try:
                 await executor_context.build()
             except Exception as ex:
                 logger.debug('%s context build failure. %s', artifact_meta, ex)
-                await run_in_executor(
-                    self.artifact_dao.update,
+                await self.artifact_dao.update(
                     db_obj=artifact,
-                    obj_in=ArtifactUpdate(state=States.FAILURE)
+                    obj_in=ArtifactUpdate(state=States.FAILURE.value)
                 )
                 raise ex
-            await run_in_executor(
-                self.artifact_dao.update,
+            await self.artifact_dao.update(
                 db_obj=artifact,
-                obj_in=ArtifactUpdate(state=States.FINISH)
+                obj_in=ArtifactUpdate(state=States.FINISH.value)
             )
             logger.debug('%s context build finish.', artifact_meta)
 
@@ -121,7 +133,7 @@ class JobService(BaseService[Job, JobCreate, JobUpdate]):
         await run_in_executor(
             self.task_dao.update_by_id,
             pk=app_id.task_id,
-            obj_in=TaskUpdate(container_id=executor.pid, state=States.RUNNING)
+            obj_in=TaskUpdate(container_id=executor.pid, state=States.RUNNING.value)
         )
         logger.debug('%s is running...', app_id)
 
@@ -131,14 +143,13 @@ class JobService(BaseService[Job, JobCreate, JobUpdate]):
         :param pk:
         :return:
         """
-        obj: Job = await self.get(pk)
-        artifact: Artifact = await run_in_executor(self.artifact_dao.get, pk=obj.artifact_id)
+        obj: Job = await self.get_by_id(pk)
+        artifact = await self.artifact_dao.get_by_id(obj.artifact_id)
         artifact_meta = ArtifactMetadata(artifact.filename)
 
-        running_task_count = await run_in_executor(self.task_dao.count_running_task, job_id=pk)
+        running_task_count = await self.task_dao.count_running_task(pk)
 
-        running_tasks = await run_in_executor(
-            self.task_dao.get_running,
+        running_tasks = await self.task_dao.get_running(
             job_id=pk,
             limit=running_task_count
         )
@@ -152,16 +163,16 @@ class JobService(BaseService[Job, JobCreate, JobUpdate]):
                 try:
                     executor = self.executor_cls(artifact_meta, task.container_id)
                     await executor.stop()
-                    state = States.STOPPED
+                    state = States.STOPPED.value
                     detail = 'Stopped.'
                 except Exception as ex:  # pylint: disable=broad-except
-                    state = States.FAILURE
+                    state = States.FAILURE.value
                     detail = f'Stop fail. {str(ex)}'
                     logger.error(detail)
-                await run_in_executor(
-                    self.task_dao.update_by_id,
+                await self.task_dao.update_by_id(
                     pk=task.id,
                     obj_in=TaskUpdate(state=state, detail=detail)
                 )
+
             return 'Stopped'
         return 'No task run.'

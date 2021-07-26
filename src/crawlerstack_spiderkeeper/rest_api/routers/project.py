@@ -7,10 +7,10 @@ from typing import List
 from fastapi import APIRouter, Depends, Response
 
 from crawlerstack_spiderkeeper.rest_api.route_class import AuditRoute
+from crawlerstack_spiderkeeper.rest_api.utils import service_depend
 from crawlerstack_spiderkeeper.schemas.project import (Project, ProjectCreate,
                                                        ProjectUpdate)
-from crawlerstack_spiderkeeper.services import project_service
-from crawlerstack_spiderkeeper.utils import CommonQueryParams
+from crawlerstack_spiderkeeper.services import ProjectService
 
 router = APIRouter(route_class=AuditRoute)
 
@@ -21,26 +21,21 @@ logger = logging.getLogger(__name__)
 async def get_multi(
         *,
         response: Response,
-        commons: CommonQueryParams = Depends(),
+        service: service_depend(ProjectService) = Depends(),
 ):
     """
     Get projects
     :param response:
-    :param commons:
+    :param service:
     :return:
     """
-    total_count = await project_service.count()
+    total_count = await service.count()
     # Set total count to header
     response.headers['X-Total-Count'] = str(total_count)
     data = []
     # If no data, we did not execute select op.
     if total_count:
-        data = await project_service.get_multi(
-            skip=commons.skip,
-            limit=commons.limit,
-            order=commons.order,
-            sort=commons.sort
-        )
+        data = await service.get()
     return data
 
 
@@ -48,26 +43,30 @@ async def get_multi(
 async def get(
         *,
         pk: int,
+        service: service_depend(ProjectService) = Depends(),
 ):
     """
     get one project by pk
     :param pk:
+    :param service:
     :return:
     """
-    return await project_service.get(pk=pk)
+    return await service.get_by_id(pk=pk)
 
 
 @router.post('/projects', response_model=Project)
 async def create(
         *,
         project_in: ProjectCreate,
+        service: service_depend(ProjectService) = Depends(),
 ):
     """
     create project
     :param project_in:
+    :param service:
     :return:
     """
-    return await project_service.create(obj_in=project_in)
+    return await service.create(obj_in=project_in)
 
 
 @router.put('/projects/{pk}', response_model=Project)
@@ -75,26 +74,28 @@ async def put(
         *,
         pk: int,
         project_in: ProjectUpdate,
+        service: service_depend(ProjectService) = Depends(),
 ):
     """
     Update one project's some fields
     :param pk:
-    :param db:
+    :param service:
     :param project_in:
     :return:
     """
-    return await project_service.update(pk=pk, obj_in=project_in)
+    return await service.update_by_id(pk=pk, obj_in=project_in)
 
 
 @router.delete('/projects/{pk}', response_model=Project)
 async def delete(
         *,
         pk: int,
+        service: service_depend(ProjectService) = Depends(),
 ):
     """
     Delete one project
     :param pk:
-    :param db:
+    :param service:
     :return:
     """
-    return await project_service.delete(pk=pk)
+    return await service.delete_by_id(pk=pk)

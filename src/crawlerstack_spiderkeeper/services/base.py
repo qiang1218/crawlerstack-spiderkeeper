@@ -5,12 +5,13 @@ import asyncio
 import logging
 import socket
 from itertools import count
-from typing import Any, Callable, Dict, Generic, List, Optional, Union
+from typing import Any, Callable, Dict, Generic, List, Optional, Type, Union
 
 from kombu import Connection, Consumer, Exchange, Producer, Queue
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from crawlerstack_spiderkeeper.config import settings
-from crawlerstack_spiderkeeper.dao import project_dao
+from crawlerstack_spiderkeeper.dao import ProjectDAO
 from crawlerstack_spiderkeeper.dao.base import BaseDAO
 from crawlerstack_spiderkeeper.db.models import Project
 from crawlerstack_spiderkeeper.schemas.project import (ProjectCreate,
@@ -24,33 +25,52 @@ from crawlerstack_spiderkeeper.utils.types import (CreateSchemaType, ModelType,
 
 class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     """Base service."""
-    dao: BaseDAO
+    DAO_CLASS: Type[BaseDAO]
 
-    async def get(self, pk: Any) -> ModelType:
+    def __init__(self, session: AsyncSession):
+        self._session = session
+        self._dao = self.DAO_CLASS(self.session)
+
+    @property
+    def dao(self):
+        """DAO"""
+        return self._dao
+
+    @property
+    def session(self) -> AsyncSession:
+        """Async session"""
+        return self._session
+
+    async def get_by_id(self, pk: int) -> ModelType:
         """Get record by primary key."""
-        return await run_in_executor(self.dao.get, pk)
+        return await self.dao.get_by_id(pk)
 
-    async def get_multi(
-            self, *, skip: int = 0, limit: int = 100, order: str = 'DESC', sort: str = 'id'
-    ) -> List[ModelType]:
+    async def get(
+            self,
+            *,
+            sorting_fields: Optional[Union[set[str], list[str]]] = None,
+            search_fields: Optional[dict[str, str]] = None,
+            limit: int = 5,
+            offset: int = 0,
+    ) -> list[ModelType]:
         """
         Get multi record.
-        :param skip:
+        :param sorting_fields:
+        :param search_fields:
         :param limit:
-        :param order:   ASC | DESC
-        :param sort:
+        :param offset:
         :return:
         """
-        return await run_in_executor(
-            self.dao.get_multi,
-            skip=skip,
+        return await self.dao.get(
+            sorting_fields=sorting_fields,
+            search_fields=search_fields,
             limit=limit,
-            order=order,
-            sort=sort,
+            offset=offset,
         )
 
     async def create(
             self,
+            *,
             obj_in: CreateSchemaType
     ) -> ModelType:
         """
@@ -58,9 +78,9 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         :param obj_in:
         :return:
         """
-        return await run_in_executor(self.dao.create, obj_in=obj_in)
+        return await self.dao.create(obj_in=obj_in)
 
-    async def update(
+    async def update_by_id(
             self,
             pk: int,
             obj_in: Union[UpdateSchemaType, Dict[str, Any]]
@@ -71,29 +91,29 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         :param obj_in:
         :return:
         """
-        return await run_in_executor(self.dao.update_by_id, pk=pk, obj_in=obj_in)
+        return await self.dao.update_by_id(pk=pk, obj_in=obj_in)
 
-    async def delete(self, *, pk: int) -> ModelType:
+    async def delete_by_id(self, *, pk: int) -> ModelType:
         """
         Delete a record by primary key.
         :param pk:
         :return:
         """
-        return await run_in_executor(self.dao.delete_by_id, pk=pk)
+        return await self.dao.delete_by_id(pk)
 
     async def count(self) -> int:
         """
         Count.
         :return:
         """
-        return await run_in_executor(self.dao.count)
+        return await self.dao.count()
 
 
 class ProjectService(BaseService[Project, ProjectCreate, ProjectUpdate]):
     """
     Project service.
     """
-    dao = project_dao
+    DAO_CLASS = ProjectDAO
 
 
 class KombuMixin:
@@ -102,7 +122,8 @@ class KombuMixin:
     """
     name: str = ''
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.logger = logging.getLogger(f'{__name__}.{self.__class__.__name__}')
         if not self.name:
             raise SpiderkeeperError('You should define name')
@@ -183,7 +204,7 @@ class KombuMixin:
     #     # TODO 完善发送确认机制
     #     raise exception
 
-    async def create(self, app_data: AppData):
+    async def create_msg(self, app_data: AppData):
         """Create server"""
         await run_in_executor(
             self.publish,

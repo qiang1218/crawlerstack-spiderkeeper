@@ -1,6 +1,6 @@
 """Test storage dao"""
 import pytest
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 from crawlerstack_spiderkeeper.dao.storage import StorageDAO
 from crawlerstack_spiderkeeper.db.models import Storage

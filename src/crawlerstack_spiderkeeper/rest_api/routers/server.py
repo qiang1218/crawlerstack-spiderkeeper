@@ -3,9 +3,9 @@ Server route
 """
 from fastapi import APIRouter, Depends, Response
 
+from crawlerstack_spiderkeeper.rest_api.utils import service_depend
 from crawlerstack_spiderkeeper.schemas.server import ServerCreate, ServerUpdate
-from crawlerstack_spiderkeeper.services import server_service
-from crawlerstack_spiderkeeper.utils import CommonQueryParams
+from crawlerstack_spiderkeeper.services import ServerService
 
 router = APIRouter()
 
@@ -14,24 +14,19 @@ router = APIRouter()
 async def get_multi(
         *,
         response: Response,
-        commons: CommonQueryParams = Depends(),
+        service: service_depend(ServerService) = Depends(),
 ):
     """
     Get multi server.
     :param response:
-    :param commons:
+    :param service:
     :return:
     """
-    count = await server_service.count()
+    count = await service.count()
     response.headers['X-Total-Count'] = str(count)
     data = []
     if count:
-        data = await server_service.get_multi(
-            skip=commons.skip,
-            limit=commons.limit,
-            order=commons.order,
-            sort=commons.sort,
-        )
+        data = await service.get()
     return data
 
 
@@ -39,51 +34,59 @@ async def get_multi(
 async def get(
         *,
         pk: int,
+        service: service_depend(ServerService) = Depends(),
 ):
     """
     Get server by id.
     :param pk:
+    :param service:
     :return:
     """
-    return await server_service.get(pk=pk)
+    return await service.get_by_id(pk=pk)
 
 
 @router.post('/servers')
 async def create(
         *,
         server_in: ServerCreate,
+        service: service_depend(ServerService) = Depends(),
 ):
     """
     Create server
     :param server_in:
+    :param service:
     :return:
     """
-    return await server_service.create(obj_in=server_in)
+    return await service.create(obj_in=server_in)
 
 
 @router.put('/servers/{pk}')
 async def put(
         *,
         pk: int,
-        obj_in: ServerUpdate
+        obj_in: ServerUpdate,
+        service: service_depend(ServerService) = Depends(),
 ):
     """
     Update a server.
     :param pk:
     :param obj_in:
+    :param service:
     :return:
     """
-    return await server_service.update(pk=pk, obj_in=obj_in)
+    return await service.update_by_id(pk=pk, obj_in=obj_in)
 
 
 @router.delete('/servers/{pk}')
 async def delete(
         *,
         pk: int,
+        service: service_depend(ServerService) = Depends(),
 ):
     """
     Delete a server.
     :param pk:
+    :param service:
     :return:
     """
-    return await server_service.delete(pk=pk)
+    return await service.delete_by_id(pk=pk)

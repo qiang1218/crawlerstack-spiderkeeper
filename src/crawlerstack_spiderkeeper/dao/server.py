@@ -15,6 +15,7 @@ class ServerDAO(BaseDAO[Server, ServerCreate, ServerUpdate]):
     """
     Server dao.
     """
+    model = Server
 
     async def get_server_by_job_id(self, job_id: int) -> Optional[Server]:
         """

@@ -1,11 +1,12 @@
 """
 Test config.
 """
+import contextlib
 import os
 import tempfile
 from datetime import datetime
 from shutil import make_archive
-from typing import Generator
+from typing import AsyncContextManager, Callable, Generator
 from urllib.parse import urlparse
 
 import pytest
@@ -109,7 +110,8 @@ async def session_factory():
     """Session factory fixture"""
     engine: Engine = create_async_engine(
         settings.DATABASE,
-        echo=True,
+        isolation_level='READ COMMITTED',
+        # echo=True,
     )
     yield sessionmaker(
         bind=engine,
@@ -151,7 +153,7 @@ def migrate():
 
 
 @pytest.fixture()
-async def session(migrate, session_factory) -> Session:
+async def session(migrate, session_factory) -> AsyncSession:
     """Session fixture."""
     async with session_factory() as _session:
         yield _session
@@ -323,7 +325,7 @@ def client(migrate):
     """Api client fixture."""
     spider_keeper = SpiderKeeper(settings)
     spider_keeper.rest_api.init()
-    _client = TestClient(spider_keeper.rest_api.app, raise_server_exceptions=False)
+    _client = TestClient(spider_keeper.rest_api.app)
     yield _client
 
 
@@ -333,3 +335,14 @@ async def spiderkeeper():
     await sk.start()
     yield sk
     await sk.stop()
+
+
+@pytest.fixture()
+def factory_with_session(spiderkeeper) -> Callable[..., AsyncContextManager]:
+    @contextlib.asynccontextmanager
+    async def factory(kls):
+        async with spiderkeeper.db.session() as session:
+            async with session.begin():
+                yield kls(session)
+
+    return factory

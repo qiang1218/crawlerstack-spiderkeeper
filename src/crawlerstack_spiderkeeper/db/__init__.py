@@ -1,15 +1,17 @@
 import contextlib
 import functools
+from asyncio import current_task
 from collections import Awaitable, Callable
 from inspect import signature
-from typing import Optional, TypeVar, Any
+from typing import Any, Optional, TypeVar, Type
 
 from dynaconf import Dynaconf
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
-                                    create_async_engine, AsyncSessionTransaction)
-from sqlalchemy.future import Engine, Connection
-from sqlalchemy.orm import scoped_session, sessionmaker, Session
+                                    AsyncSessionTransaction,
+                                    create_async_engine, async_scoped_session)
+from sqlalchemy.future import Connection, Engine
+from sqlalchemy.orm import sessionmaker
 
 from crawlerstack_spiderkeeper.utils import SingletonMeta
 from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
@@ -48,8 +50,8 @@ class Database(metaclass=SingletonMeta):
         """"""
 
     @property
-    def scoped_session(self) -> scoped_session:
-        return scoped_session(self.session)
+    def scoped_session(self) -> async_scoped_session:
+        return async_scoped_session(self.session, scopefunc=current_task)
 
     async def close(self) -> None:
         await self.engine.dispose()

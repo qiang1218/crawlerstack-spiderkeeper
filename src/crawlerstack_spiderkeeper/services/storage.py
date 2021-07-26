@@ -7,27 +7,44 @@ from asyncio import AbstractEventLoop
 from typing import Callable, Dict, Optional
 
 from kombu import Message
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from crawlerstack_spiderkeeper.dao import server_dao, storage_dao, task_dao
-from crawlerstack_spiderkeeper.db.models import Server, Storage
+from crawlerstack_spiderkeeper.dao import ServerDAO, StorageDAO, TaskDAO
 from crawlerstack_spiderkeeper.exportors import BaseExporter, exporters_factory
 from crawlerstack_spiderkeeper.schemas.storage import (StorageCreate,
                                                        StorageUpdate)
-from crawlerstack_spiderkeeper.services.base import KombuMixin
-from crawlerstack_spiderkeeper.utils import AppData, AppId, run_in_executor
+from crawlerstack_spiderkeeper.services.base import BaseService, KombuMixin
+from crawlerstack_spiderkeeper.utils import AppData, AppId
 from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
 from crawlerstack_spiderkeeper.utils.states import States
 
 
-class StorageService(KombuMixin):
+class StorageService(KombuMixin, BaseService):
     """
     Storage service.
     """
     name = 'storage'
 
-    def __init__(self):
-        super().__init__()
+    DAO_CLASS = StorageDAO
+
+    def __init__(self, session: AsyncSession):
+        super().__init__(session)
         self.__storage_tasks: Dict[str, asyncio.Future] = {}
+        self._task_dao = TaskDAO(self.session)
+        self._server_dao = ServerDAO(self.session)
+        self._storage_dao = StorageDAO(self.session)
+
+    @property
+    def server_dao(self) -> ServerDAO:
+        return self._server_dao
+
+    @property
+    def task_dao(self) -> TaskDAO:
+        return self._task_dao
+
+    @property
+    def storage_dao(self) -> StorageDAO:
+        return self._storage_dao
 
     @property
     def _event_loop(self) -> AbstractEventLoop:
@@ -36,17 +53,13 @@ class StorageService(KombuMixin):
 
     async def create(self, app_data: AppData):
         """Create storage task."""
-        await super().create(app_data)
-
-        await run_in_executor(
-            task_dao.increase_item_count,
-            pk=app_data.app_id.task_id,
-        )
+        await super().create_msg(app_data)
+        await self.task_dao.increase_item_count(app_data.app_id.task_id)
         self.logger.debug('Increase task: %s item count.', app_data.app_id.task_id)
 
     async def _exporter(self, job_id: int) -> BaseExporter:
         """Get exporter by job id."""
-        server: Server = await run_in_executor(server_dao.get_server_by_job_id, job_id)
+        server = await self.server_dao.get_server_by_job_id(job_id)
         if server:
             exporter_cls = exporters_factory(server.type)
             if exporter_cls:
@@ -73,7 +86,8 @@ class StorageService(KombuMixin):
         # 如果没有异常，则更新状态，同时 ack
         else:
             # 由于 kombu consume 的回调不支持异步，所以这里使用同步操作。
-            storage_dao.increase_storage_count(storage_id)
+            # FIXME 更改为异步后 increase_storage_count 也变成了异步操作。
+            # storage_dao.increase_storage_count(storage_id)
             message.ack()
 
     async def consume_task(
@@ -91,10 +105,8 @@ class StorageService(KombuMixin):
         state = States.RUNNING
         detail = None
 
-        storage_obj: Storage = await run_in_executor(
-            storage_dao.create,
-            obj_in=StorageCreate(job_id=app_id.job_id, state=state),
-        )
+        storage_obj = await self.storage_dao.create(obj_in=StorageCreate(job_id=app_id.job_id, state=state))
+
         try:
             exporter = await self._exporter(job_id=app_id.job_id)
             callback = functools.partial(self.callback, exporter.write, storage_obj.id)
@@ -118,8 +130,7 @@ class StorageService(KombuMixin):
         self._clean_storage_task(app_id)
 
         self.logger.debug('storage task : %s %s', app_id, state)
-        await run_in_executor(
-            storage_dao.update_by_id,
+        await self.storage_dao.update_by_id(
             pk=storage_obj.id,
             obj_in=StorageUpdate(state=state, detail=detail),
         )
@@ -130,7 +141,7 @@ class StorageService(KombuMixin):
         :param app_id:
         :return:
         """
-        running_storage = await run_in_executor(storage_dao.running_storage)
+        running_storage = await self.storage_dao.running_storage()
         if str(app_id) not in self.__storage_tasks:
             # 如果没有 Storage 任务，则更新数据库状态
             if running_storage:
@@ -139,14 +150,14 @@ class StorageService(KombuMixin):
                         'Because storage: %s already stop, update db state',
                         storage.id
                     )
-                    await run_in_executor(
-                        storage_dao.update_by_id,
+                    await self.storage_dao.update_by_id(
                         pk=storage.id,
                         obj_in=StorageUpdate(
                             state=States.STOPPED,
                             detail='storage task already stop, update db state'
                         )
                     )
+
             return True
 
     async def start(self, app_id: AppId) -> str:

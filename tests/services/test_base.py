@@ -5,11 +5,11 @@ from typing import Dict
 
 import pytest
 from kombu import Message
+from sqlalchemy import select, func, text
 
-from crawlerstack_spiderkeeper.db.models import Project
-from crawlerstack_spiderkeeper.schemas.project import (ProjectCreate,
-                                                       ProjectUpdate)
-from crawlerstack_spiderkeeper.services import project_service
+from crawlerstack_spiderkeeper.db.models import Audit
+from crawlerstack_spiderkeeper.schemas.audit import AuditCreate, AuditUpdate
+from crawlerstack_spiderkeeper.services import AuditService
 from crawlerstack_spiderkeeper.services.base import KombuMixin
 from crawlerstack_spiderkeeper.utils.exceptions import ObjectDoesNotExist
 
@@ -18,65 +18,100 @@ class TestBaseService:
     """Test base service."""
 
     @pytest.mark.asyncio
-    async def test_get_multi_return_no_result(self, migrate):
+    async def test_get_return_no_result(self, migrate, factory_with_session):
         """Test no object when get multi."""
-        objs = await project_service.get_multi()
+        async with factory_with_session(AuditService) as service:
+            objs = await service.get()
         assert objs == []
 
     @pytest.mark.asyncio
-    async def test_get_multi(self, init_project, session):
+    async def test_get(self, init_audit, session, factory_with_session):
         """Test get multi object."""
-        objs = await project_service.get_multi()
-        assert len(objs) == session.query(Project).count()
+        async with factory_with_session(AuditService) as service:
+            objs = await service.get()
+        stmt = select(func.count()).select_from(Audit)
+        assert len(objs) == await session.scalar(stmt)
 
     @pytest.mark.asyncio
-    async def test_get(self, init_project, session):
+    async def test_get_by_id(self, init_audit, session, factory_with_session):
         """Test get a object."""
-        exist_obj = session.query(Project).first()
-        obj = await project_service.get(exist_obj.id)
+        exist_obj = await session.scalar(select(Audit))
+
+        async with factory_with_session(AuditService) as service:
+            obj = await service.get_by_id(exist_obj.id)
+
         assert obj.id == exist_obj.id
 
     @pytest.mark.asyncio
-    async def test_get_return_no_result(self, migrate):
+    async def test_get_by_id_with_no_data(self, migrate, factory_with_session):
         """Test get a not exist object."""
-        with pytest.raises(ObjectDoesNotExist):
-            await project_service.get(1)
+        async with factory_with_session(AuditService) as service:
+            with pytest.raises(ObjectDoesNotExist):
+                await service.get_by_id(1)
 
     @pytest.mark.asyncio
-    async def test_create(self, migrate):
+    async def test_create(self, migrate, session, factory_with_session):
         """Test create a object."""
-        obj = await project_service.create(obj_in=ProjectCreate(name='foo', slug='foo'))
-        assert obj
-        assert isinstance(obj, Project)
+        async with factory_with_session(AuditService) as service:
+            obj_in = AuditCreate(
+                url='https://example.com',
+                method='POST',
+                detail='foo',
+                client='127.0.0.1'
+            )
+            obj = await service.create(obj_in=obj_in)
+            assert obj
+            assert isinstance(obj, Audit)
+            stmt = select(func.count()).select_from(Audit)
+
+        assert await session.scalar(stmt) == 1
 
     @pytest.mark.asyncio
-    async def test_update(self, init_project, session):
+    async def test_update(self, init_audit, session, factory_with_session):
         """Test update a object."""
-        exist_obj = session.query(Project).first()
-        changed_name = 'test_update'
-        obj = await project_service.update(exist_obj.id, ProjectUpdate(name=changed_name))
-        assert exist_obj.name != obj.name
+        exist_obj = await session.scalar(select(Audit))
+        changed = 'test_update'
+        async with factory_with_session(AuditService) as service:
+            obj = await service.update_by_id(exist_obj.id, AuditUpdate(detail=changed))
+        assert exist_obj.detail != obj.detail
 
     @pytest.mark.asyncio
-    async def test_update_obj_not_exist(self, migrate):
+    async def test_update_obj_not_exist(self, migrate, factory_with_session):
         """Test update a not exist object."""
-        with pytest.raises(ObjectDoesNotExist):
-            changed_name = 'test_update'
-            await project_service.update(1, ProjectUpdate(name=changed_name))
+        async with factory_with_session(AuditService) as service:
+            with pytest.raises(ObjectDoesNotExist):
+                changed = 'test_update'
+                await service.update_by_id(1, AuditUpdate(detail=changed))
 
     @pytest.mark.asyncio
-    async def test_delete(self, init_project, session):
+    async def test_delete(self, init_audit, session, factory_with_session):
         """Test delete a object."""
-        count = session.query(Project).count()
-        obj = session.query(Project).first()
-        await project_service.delete(pk=obj.id)
-        assert count - 1 == session.query(Project).count()
+        stmt = select(func.count()).select_from(Audit)
+
+        async with session.begin():
+            before_count = await session.scalar(stmt)
+            obj = await session.scalar(select(Audit))
+
+        async with factory_with_session(AuditService) as service:
+            await service.delete_by_id(pk=obj.id)
+
+        async with session.begin():
+            after_count = await session.scalar(stmt)
+
+        assert before_count - 1 == after_count
 
     @pytest.mark.asyncio
-    async def test_delete_no_exist(self, migrate):
+    async def test_delete_no_exist(self, migrate, factory_with_session):
         """Test delete a not exist object."""
-        with pytest.raises(ObjectDoesNotExist):
-            await project_service.delete(pk=1)
+        async with factory_with_session(AuditService) as service:
+            with pytest.raises(ObjectDoesNotExist):
+                await service.delete_by_id(pk=1)
+
+    @pytest.mark.asyncio
+    async def test_count(self, migrate, init_audit, factory_with_session):
+        async with factory_with_session(AuditService) as service:
+            result = await service.count()
+            assert result == 2
 
 
 # ===================

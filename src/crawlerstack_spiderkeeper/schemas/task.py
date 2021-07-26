@@ -13,7 +13,7 @@ class TaskBase(BaseModel):
     """Task base schema."""
     create_time: datetime = None
     update_time: datetime = None
-    state: States = None
+    state: int = None
     item_count: int = 0
     detail: str = None
     container_id: constr(max_length=120) = None

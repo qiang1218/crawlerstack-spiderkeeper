@@ -9,7 +9,7 @@ from fastapi.routing import APIRoute
 from starlette.datastructures import UploadFile
 
 from crawlerstack_spiderkeeper.schemas.audit import AuditCreate
-from crawlerstack_spiderkeeper.services import audit_service
+from crawlerstack_spiderkeeper.services import AuditService
 
 
 class AuditRoute(APIRoute):
@@ -77,7 +77,10 @@ async def _audit_record(request: Request, response: Response):
         'user_id': user,
         'detail': json.dumps(detail),
     }
-    await audit_service.create(obj_in=AuditCreate(**data))
+    db = request.app.extra.get('db')
+    async with db.scoped_session() as session:
+        service = AuditService(session)
+        await service.create(obj_in=AuditCreate(**data))
 
 
 async def _get_request_body(request: Request) -> Dict:

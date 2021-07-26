@@ -2,10 +2,13 @@
 """
 Cmdline.
 """
+import asyncio
+
 import click
 
 from crawlerstack_spiderkeeper import __version__
 from crawlerstack_spiderkeeper.config import settings
+from crawlerstack_spiderkeeper.manage import SpiderKeeper
 
 
 @click.group(invoke_without_command=True)
@@ -38,7 +41,7 @@ def api(host, port, level, file):
     for name, value in kwargs.items():
         if value:
             settings.set(name, value)
-    # SpiderKeeper(settings).run()
+    asyncio.run(SpiderKeeper(settings).run())
 
 
 if __name__ == '__main__':

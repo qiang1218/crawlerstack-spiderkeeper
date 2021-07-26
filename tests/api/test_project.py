@@ -4,20 +4,19 @@ from crawlerstack_spiderkeeper.db.models import Artifact, Project
 from tests.conftest import assert_status_code, build_api_url
 
 
-def test_get_multi(client, init_project, session):
+def test_get_multi(client, init_project):
     """Test get multi projects"""
     response = client.get(build_api_url('/projects'))
     assert_status_code(response)
-    assert len(response.json()) == session.query(Project).count()
+    assert len(response.json()) == 2
 
 
-def test_get(client, init_project, session):
+def test_get(client, init_project):
     """Test get a project."""
-    obj = session.query(Project).first()
-    api = build_api_url(f'/projects/{obj.id}')
+    api = build_api_url('/projects/1')
     response = client.get(api)
     assert_status_code(response)
-    assert response.json().get('id') == obj.id
+    assert response.json().get('id') == 1
 
 
 def test_create(client, migrate):
@@ -28,40 +27,34 @@ def test_create(client, migrate):
         'slug': 'demo_1',
     }
     response = client.post(api, json=data)
-    print(response.text)
     assert_status_code(response)
     assert response.json().get('name') == 'demo-1'
 
 
-def test_put(client, init_project, session):
+def test_put(client, init_project):
     """Test update a project."""
-    obj = session.query(Project).first()
-    api = build_api_url(f'/projects/{obj.id}')
-    data = {
-        'name': 'xxx'
-    }
+    api = build_api_url(f'/projects/1')
+    data = {'name': 'changed'}
     response = client.put(api, json=data)
     assert_status_code(response)
-    assert response.json().get('name') == 'xxx'
+    assert response.json().get('name') == 'changed'
 
 
-def test_delete(client, init_project, session):
+def test_delete(client, init_project):
     """Test delete a project."""
-    project = session.query(Project).first()
-    count = session.query(Project).count()
-    response = client.delete(build_api_url(f'/projects/{project.id}'))
+    response = client.delete(build_api_url(f'/projects/1'))
     assert_status_code(response)
-    assert session.query(Project).count() == count - 1
+    response = client.get(build_api_url('/projects'))
+    assert int(response.headers['X-Total-Count']) == 1
 
 
-def test_delete_with_cascade(client, init_project, init_artifact, session):
+def test_delete_with_cascade(client, init_project, init_artifact):
     """Test delete project with it's children."""
-    obj = session.query(Project).first()
-    api = build_api_url(f'/projects/{obj.id}')
+    api = build_api_url(f'/projects/1')
     response = client.delete(api)
     assert_status_code(response)
-    count = session.query(Artifact).filter(Artifact.project_id == obj.id).count()
-    assert not count
+    response = client.get(build_api_url('/artifacts'))
+    assert not int(response.headers['X-Total-Count'])
 
 
 def test_delete_with_cascade_error(client, init_project, init_job, session):

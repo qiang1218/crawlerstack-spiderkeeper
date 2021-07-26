@@ -1,14 +1,15 @@
 """
 Base dao.
 """
-from typing import Any, Generic, Type, Union, Optional
+from typing import Any, Generic, Optional, Type, Union
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import select, update, delete, func
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
-from crawlerstack_spiderkeeper.utils.exceptions import (ObjectDoesNotExist, SpiderkeeperError)
+from crawlerstack_spiderkeeper.utils.exceptions import (ObjectDoesNotExist,
+                                                        SpiderkeeperError)
 from crawlerstack_spiderkeeper.utils.types import (CreateSchemaType, ModelType,
                                                    UpdateSchemaType)
 

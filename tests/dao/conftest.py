@@ -1,6 +1,6 @@
-from collections import Callable
-from typing import Type, AsyncContextManager
 import contextlib
+from collections import Callable
+from typing import AsyncContextManager, Type
 
 import pytest
 

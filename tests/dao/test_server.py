@@ -2,7 +2,7 @@
 import pytest
 from sqlalchemy import select
 
-from crawlerstack_spiderkeeper.dao.server import  ServerDAO
+from crawlerstack_spiderkeeper.dao.server import ServerDAO
 from crawlerstack_spiderkeeper.db.models import Job
 
 

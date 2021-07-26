@@ -2,7 +2,7 @@
 Tests.
 """
 import pytest
-from sqlalchemy import select, inspect
+from sqlalchemy import inspect, select
 
 from crawlerstack_spiderkeeper.db.models import Audit
 

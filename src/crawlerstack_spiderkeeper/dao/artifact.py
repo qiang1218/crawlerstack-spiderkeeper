@@ -27,7 +27,7 @@ class ArtifactDAO(BaseDAO[Artifact, ArtifactCreate, ArtifactUpdate]):
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def get_artifact_from_job_id(self, job_id: int) -> List[Artifact]:
+    async def get_artifact_from_job_id(self, job_id: int) -> Artifact:
         """
         Get artifact from job id
         :param job_id:

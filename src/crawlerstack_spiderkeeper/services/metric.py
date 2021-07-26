@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 
 from kombu import Message
 from prometheus_client import Histogram
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from crawlerstack_spiderkeeper.services.base import KombuMixin
 from crawlerstack_spiderkeeper.utils import AppId
@@ -38,7 +39,8 @@ class MetricService(KombuMixin):
 
     metrics = {name: Histogram(name, name, labels) for name in metric_name}
 
-    def __init__(self):
+    def __init__(self, session: AsyncSession):
+        self._session = session
         super().__init__()
         self.__should_stop: Optional[asyncio.Future] = None
 

@@ -15,6 +15,7 @@ class JobDAO(BaseDAO[Job, JobCreate, JobUpdate]):
     """
     Job dao.
     """
+    model = Job
 
     async def state(self, *, pk: int) -> Optional[States]:
         """

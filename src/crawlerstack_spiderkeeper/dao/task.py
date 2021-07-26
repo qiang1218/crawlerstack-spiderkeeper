@@ -3,7 +3,7 @@ Task dao.
 """
 from typing import List, Optional
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 from crawlerstack_spiderkeeper.dao.base import BaseDAO
 from crawlerstack_spiderkeeper.db.models import Task
