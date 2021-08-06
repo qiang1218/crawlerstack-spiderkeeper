@@ -18,12 +18,12 @@ def router_v1():
     router.include_router(audit.router, tags=['Audit'])
     router.include_router(server.router, tags=['Server'])
     router.include_router(project.router, tags=["Project"])
-    # router.include_router(artifact.router, tags=['Artifact'])
-    # router.include_router(job.router, tags=["Job"])
-    # router.include_router(task.router, tags=["Task"])
+    router.include_router(artifact.router, tags=['Artifact'])
+    router.include_router(job.router, tags=["Job"])
+    router.include_router(task.router, tags=["Task"])
 
     # router.include_router(log.router, tags=["Log"])
-    # router.include_router(metric.router, tags=["Metric"])
+    router.include_router(metric.router, tags=["Metric"])
     # router.include_router(storage.router, tags=["Storage"])
 
     return router

@@ -26,6 +26,7 @@ default:
 
   ##########################################################
   # Kombu
+#  mq: 'amqp://guest:guest@localhost:5672//'
   mq: memory://
 
   ##########################################################
@@ -57,7 +58,7 @@ development:
 production:
 
 test:
-  debug: false
+  debug: true
   verbose: false
   loglevel: DEBUG
   database: 'sqlite+aiosqlite:////tmp/spiderkeeper.db'

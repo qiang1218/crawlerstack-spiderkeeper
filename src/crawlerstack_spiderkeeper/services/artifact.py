@@ -15,12 +15,12 @@ from crawlerstack_spiderkeeper.dao import ArtifactDAO, ProjectDAO
 from crawlerstack_spiderkeeper.db.models import Artifact
 from crawlerstack_spiderkeeper.schemas.artifact import (ArtifactCreate,
                                                         ArtifactUpdate)
-from crawlerstack_spiderkeeper.services.base import BaseService
+from crawlerstack_spiderkeeper.services.base import EntityService
 from crawlerstack_spiderkeeper.utils import run_in_executor, upload
 from crawlerstack_spiderkeeper.utils.metadata import ArtifactMetadata
 
 
-class ArtifactService(BaseService[Artifact, ArtifactCreate, ArtifactUpdate]):
+class ArtifactService(EntityService[Artifact, ArtifactCreate, ArtifactUpdate]):
     """
     Artifact service
     """
@@ -35,7 +35,7 @@ class ArtifactService(BaseService[Artifact, ArtifactCreate, ArtifactUpdate]):
         return await run_in_executor(self.dao.get_project_of_artifacts, project_id=project_id)
 
 
-class ArtifactFileService(BaseService):
+class ArtifactFileService(EntityService):
     """
     Artifact file service
     """

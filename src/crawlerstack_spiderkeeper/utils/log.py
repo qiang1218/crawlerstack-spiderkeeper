@@ -42,15 +42,17 @@ def init_logging_config() -> Dict:
         "disable_existing_loggers": False,
         "formatters": {
             'verbose': {
-                'format': '%(asctime)s %(levelname)s %(name)s %(process)d %(thread)d %(message)s'
+                'format': '%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(process)d %(thread)d - %(pathname)s:%(lineno)d %(message)s',
+                'datefmt': '%Y-%m-%dT%H:%M:%S.%s+0800',
             },
             'simple': {
-                'format': '%(asctime)s %(levelname)s %(message)s'
+                'format': '%(asctime)s - %(name)s - %(levelname)s %(message)s',
+                'datefmt': '%Y-%m-%dT%H:%M:%S.%s+0800',
             },
             "access": {
                 "()": "uvicorn.logging.AccessFormatter",
-                "fmt": '%(asctime)s %(levelprefix)s %(client_addr)s - '
-                       '"%(request_line)s" %(status_code)s',
+                "fmt": '%(asctime)s %(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
+                'datefmt': '%Y-%m-%dT%H:%M:%S.%s+0800',
             },
         },
         "handlers": {

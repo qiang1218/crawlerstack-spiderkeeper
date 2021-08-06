@@ -1,66 +1,71 @@
 """
 Test storage service.
 """
-# import asyncio
-#
-# import pytest
-# from kombu import Message
-#
-# from crawlerstack_spiderkeeper.dao import TaskDAO
-# from crawlerstack_spiderkeeper.db.models import Storage, Task
-# from crawlerstack_spiderkeeper.services import storage_service, StorageService
-# from crawlerstack_spiderkeeper.signals import server_stop
-# from crawlerstack_spiderkeeper.utils import AppData, AppId
-# from crawlerstack_spiderkeeper.utils.states import States
-#
-#
-# @pytest.fixture()
-# async def app_data(init_task, factory_with_session):
-#     """Fixture app data."""
-#     async with factory_with_session(TaskDAO) as dao:
-#         tasks = await dao.get(limit=1)
-#         task = tasks[0]
-#     yield AppData(app_id=str(AppId(task.job_id, task.id)), data={'foo': 'bar'})
-#
-#
-# @pytest.mark.asyncio
-# async def test_create(mocker, init_task, session, app_data, factory_with_session):
-#     """Test create a storage."""
-#     async with factory_with_session(StorageService) as service:
-#         mocker.patch.object(service, 'publish')
-#         await service.create(app_data)
-#     task = await session.get(Task, app_data.app_id.task_id)
-#     assert task.item_count == 1
-#
-#
-# @pytest.mark.asyncio
-# @pytest.mark.parametrize(
-#     ['server', 'exporter_cls', 'except_value'],
-#     [
-#         (True, True, None),
-#         (True, False, 'is not support'),
-#         (False, False, 'not config server info.'),
-#         (False, True, 'not config server info.'),
-#     ]
-# )
-# async def test__exporter_error(mocker, server, exporter_cls, except_value):
-#     """Test export error."""
-#     mocker.patch(
-#         'crawlerstack_spiderkeeper.services.storage.run_in_executor',
-#         new_callable=mocker.AsyncMock,
-#         return_value=mocker.MagicMock() if server else server
-#     )
-#     exporter_cls_mocker = mocker.MagicMock()
-#     mocker.patch(
-#         'crawlerstack_spiderkeeper.services.storage.exporters_factory',
-#         return_value=exporter_cls_mocker if exporter_cls else exporter_cls
-#     )
-#     if except_value:
-#         with pytest.raises(Exception, match=except_value):
-#             await storage_service._exporter(1)  # pylint: disable=protected-access
-#     else:
-#         await storage_service._exporter(1)  # pylint: disable=protected-access
-#         exporter_cls_mocker.from_url.assert_called_once()
+import asyncio
+
+import pytest
+from kombu import Message
+
+from crawlerstack_spiderkeeper.dao import TaskDAO
+from crawlerstack_spiderkeeper.db.models import Storage, Task
+from crawlerstack_spiderkeeper.services import StorageService
+from crawlerstack_spiderkeeper.signals import server_stop
+from crawlerstack_spiderkeeper.utils import AppData, AppId
+from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
+from crawlerstack_spiderkeeper.utils.states import States
+
+
+@pytest.fixture()
+async def app_data(init_task, factory_with_session):
+    """Fixture app data."""
+    async with factory_with_session(TaskDAO) as dao:
+        tasks = await dao.get(limit=1)
+        task = tasks[0]
+    yield AppData(app_id=str(AppId(task.job_id, task.id)), data={'foo': 'bar'})
+
+
+@pytest.mark.asyncio
+async def test_create(mocker, session_factory, app_data, factory_with_session):
+    """Test create a storage."""
+    async with factory_with_session(StorageService) as service:
+        mocker.patch.object(service, 'publish')
+        await service.create(app_data)
+    async with session_factory() as session:
+        task = await session.get(Task, app_data.app_id.task_id)
+    assert task.item_count == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ['server', 'exporter_cls', 'except_value'],
+    [
+        (True, True, None),
+        (True, False, 'is not support'),
+        (False, False, 'not config server info.'),
+        (False, True, 'not config server info.'),
+    ]
+)
+async def test_exporter(mocker, init_job, server, factory_with_session, exporter_cls, except_value):
+    """Test export error."""
+    # exporter_cls_mocker = mocker.MagicMock()
+    # mocker.patch(
+    #     'crawlerstack_spiderkeeper.services.storage.exporters_factory',
+    #     return_value=exporter_cls_mocker if exporter_cls else exporter_cls
+    # )
+    async with factory_with_session(StorageService) as service:
+        res = await service.exporter(1)
+        print(res)
+        print(id(res))
+        print(id(service.dao.session))
+    #     # if except_value:
+    #     #     with pytest.raises(SpiderkeeperError):
+    #     #         await service.exporter(1)
+    #     # else:
+    #     #     await service.exporter(1)
+    #     #     exporter_cls_mocker.from_url.assert_called_once()
+    # print(service)
+
+
 #
 #
 # @pytest.mark.asyncio

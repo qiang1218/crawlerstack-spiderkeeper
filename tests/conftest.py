@@ -2,6 +2,7 @@
 Test config.
 """
 import contextlib
+import logging
 import os
 import tempfile
 from datetime import datetime
@@ -16,18 +17,21 @@ from alembic.command import upgrade as alembic_upgrade
 from alembic.config import Config as AlembicConfig
 from fastapi import Response, UploadFile
 from sqlalchemy import select
-from sqlalchemy.engine import Engine
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.engine import Engine, create_engine
+from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
+                                    create_async_engine)
 from sqlalchemy.orm import Session, sessionmaker
 from starlette.testclient import TestClient
 
 from crawlerstack_spiderkeeper.config import settings
 from crawlerstack_spiderkeeper.db.models import (Artifact, Audit, Job, Project,
-                                                 Server, Storage, Task)
+                                                 Server, Storage, Task, BaseModel)
 from crawlerstack_spiderkeeper.manage import SpiderKeeper
 from crawlerstack_spiderkeeper.signals import server_start, server_stop
 from crawlerstack_spiderkeeper.utils.metadata import ArtifactMetadata, Metadata
 from crawlerstack_spiderkeeper.utils.states import States
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture()
@@ -105,24 +109,6 @@ def demo_zip(data_dir, temp_dir) -> Generator[str, None, None]:
     yield os.path.join(metadata.artifact_files_path, filename)
 
 
-@pytest.fixture()
-async def session_factory():
-    """Session factory fixture"""
-    engine: Engine = create_async_engine(
-        settings.DATABASE,
-        isolation_level='READ COMMITTED',
-        # echo=True,
-    )
-    yield sessionmaker(
-        bind=engine,
-        autoflush=True,
-        expire_on_commit=False,
-        class_=AsyncSession
-    )
-
-    await engine.dispose()
-
-
 @pytest.fixture(name='uploaded_file')
 def fixture_uploaded_file(temp_dir):
     """Uploaded file fixture."""
@@ -133,23 +119,56 @@ def fixture_uploaded_file(temp_dir):
 
 
 @pytest.fixture()
-def migrate():
+async def engine():
+    engine: AsyncEngine = create_async_engine(
+        settings.DATABASE,
+        # echo=True,
+    )
+    try:
+        yield engine
+    finally:
+        await engine.dispose()
+
+
+@pytest.fixture()
+async def session_factory(engine):
+    """Session factory fixture"""
+    yield sessionmaker(
+        bind=engine,
+        class_=AsyncSession
+    )
+
+
+@pytest.fixture()
+async def migrate(engine):
     """migrate fixture."""
-    datetime.now()
-    os.chdir(os.path.join(settings.BASE_DIR, 'alembic'))
-    alembic_config = AlembicConfig(os.path.join(settings.BASE_DIR, 'alembic', 'alembic.ini'))
-    alembic_config.set_main_option('script_location', os.getcwd())
-    print(f'\n----- RUN ALEMBIC MIGRATION, DB URI: {settings.DATABASE}\n')
-    alembic_downgrade(alembic_config, 'base')
-    alembic_upgrade(alembic_config, 'head')
+    # datetime.now()
+    # os.chdir(os.path.join(settings.BASE_DIR, 'alembic'))
+    # alembic_config = AlembicConfig(os.path.join(settings.BASE_DIR, 'alembic', 'alembic.ini'))
+    # alembic_config.set_main_option('script_location', os.getcwd())
+    # logging.error(f'\x1b[1m----- RUN ALEMBIC MIGRATION, DB URI: "{settings.DATABASE}". -----\n\x1b[0m')
+    # alembic_downgrade(alembic_config, 'base')
+    # alembic_upgrade(alembic_config, 'head')
+    # try:
+    #     yield
+    # finally:
+    #     alembic_downgrade(alembic_config, 'base')
+    #     try:
+    #         os.remove(urlparse(settings.DATABASE).path)
+    #     except FileNotFoundError:
+    #         pass
+    # logging.error(f'\x1b[1m----- CLEANUP ALEMBIC MIGRATION FINISHED. -----\n\x1b[0m')
+
+    logger.info('Creating all tables to database.')
+    async with engine.begin() as conn:
+        await conn.run_sync(BaseModel.metadata.drop_all)
+        await conn.run_sync(BaseModel.metadata.create_all)
     try:
         yield
     finally:
-        alembic_downgrade(alembic_config, 'base')
-        try:
-            os.remove(urlparse(settings.DATABASE).path)
-        except FileNotFoundError:
-            pass
+        async with engine.begin() as conn:
+            await conn.run_sync(BaseModel.metadata.drop_all)
+    logger.info('Deleted all table from database.')
 
 
 @pytest.fixture()
@@ -194,7 +213,7 @@ async def init_server(session, temp_dir):
 
 
 @pytest.fixture()
-async def init_project(session):
+async def init_project(session) -> list[Project]:
     """Init project fixture."""
     async with session.begin():
         projects = [
@@ -237,7 +256,7 @@ async def init_job(session, init_server, init_artifact):
 
 
 @pytest.fixture()
-async def init_task(session, init_job):
+async def init_task(session, init_job) -> list[Task]:
     """Init task fixture."""
     async with session.begin():
         job = await session.scalar(select(Job))
@@ -330,11 +349,13 @@ def client(migrate):
 
 
 @pytest.fixture(autouse=True)
-async def spiderkeeper():
+async def spiderkeeper(migrate):
     sk = SpiderKeeper(settings)
+    logger.debug('Starting spiderkeeper!!!')
     await sk.start()
     yield sk
     await sk.stop()
+    logger.debug('Stopped spiderkeeper!!!')
 
 
 @pytest.fixture()

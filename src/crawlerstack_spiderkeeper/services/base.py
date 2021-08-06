@@ -1,13 +1,17 @@
 """
 Base service.
 """
+
 import asyncio
+import functools
+import inspect
 import logging
 import socket
+from asyncio import AbstractEventLoop
 from itertools import count
-from typing import Any, Callable, Dict, Generic, List, Optional, Type, Union
+from typing import Any, Callable, Dict, Generic, List, Optional, Type, Union, TypeVar
 
-from kombu import Connection, Consumer, Exchange, Producer, Queue
+from kombu import Connection, Consumer, Exchange, Producer, Queue, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from crawlerstack_spiderkeeper.config import settings
@@ -16,25 +20,48 @@ from crawlerstack_spiderkeeper.dao.base import BaseDAO
 from crawlerstack_spiderkeeper.db.models import Project
 from crawlerstack_spiderkeeper.schemas.project import (ProjectCreate,
                                                        ProjectUpdate)
-from crawlerstack_spiderkeeper.signals import server_start, server_stop
-from crawlerstack_spiderkeeper.utils import AppData, AppId, run_in_executor
+from crawlerstack_spiderkeeper.utils import AppData, AppId, run_in_executor, SingletonMeta
 from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
 from crawlerstack_spiderkeeper.utils.types import (CreateSchemaType, ModelType,
                                                    UpdateSchemaType)
 
+_T = TypeVar('_T')
+logger = logging.getLogger(__name__)
 
-class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+
+class ICRUD:  # noqa
+    """
+    定义接口规范。
+    Service 类都需要实现该接口的抽象方法。
+
+    根据里式替换原则：
+        - 当子类的方法实现父类的方法时（重写/重载或实现抽象方法），方法的后置条件（即方法的的输出/返回值）要比父类的方法更严格或相等
+    """
+
+    def get(self, *args, **kwargs) -> Any:
+        raise NotImplementedError
+
+    def create(self, *args, **kwargs) -> Any:
+        raise NotImplementedError
+
+    def update(self, *args, **kwargs) -> Any:
+        raise NotImplementedError
+
+    def delete(self, *args, **kwargs) -> Any:
+        raise NotImplementedError
+
+
+class EntityService(ICRUD, Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     """Base service."""
     DAO_CLASS: Type[BaseDAO]
 
     def __init__(self, session: AsyncSession):
         self._session = session
-        self._dao = self.DAO_CLASS(self.session)
 
     @property
     def dao(self):
         """DAO"""
-        return self._dao
+        return self.DAO_CLASS(self.session)
 
     @property
     def session(self) -> AsyncSession:
@@ -93,6 +120,13 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         return await self.dao.update_by_id(pk=pk, obj_in=obj_in)
 
+    async def update(
+            self,
+            pk: int,
+            obj_in: Union[UpdateSchemaType, Dict[str, Any]]
+    ):
+        return await self.update_by_id(pk=pk, obj_in=obj_in)
+
     async def delete_by_id(self, *, pk: int) -> ModelType:
         """
         Delete a record by primary key.
@@ -100,6 +134,14 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         :return:
         """
         return await self.dao.delete_by_id(pk)
+
+    async def delete(self, *, pk: int) -> ModelType:
+        """
+        Delete a record
+        :param pk:
+        :return:
+        """
+        return await self.delete_by_id(pk=pk)
 
     async def count(self) -> int:
         """
@@ -109,50 +151,70 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return await self.dao.count()
 
 
-class ProjectService(BaseService[Project, ProjectCreate, ProjectUpdate]):
+class ProjectService(EntityService[Project, ProjectCreate, ProjectUpdate]):
     """
     Project service.
     """
     DAO_CLASS = ProjectDAO
 
 
-class KombuMixin:
+class SingletonKombu(metaclass=SingletonMeta):
     """
-    Kubo service mixin.
+    单例 kombu
     """
-    name: str = ''
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.logger = logging.getLogger(f'{__name__}.{self.__class__.__name__}')
-        if not self.name:
-            raise SpiderkeeperError('You should define name')
-        try:
-            # TODO fix 不要在初始化对象时，初始化连接。
-            self.connect = Connection(settings.MQ, confirm_publish=True)
-            self.logger.debug('Init kombu connect. url: %s', settings.MQ)
-            self.exchange = Exchange(self.name)
-            self.logger.debug('Init kombu exchange: %s', self.exchange.name)
 
-            self.channel = self.connect.channel()
-        except Exception as ex:
-            self.logger.exception('Init kombu error. MQ url: %s, %s', settings.MQ, ex)
-            raise
+# TODO 完善发送确认机制
+class Kombu(SingletonKombu, ICRUD):
+    """
+    Kombu server ，提供队列服务。
+    """
+    NAME: str
 
-        self.__server_running = False
+    _connect = None
+    _channel = None
+    _should_stop = False
+    _exchange = None
 
-        # 注册事件
-        server_start.connect(self.server_start)
-        server_stop.connect(self.server_stop)
+    @classmethod
+    def server_start(cls):
+        """Call to start when server start signal fire."""
+        obj = cls()
+        obj._should_stop = True
 
-    async def server_start(self):
-        """Update server to running."""
-        self.__server_running = True
+    @classmethod
+    def server_stop(cls):
+        """Call to stop when server stop signal fire."""
+        obj = cls()
+        obj._should_stop = True
 
     @property
-    def server_running(self) -> bool:
-        """Server is running?"""
-        return self.__server_running
+    def name(self) -> str:
+        """Server name"""
+        if not self.NAME:
+            raise SpiderkeeperError('You should define name')
+        return self.NAME
+
+    @property
+    def exchange(self):
+        """Delay load exchange"""
+        if self._exchange is None:
+            self._exchange = Exchange(self.name)
+        return self._exchange
+
+    @property
+    def connect(self) -> Connection:
+        """延迟加载单例连接"""
+        if self._connect is None:
+            self._connect = Connection(settings.MQ, confirm_publish=True)
+        return self._connect
+
+    @property
+    def channel(self):
+        """延迟加载单例 channel """
+        if self._channel is None:
+            self._channel = self.connect.channel()
+        return self._channel
 
     def queue_name(self, app_id: Optional[AppId] = None):
         """
@@ -174,37 +236,15 @@ class KombuMixin:
             return f'{self.name}-{app_id.job_id}'
         return self.name
 
-    def publish(self, queue_name: str, routing_key: str, body: Any):
-        """
-        Publish to mq
-        :param queue_name:
-        :param routing_key:
-        :param body:
-        :return:
-        """
-        queue = Queue(name=queue_name, exchange=self.exchange, routing_key=routing_key)
-        producer = Producer(self.channel)
-        res = producer.publish(
-            body=body,
-            retry=True,
-            exchange=queue.exchange,
-            routing_key=queue.routing_key,
-            declare=[queue]
-        )
-        self.logger.debug(
-            'Publish data to exchange: %s, queue: %s, routing_key: %s, data: %s',
-            queue.exchange.name,
-            queue.name,
-            routing_key,
-            body,
-        )
-        return res
+    def update(self, *args, **kwargs):
+        """No operation"""
+        pass
 
-    # def __publish_on_return(self, exception, exchange, routing_key, message):  # pylint: disable=no-self-use
-    #     # TODO 完善发送确认机制
-    #     raise exception
+    def delete(self, *args, **kwargs):
+        """No operation"""
+        pass
 
-    async def create_msg(self, app_data: AppData):
+    async def create(self, app_data: AppData):
         """Create server"""
         await run_in_executor(
             self.publish,
@@ -212,6 +252,59 @@ class KombuMixin:
             routing_key=self.routing_key(app_data.app_id),
             body={'app_id': str(app_data.app_id), 'data': app_data.data}
         )
+
+    async def publish(self, queue_name: str, routing_key: str, body: Any):
+        """
+        将消息写入队列。
+        :param queue_name:
+        :param routing_key:
+        :param body:
+        :return:
+        """
+        queue = Queue(name=queue_name, exchange=self.exchange, routing_key=routing_key)
+        producer = Producer(self.channel)
+        result = await run_in_executor(
+            producer.publish,
+            body=body,
+            content_type='json',
+            retry=True,
+            exchange=queue.exchange,
+            routing_key=queue.routing_key,
+            declare=[queue]
+        )
+
+        return result
+
+    async def get(self, app_id=None, limit=1):
+        """
+        Get message data from queue, and auto ack.
+        :param app_id:
+        :param limit:
+        :return:
+        """
+        data = []
+        consume_on_response = functools.partial(self._consuming_and_ack, data)
+        await self.consume(
+            self.queue_name(app_id),
+            self.routing_key(app_id),
+            [consume_on_response],
+            limit=limit,
+        )
+        return data
+
+    def _consuming_and_ack(self, items: List[_T], body: _T, message: Message):  # noqa
+        """
+        用于注册到消费者的回调。 `buffered_data` 用于接收消费的字段，后面两个参数
+        是回调的时候传入消息内容。
+        在注册回调前，请使用高阶函数 `functools.partial` 将提前定义好的变量封装到该方法中。
+        等到执行完成，提前定义的 buffered_data 就有数据了。
+        :param items:
+        :param body:
+        :param message:
+        :return:
+        """
+        items.append(body)
+        message.ack()
 
     async def consume(
             self,
@@ -224,6 +317,77 @@ class KombuMixin:
             should_stop: Optional[asyncio.Future] = None,
     ) -> None:
         """
+        example:
+            def consuming_and_auto_ack(self, items: List[_T], body: _T, message: Message):
+                # Consume and auto ack
+                items.append(body)
+                message.ack()
+
+            data = []   # consumed data
+            consume_on_response = functools.partial(consuming_and_auto_ack, data)
+            await self.consume(
+                queue_name=self.queue_name(app_id),
+                routing_key=self.routing_key(app_id),
+                register_callbacks=[consume_on_response],
+                limit=3,
+            )
+            for i in data:
+                logging.info(i)
+
+        example:
+            async def have_to_do_something(item: Any):
+                # Have to do something with coroutine
+                # when consume each item.
+                await asyncio.sleep(0.1)
+                logging.info('Consumed data. Detail: %s', item)
+
+            def consuming_and_auto_ack(
+                self,
+                func: Callable,
+                body: _T,
+                message: Message,
+                loop: Optional[AbstractEventLoop] = None,
+            ):
+                # Consume and auto ack
+                if inspect.iscoroutinefunction(func):
+                    # To submit a coroutine object to the event loop. (thread safe)
+                    if not loop:
+                        raise Exception('You must pass a event loop when call coroutine object.')
+                    future = asyncio.run_coroutine_threadsafe(func(body), loop)
+                    try:
+                        future.result()    # Wait for the result from other os thread
+                    except asyncio.TimeoutError:
+                        future.cancel()
+                        raise
+                else:
+                    func(body)
+                message.ack()
+
+            consume_on_response = functools.partial(consuming_and_auto_ack, have_to_do_something)
+            await self.consume(
+                queue_name=self.queue_name(app_id),
+                routing_key=self.routing_key(app_id),
+                register_callbacks=[consume_on_response],
+                limit=3,
+            )
+
+        example:
+            def consuming_and_manual_ack(self, items: List[Tuple[_T, Message]], body: _T, message: Message):
+                # Consume and auto ack
+                items.append((body, message))
+
+            data = []   # consumed data
+            consume_on_response = functools.partial(consuming_and_manual_ack, data)
+            await self.consume(
+                queue_name=self.queue_name(app_id),
+                routing_key=self.routing_key(app_id),
+                register_callbacks=[consume_on_response],
+                limit=3,
+            )
+            for _body, _message in data:
+                logging.info(_body)
+                await run_in_executor(_message.ack) # ack
+
         :param queue_name:
         :param routing_key:
         :param register_callbacks:  callback 接受两个参数 body 和 message
@@ -239,12 +403,11 @@ class KombuMixin:
         :return:
         """
         queue = Queue(name=queue_name, exchange=self.exchange, routing_key=routing_key)
-        consumer = Consumer(self.connect, queues=[queue])
+        consumer = Consumer(self.channel, queues=[queue])
 
         for callback in register_callbacks:
             consumer.register_callback(callback)
         consumer.consume()
-        self.logger.debug('Consuming from queue: %s', queue_name)
         await self._consuming(
             limit=limit,
             timeout=timeout,
@@ -270,9 +433,9 @@ class KombuMixin:
         """
         elapsed = 0
         for _ in limit and range(limit) or count():
-
-            __should_stop = not self.__server_running or (should_stop and should_stop.done())
+            __should_stop = self._should_stop or (should_stop and should_stop.done())
             if __should_stop:
+                logging.debug('%s should stop, so stop consuming message.', self)
                 break
 
             try:
@@ -288,9 +451,3 @@ class KombuMixin:
                     raise
             else:
                 elapsed = 0
-        self.logger.info('Stop consuming.')
-
-    async def server_stop(self):
-        """Stop server"""
-        self.logger.info('Stop kombu service')
-        self.__server_running = False

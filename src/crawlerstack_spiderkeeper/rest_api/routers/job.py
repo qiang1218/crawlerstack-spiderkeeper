@@ -5,9 +5,10 @@ from typing import Dict, List
 
 from fastapi import APIRouter, Depends, Response
 
+from crawlerstack_spiderkeeper.rest_api.utils import (auto_commit,
+                                                      service_depend)
 from crawlerstack_spiderkeeper.schemas.job import Job, JobCreate, JobUpdate
-from crawlerstack_spiderkeeper.services import job_service
-from crawlerstack_spiderkeeper.utils import CommonQueryParams
+from crawlerstack_spiderkeeper.services import JobService
 
 router = APIRouter()
 
@@ -15,124 +16,135 @@ router = APIRouter()
 @router.get('/jobs/{pk}/state')
 async def job_state(
         *,
-        pk: int
+        pk: int,
+        service: service_depend(JobService) = Depends(),
 ) -> Dict[str, str]:
     """
     Get job state
+    :param service:
     :param pk:
     :return:
     """
-    result = await job_service.state(pk)
+    result = await service.state(pk)
     return {
         'state': result
     }
 
 
 @router.get('/jobs', response_model=List[Job])
-async def get_multi(
+async def get(
         *,
         response: Response,
-        commons: CommonQueryParams = Depends(),
+        service: service_depend(JobService) = Depends(),
 ):
     """
     Get multi job
     :param response
-    :param commons:
-    :return:
-    :param response:
-    :param commons:
+    :param service:
     :return:
     """
-    count = await job_service.count()
+    count = await service.count()
     response.headers['X-Total-Count'] = str(count)
     data = []
     if count:
-        data = await job_service.get_multi(
-            skip=commons.skip,
-            limit=commons.limit,
-            order=commons.order,
-            sort=commons.sort
-        )
+        data = await service.get()
     return data
 
 
 @router.get('/jobs/{pk}', response_model=Job)
-async def get(
+async def get_by_id(
         *,
         pk: int,
+        service: service_depend(JobService) = Depends(),
 ):
     """
     Get one job by pk
+    :param service:
     :param pk:
     :return:
     """
-    return await job_service.get(pk=pk)
+    return await service.get_by_id(pk=pk)
 
 
 @router.post('/jobs', response_model=Job)
+@auto_commit
 async def create(
         *,
         job_in: JobCreate,
+        service: service_depend(JobService) = Depends(),
 ):
     """
     Create job
+    :param service:
     :param job_in:
     :return:
     """
-    return await job_service.create(obj_in=job_in)
+    return await service.create(obj_in=job_in)
 
 
 @router.post('/jobs/{pk}', response_model=Job)
+@auto_commit
 async def update(
         *,
         pk: int,
-        job_in: JobUpdate
+        job_in: JobUpdate,
+        service: service_depend(JobService) = Depends(),
 ):
     """
     Update job by id.
+    :param service:
     :param pk:
     :param job_in:
     :return:
     """
-    return await job_service.update(pk, job_in)
+    return await service.update_by_id(pk, job_in)
 
 
 @router.delete('/jobs/{pk}', response_model=Job)
+@auto_commit
 async def delete(
         *,
         pk: int,
+        service: service_depend(JobService) = Depends(),
 ):
     """
     Delete one job
+    :param service:
     :param pk:
     :return:
     """
-    return await job_service.delete(pk=pk)
+    return await service.delete_by_id(pk=pk)
 
 
 @router.post('/jobs/{pk}/_run')
+@auto_commit
 async def run(
         *,
-        pk: int
+        pk: int,
+        service: service_depend(JobService) = Depends(),
 ):
     """
     Run job by id
+    :param service:
     :param pk:
     :return:
     """
-    res = await job_service.run(pk=pk)
+    res = await service.run(pk=pk)
     return {'res': res}
 
 
 @router.post('/jobs/{pk}/_stop')
+@auto_commit
 async def stop(
         *,
         pk: int,
+        service: service_depend(JobService) = Depends(),
 ):
     """
     Stop job by id
+    :param service:
     :param pk:
     :return:
     """
-    res = await job_service.stop(pk=pk)
+    res = await service.stop(pk=pk)
     return {'res': res}

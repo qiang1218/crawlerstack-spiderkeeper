@@ -3,13 +3,13 @@ import functools
 from asyncio import current_task
 from collections import Awaitable, Callable
 from inspect import signature
-from typing import Any, Optional, TypeVar, Type
+from typing import Any, Optional, Type, TypeVar
 
 from dynaconf import Dynaconf
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
                                     AsyncSessionTransaction,
-                                    create_async_engine, async_scoped_session)
+                                    async_scoped_session, create_async_engine)
 from sqlalchemy.future import Connection, Engine
 from sqlalchemy.orm import sessionmaker
 
@@ -39,15 +39,12 @@ class Database(metaclass=SingletonMeta):
     @property
     def engine(self) -> AsyncEngine:
         if not self._engine:
-            self._engine = create_async_engine(self.settings.DATABASE, echo=True)
+            self._engine = create_async_engine(self.settings.DATABASE, echo=True, future=True)
         return self._engine
 
     @property
     def session(self) -> sessionmaker:
-        return sessionmaker(self.engine, expire_on_commit=False, class_=AsyncSession)
-
-    def foo(self):
-        """"""
+        return sessionmaker(self.engine, class_=AsyncSession)
 
     @property
     def scoped_session(self) -> async_scoped_session:

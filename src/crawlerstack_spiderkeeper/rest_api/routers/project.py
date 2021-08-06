@@ -2,22 +2,24 @@
 Project route
 """
 import logging
-from typing import List
 
 from fastapi import APIRouter, Depends, Response
 
 from crawlerstack_spiderkeeper.rest_api.route_class import AuditRoute
-from crawlerstack_spiderkeeper.rest_api.utils import service_depend
+from crawlerstack_spiderkeeper.rest_api.utils import (auto_commit,
+                                                      service_depend)
 from crawlerstack_spiderkeeper.schemas.project import (Project, ProjectCreate,
                                                        ProjectUpdate)
 from crawlerstack_spiderkeeper.services import ProjectService
 
-router = APIRouter(route_class=AuditRoute)
+router = APIRouter(
+    route_class=AuditRoute
+)
 
 logger = logging.getLogger(__name__)
 
 
-@router.get("/projects", response_model=List[Project])
+@router.get("/projects", response_model=list[Project])
 async def get_multi(
         *,
         response: Response,
@@ -55,6 +57,7 @@ async def get(
 
 
 @router.post('/projects', response_model=Project)
+@auto_commit
 async def create(
         *,
         project_in: ProjectCreate,
@@ -66,10 +69,12 @@ async def create(
     :param service:
     :return:
     """
-    return await service.create(obj_in=project_in)
+    result = await service.create(obj_in=project_in)
+    return result
 
 
 @router.put('/projects/{pk}', response_model=Project)
+@auto_commit
 async def put(
         *,
         pk: int,
@@ -87,6 +92,7 @@ async def put(
 
 
 @router.delete('/projects/{pk}', response_model=Project)
+@auto_commit
 async def delete(
         *,
         pk: int,

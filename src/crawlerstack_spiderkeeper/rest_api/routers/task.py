@@ -5,8 +5,10 @@ from typing import List
 
 from fastapi import APIRouter, Depends, Response
 
+from crawlerstack_spiderkeeper.rest_api.utils import (auto_commit,
+                                                      service_depend)
 from crawlerstack_spiderkeeper.schemas.task import Task, TaskUpdate
-from crawlerstack_spiderkeeper.services import task_service
+from crawlerstack_spiderkeeper.services import TaskService, task_service
 from crawlerstack_spiderkeeper.utils import CommonQueryParams
 
 router = APIRouter()
@@ -15,63 +17,67 @@ router = APIRouter()
 @router.get('/tasks', response_model=List[Task])
 async def get_multi(
         response: Response,
-        commons: CommonQueryParams = Depends(),
+        service: service_depend(TaskService) = Depends(),
 ):
     """
     Get tasks
     :param response:
-    :param commons:
+    :param service:
     :return:
     """
-    count = await task_service.count()
+    count = await service.count()
     response.headers['X-Total-Count'] = str(count)
     data = []
     if count:
-        data = await task_service.get_multi(
-            skip=commons.skip,
-            limit=commons.limit,
-            order=commons.order,
-            sort=commons.sort
-        )
+        data = await service.get()
     return data
 
 
 @router.get('/tasks/{pk}', response_model=Task)
-async def get(
+@auto_commit
+async def get_by_id(
         *,
         pk: int,
+        service: service_depend(TaskService) = Depends(),
 ):
     """
     Get one task
+    :param service:
     :param pk:
     :return:
     """
-    return await task_service.get(pk=pk)
+    return await service.get_by_id(pk=pk)
 
 
 @router.put('/tasks/{pk}', response_model=Task)
+@auto_commit
 async def update(
         *,
         pk: int,
         task_in: TaskUpdate,
+        service: service_depend(TaskService) = Depends(),
 ):
     """
     Update task by id.
+    :param service:
     :param pk:
     :param task_in:
     :return:
     """
-    return await task_service.update(pk, task_in)
+    return await service.update_by_id(pk, task_in)
 
 
 @router.delete('/tasks/{pk}', response_model=Task)
+@auto_commit
 async def delete(
         *,
         pk: int,
+        service: service_depend(TaskService) = Depends(),
 ):
     """
     Delete one task
+    :param service:
     :param pk:
     :return:
     """
-    return await task_service.delete(pk=pk)
+    return await service.delete_by_id(pk=pk)

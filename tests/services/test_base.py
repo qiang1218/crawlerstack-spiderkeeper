@@ -1,16 +1,23 @@
 """
 Test base service.
 """
-from typing import Dict
+import asyncio
+import functools
+import inspect
+import json
+from asyncio import AbstractEventLoop
+from concurrent.futures import Future
+from datetime import datetime
+from typing import Dict, Any
 
 import pytest
-from kombu import Message
-from sqlalchemy import select, func, text
+from kombu import Message, Queue, Exchange, Consumer
+from sqlalchemy import func, select, text
 
 from crawlerstack_spiderkeeper.db.models import Audit
 from crawlerstack_spiderkeeper.schemas.audit import AuditCreate, AuditUpdate
 from crawlerstack_spiderkeeper.services import AuditService
-from crawlerstack_spiderkeeper.services.base import KombuMixin
+from crawlerstack_spiderkeeper.services.base import Kombu
 from crawlerstack_spiderkeeper.utils.exceptions import ObjectDoesNotExist
 
 
@@ -66,22 +73,24 @@ class TestBaseService:
 
         assert await session.scalar(stmt) == 1
 
+    @pytest.mark.parametrize(
+        'pk, expect_value',
+        [
+            (1, 'changed_value'),
+            (100, ObjectDoesNotExist)
+        ]
+    )
     @pytest.mark.asyncio
-    async def test_update(self, init_audit, session, factory_with_session):
+    async def test_update(self, init_audit, factory_with_session, pk, expect_value):
         """Test update a object."""
-        exist_obj = await session.scalar(select(Audit))
         changed = 'test_update'
         async with factory_with_session(AuditService) as service:
-            obj = await service.update_by_id(exist_obj.id, AuditUpdate(detail=changed))
-        assert exist_obj.detail != obj.detail
-
-    @pytest.mark.asyncio
-    async def test_update_obj_not_exist(self, migrate, factory_with_session):
-        """Test update a not exist object."""
-        async with factory_with_session(AuditService) as service:
-            with pytest.raises(ObjectDoesNotExist):
-                changed = 'test_update'
-                await service.update_by_id(1, AuditUpdate(detail=changed))
+            if inspect.isclass(expect_value) and issubclass(expect_value, Exchange):
+                with pytest.raises(expect_value):
+                    await service.update_by_id(1, AuditUpdate(detail=changed))
+            else:
+                obj = await service.update_by_id(1, AuditUpdate(detail=changed))
+                assert obj.detail == changed
 
     @pytest.mark.asyncio
     async def test_delete(self, init_audit, session, factory_with_session):
@@ -108,7 +117,7 @@ class TestBaseService:
                 await service.delete_by_id(pk=1)
 
     @pytest.mark.asyncio
-    async def test_count(self, migrate, init_audit, factory_with_session):
+    async def test_count(self, init_audit, factory_with_session):
         async with factory_with_session(AuditService) as service:
             result = await service.count()
             assert result == 2
@@ -116,53 +125,47 @@ class TestBaseService:
 
 # ===================
 
-class DemoKombu(KombuMixin):
+class DemoKombu(Kombu):
     """Demo Kombu mixin."""
     name = 'test'
 
 
-@pytest.fixture()
-def kombu():
-    """Fixture kombu."""
-    k = DemoKombu()
-    yield k
-    # k.server_stop()
-
-
-def test_kombu_mixin_init(kombu):
-    """Test init kombu mixin."""
-    assert kombu.connect.info()
-
-
-def test_init_kombu_mixin_exception():
-    """Test raise exception when init kombu mixin."""
-    with pytest.raises(Exception):
-        KombuMixin()
-
-
 @pytest.mark.asyncio
-async def test_kombu_mixin_publish_consume(kombu, server_start_signal):
-    """Test publish a record to consume."""
-    queue_name = 'test'
-    length = 2
-    for _ in range(length):
-        kombu.publish(
-            queue_name=queue_name,
-            routing_key=queue_name,
-            body={'test': 'test111'}
-        )
-    consume_count = 0
+async def test_kombu():
+    """
+    test kombu
+    :return:
+    """
+    kombu = DemoKombu()
 
-    def callback(_body: Dict, message: Message):  # pyint: disable=unused=argument
-        nonlocal consume_count
-        consume_count += 1
-        message.ack()
-
-    await kombu.consume(
-        queue_name=queue_name,
-        routing_key=queue_name,
-        limit=2,
-        # timeout=5,
-        register_callbacks=[callback]
+    await kombu.publish(
+        queue_name='foo',
+        routing_key='bar',
+        body=json.dumps({
+            'datetime': datetime.now().strftime('%Y-%h-%mT%H:%M:%S+0800'),
+            'msg': 'foo'
+        })
     )
-    assert consume_count == length
+
+    await asyncio.sleep(0.2)
+
+    async def use_data(data):
+        """consume then have to do some coroutine"""
+        await asyncio.sleep(0.1)
+        data = json.loads(data)
+        assert data['msg'] == 'foo'
+
+    def consume_and_auto_ack(loop: AbstractEventLoop, body, message):
+        """Registered the callback to consumer """
+        # To submit a coroutine object to the event loop. (thread safe)
+        fut = asyncio.run_coroutine_threadsafe(use_data(body), loop)
+        fut.result()  # Wait for the result from other os thread
+        message.ack()  # then manual ack
+
+    callback = functools.partial(consume_and_auto_ack, asyncio.get_running_loop())
+    await kombu.consume(
+        queue_name='foo',
+        routing_key='bar',
+        limit=1,
+        register_callbacks=[callback],
+    )

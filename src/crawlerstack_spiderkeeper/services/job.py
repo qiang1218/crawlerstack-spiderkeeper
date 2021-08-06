@@ -13,7 +13,7 @@ from crawlerstack_spiderkeeper.executor import executor_factory
 from crawlerstack_spiderkeeper.schemas.artifact import ArtifactUpdate
 from crawlerstack_spiderkeeper.schemas.job import JobCreate, JobUpdate
 from crawlerstack_spiderkeeper.schemas.task import TaskCreate, TaskUpdate
-from crawlerstack_spiderkeeper.services.base import BaseService
+from crawlerstack_spiderkeeper.services.base import EntityService
 from crawlerstack_spiderkeeper.utils import (AppId, ArtifactMetadata,
                                              run_in_executor)
 from crawlerstack_spiderkeeper.utils.states import States
@@ -21,7 +21,7 @@ from crawlerstack_spiderkeeper.utils.states import States
 logger = logging.getLogger(__name__)
 
 
-class JobService(BaseService[Job, JobCreate, JobUpdate]):
+class JobService(EntityService[Job, JobCreate, JobUpdate]):
     """
     Job service
     """
@@ -74,11 +74,10 @@ class JobService(BaseService[Job, JobCreate, JobUpdate]):
             return 'Job already run.'
 
         task = await self.task_dao.create(obj_in=TaskCreate(job_id=pk))
-        app_id = AppId(job_id=pk, task_id=task.id)
         await self._build_context(job_id=pk, artifact_meta=artifact_meta)
         # TODO 优化 obj.cmdline 数据因 ` ` 分隔符造成错误。将此数据改为json即可，但要做格式判断
         # 如果需要执行 `python -c "for i in range(10): print(i)"` 用空格分割就会出现问题
-        await self._run_task(app_id, artifact_meta, cmdline=obj.cmdline.split(' '))
+        await self._run_task(task, artifact_meta, cmdline=obj.cmdline.split(' '))
         logger.debug('<%s> is start', obj)
         return 'Job running.'
 
@@ -115,11 +114,12 @@ class JobService(BaseService[Job, JobCreate, JobUpdate]):
 
     async def _run_task(
             self,
-            app_id: AppId,
+            task: Task,
             artifact_meta: ArtifactMetadata,
             cmdline: List[str]
     ) -> None:
         """启动 Spider 容器任务，并更新 task 状态"""
+        app_id = AppId(job_id=task.job_id, task_id=task.id)
         executor = await self.executor_cls.run(
             artifact=artifact_meta,
             cmdline=cmdline,
@@ -130,9 +130,8 @@ class JobService(BaseService[Job, JobCreate, JobUpdate]):
             }
         )
         # Update task
-        await run_in_executor(
-            self.task_dao.update_by_id,
-            pk=app_id.task_id,
+        await self.task_dao.update(
+            db_obj=task,
             obj_in=TaskUpdate(container_id=executor.pid, state=States.RUNNING.value)
         )
         logger.debug('%s is running...', app_id)
@@ -143,7 +142,7 @@ class JobService(BaseService[Job, JobCreate, JobUpdate]):
         :param pk:
         :return:
         """
-        obj: Job = await self.get_by_id(pk)
+        obj = await self._job_dao.get_by_id(pk)
         artifact = await self.artifact_dao.get_by_id(obj.artifact_id)
         artifact_meta = ArtifactMetadata(artifact.filename)
 

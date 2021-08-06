@@ -8,10 +8,9 @@ from crawlerstack_spiderkeeper.utils import AppId
 from tests.conftest import assert_status_code, build_api_url
 
 
-def test_metric(init_task, session, client, server_start_signal):
+def test_metric(init_task, client, server_start_signal):
     """Test metric."""
-    task: Task = session.query(Task).first()
-
+    task = init_task[0]
     data = {
         'app_id': str(AppId(task.job_id, task.id)),
         'data': {'downloader_exception_count': 10086}

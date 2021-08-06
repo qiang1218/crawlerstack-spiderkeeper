@@ -3,15 +3,17 @@ Server route
 """
 from fastapi import APIRouter, Depends, Response
 
-from crawlerstack_spiderkeeper.rest_api.utils import service_depend
-from crawlerstack_spiderkeeper.schemas.server import ServerCreate, ServerUpdate
+from crawlerstack_spiderkeeper.rest_api.utils import (auto_commit,
+                                                      service_depend)
+from crawlerstack_spiderkeeper.schemas.server import (Server, ServerCreate,
+                                                      ServerUpdate)
 from crawlerstack_spiderkeeper.services import ServerService
 
 router = APIRouter()
 
 
-@router.get('/servers')
-async def get_multi(
+@router.get('/servers', response_model=list[Server])
+async def get(
         *,
         response: Response,
         service: service_depend(ServerService) = Depends(),
@@ -30,8 +32,8 @@ async def get_multi(
     return data
 
 
-@router.get('/servers/{pk}')
-async def get(
+@router.get('/servers/{pk}', response_model=Server)
+async def get_by_id(
         *,
         pk: int,
         service: service_depend(ServerService) = Depends(),
@@ -45,7 +47,8 @@ async def get(
     return await service.get_by_id(pk=pk)
 
 
-@router.post('/servers')
+@router.post('/servers', response_model=Server)
+@auto_commit
 async def create(
         *,
         server_in: ServerCreate,
@@ -60,7 +63,8 @@ async def create(
     return await service.create(obj_in=server_in)
 
 
-@router.put('/servers/{pk}')
+@router.put('/servers/{pk}', response_model=Server)
+@auto_commit
 async def put(
         *,
         pk: int,
@@ -78,6 +82,7 @@ async def put(
 
 
 @router.delete('/servers/{pk}')
+@auto_commit
 async def delete(
         *,
         pk: int,

@@ -2,10 +2,10 @@
 Task service
 """
 from crawlerstack_spiderkeeper.dao import TaskDAO
-from crawlerstack_spiderkeeper.services.base import BaseService
+from crawlerstack_spiderkeeper.services.base import EntityService
 
 
-class TaskService(BaseService):
+class TaskService(EntityService):
     """
     Task service.
     """

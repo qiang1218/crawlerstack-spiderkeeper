@@ -5,7 +5,7 @@ import asyncio
 import logging
 
 import pytest
-from sqlalchemy import select, update, text
+from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.util import greenlet_spawn
 
