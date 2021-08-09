@@ -88,7 +88,6 @@ class Kombu(metaclass=SingletonMeta):
         result = await run_in_executor(
             producer.publish,
             body=body,
-            content_type='json',
             retry=True,
             exchange=queue.exchange,
             routing_key=queue.routing_key,

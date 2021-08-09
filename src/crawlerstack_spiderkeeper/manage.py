@@ -58,6 +58,7 @@ class SpiderKeeper:
         # await server_start.send()
         self.rest_api.init()
         await self.rest_api.start()
+        await server_start.send()
 
     async def run(self):
         """Run"""
@@ -74,7 +75,7 @@ class SpiderKeeper:
 
     async def stop(self):
         """Stop spiderkeeper"""
-        # await server_stop.send()
+        await server_stop.send()
         await self.rest_api.stop()
         await self.db.close()
 
