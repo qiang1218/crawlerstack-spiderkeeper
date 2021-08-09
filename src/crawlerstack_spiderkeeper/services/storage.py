@@ -11,6 +11,7 @@ from kombu import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from crawlerstack_spiderkeeper.dao import ServerDAO, StorageDAO, TaskDAO
+from crawlerstack_spiderkeeper.db import session_provider
 from crawlerstack_spiderkeeper.exportors import BaseExporter, exporters_factory
 from crawlerstack_spiderkeeper.schemas.storage import (StorageCreate,
                                                        StorageUpdate)
@@ -72,21 +73,17 @@ class StorageService(Kombu, EntityService):
         await self.task_dao.increase_item_count(app_data.app_id.task_id)
         logger.debug('Increase task: %s item count.', app_data.app_id.task_id)
 
-    async def get_server_by_job_id(self, job_id: int):
-        return self.server_dao.get_server_by_job_id(job_id)
-
     async def exporter(self, job_id: int):
         """Get exporter by job id."""
         server = await self.server_dao.get_server_by_job_id(job_id)
-        return server
-        # if server:
-        #     exporter_cls = exporters_factory(server.type)
-        #     if exporter_cls:
-        #         return exporter_cls.from_url(server.uri)
-        #     raise SpiderkeeperError(
-        #         f'Exporter schema: {server.type} is not support. Please implementation',
-        #     )
-        # raise SpiderkeeperError(f'Job<id: {job_id}> not config server info.')
+        if server:
+            exporter_cls = exporters_factory(server.type)
+            if exporter_cls:
+                return exporter_cls.from_url(server.uri)
+            raise SpiderkeeperError(
+                f'Exporter schema: {server.type} is not support. Please implementation',
+            )
+        raise SpiderkeeperError(f'Job<id: {job_id}> not config server info.')
 
     async def exporting(self, exporter: BaseExporter, data, storage_id):
         exporter.write(data)
@@ -138,7 +135,9 @@ class StorageService(Kombu, EntityService):
         state = States.RUNNING
         detail = None
 
-        storage_obj = await self.storage_dao.create(obj_in=StorageCreate(job_id=app_id.job_id, state=state))
+        storage_obj = await self.storage_dao.create(
+            obj_in=StorageCreate(job_id=app_id.job_id, state=state.value)
+        )
 
         try:
             exporter = await self.exporter(job_id=app_id.job_id)
@@ -170,7 +169,7 @@ class StorageService(Kombu, EntityService):
         logger.debug('storage task : %s %s', app_id, state)
         await self.storage_dao.update_by_id(
             pk=storage_obj.id,
-            obj_in=StorageUpdate(state=state, detail=detail),
+            obj_in=StorageUpdate(state=state.value, detail=detail),
         )
 
     async def has_running_task(self, app_id: AppId) -> bool:
@@ -180,23 +179,24 @@ class StorageService(Kombu, EntityService):
         :return:
         """
         running_storage = await self.storage_dao.running_storage()
-        if str(app_id) not in self._storage_tasks:
-            # 如果没有 Storage 任务，则更新数据库状态
-            if running_storage:
-                for storage in running_storage:
-                    logger.debug(
-                        'Because storage: %s already stop, update db state',
-                        storage.id
+        if not running_storage:
+            for storage in running_storage:
+                logger.debug(
+                    'Because storage: %s already stop, update db state',
+                    storage.id
+                )
+                await self.storage_dao.update_by_id(
+                    pk=storage.id,
+                    obj_in=StorageUpdate(
+                        state=States.STOPPED.value,
+                        detail='storage task already stop, update db state'
                     )
-                    await self.storage_dao.update_by_id(
-                        pk=storage.id,
-                        obj_in=StorageUpdate(
-                            state=States.STOPPED,
-                            detail='storage task already stop, update db state'
-                        )
-                    )
+                )
 
+        if str(app_id) in self._storage_tasks:
             return True
+        else:
+            return False
 
     async def start(self, app_id: AppId) -> str:
         """
@@ -205,7 +205,8 @@ class StorageService(Kombu, EntityService):
         :return:
         """
         fut = asyncio.Future()
-        if await self.has_running_task(app_id):
+        # 如果任务没有运行，就创建。
+        if not await self.has_running_task(app_id):
             self._storage_tasks.update({str(app_id): fut})
             self.event_loop.create_task(self.consume_task(app_id, fut))
             return 'Run storage task.'
@@ -237,7 +238,7 @@ class StorageService(Kombu, EntityService):
         :return:
         """
         await super().server_stop()
-        if not self._should_stop:
+        if self._should_stop:
             logger.debug('Server stop, clean storage task.')
             _storage_tasks = self._storage_tasks.copy()
             for _, fut in _storage_tasks.items():
@@ -247,5 +248,5 @@ class StorageService(Kombu, EntityService):
 
 
 # 注册事件
-# server_start.connect(StorageService.server_start)
-# server_stop.connect(StorageService.server_stop)
+server_start.connect(StorageService.server_start_event)
+server_stop.connect(StorageService.server_stop_event)

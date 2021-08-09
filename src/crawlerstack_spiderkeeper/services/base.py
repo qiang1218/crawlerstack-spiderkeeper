@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from crawlerstack_spiderkeeper.config import settings
 from crawlerstack_spiderkeeper.dao import ProjectDAO
 from crawlerstack_spiderkeeper.dao.base import BaseDAO
+from crawlerstack_spiderkeeper.db import session_provider
 from crawlerstack_spiderkeeper.db.models import Project
 from crawlerstack_spiderkeeper.schemas.project import (ProjectCreate,
                                                        ProjectUpdate)
@@ -38,6 +39,9 @@ class ICRUD:  # noqa
         - 当子类的方法实现父类的方法时（重写/重载或实现抽象方法），方法的后置条件（即方法的的输出/返回值）要比父类的方法更严格或相等
     """
 
+    def __init__(self, session: AsyncSession):
+        self._session = session
+
     def get(self, *args, **kwargs) -> Any:
         raise NotImplementedError
 
@@ -54,9 +58,6 @@ class ICRUD:  # noqa
 class EntityService(ICRUD, Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     """Base service."""
     DAO_CLASS: Type[BaseDAO]
-
-    def __init__(self, session: AsyncSession):
-        self._session = session
 
     @property
     def dao(self):
@@ -177,16 +178,24 @@ class Kombu(SingletonKombu, ICRUD):
     _exchange = None
 
     @classmethod
-    def server_start(cls):
-        """Call to start when server start signal fire."""
-        obj = cls()
-        obj._should_stop = True
+    @session_provider(auto_commit=True)
+    async def server_start_event(cls, session: AsyncSession):
+        obj = cls(session)
+        await obj.server_start()
 
     @classmethod
-    def server_stop(cls):
+    @session_provider(auto_commit=True)
+    async def server_stop_event(cls, session: AsyncSession):
+        obj = cls(session)
+        await obj.server_stop()
+
+    async def server_start(self):
+        """Call to start when server start signal fire."""
+        self._should_stop = True
+
+    async def server_stop(self):
         """Call to stop when server stop signal fire."""
-        obj = cls()
-        obj._should_stop = True
+        self._should_stop = True
 
     @property
     def name(self) -> str:

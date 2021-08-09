@@ -15,7 +15,7 @@ class StorageBase(BaseModel):
     create_time: Optional[datetime] = None
     update_time: Optional[datetime] = None
     count: int = 0
-    state: States = None
+    state: int = None
     detail: constr(max_length=500) = None
 
 

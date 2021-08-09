@@ -299,24 +299,6 @@ def build_api_url(api: str) -> str:
     return f'/api/{API_VERSION}{api}'
 
 
-@pytest.fixture(name='signal_send')
-async def fixture_signal_send():
-    """Signal send fixture."""
-
-    async def _(signal: Signal, *args, **kwargs):
-        await signal.send(*args, **kwargs)
-
-    yield _
-
-
-@pytest.fixture(name='server_start_signal')
-async def fixture_server_start_signal(signal_send):
-    """Server start signal fixture."""
-    await signal_send(server_start)
-    yield
-    await signal_send(server_stop)
-
-
 @pytest.fixture(name='count_file_factory')
 def fixture_count_file_factory():
     """Count file factory fixture."""
