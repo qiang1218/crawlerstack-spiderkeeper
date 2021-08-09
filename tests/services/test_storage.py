@@ -5,14 +5,12 @@ import asyncio
 import functools
 
 import pytest
-from aio_pydispatch import signal
-from kombu import Message
 from sqlalchemy import select, func
-from sqlalchemy.util import greenlet_spawn
 
 from crawlerstack_spiderkeeper.dao import TaskDAO, ServerDAO
 from crawlerstack_spiderkeeper.db.models import Storage, Task
 from crawlerstack_spiderkeeper.services import StorageService
+from crawlerstack_spiderkeeper.services.utils import Kombu
 from crawlerstack_spiderkeeper.signals import server_stop
 from crawlerstack_spiderkeeper.utils import AppData, AppId
 from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
@@ -34,7 +32,7 @@ async def app_data(init_task, factory_with_session):
 async def test_create(mocker, session_factory, app_data, factory_with_session):
     """Test create a storage."""
     async with factory_with_session(StorageService) as service:
-        mocker.patch.object(service, 'publish')
+        mocker.patch.object(service.kombu, 'publish')
         await service.create(app_data)
     async with session_factory() as session:
         task = await session.get(Task, app_data.app_id.task_id)
@@ -78,13 +76,12 @@ async def test_exporter(mocker, init_job, server, factory_with_session, exporter
     [
         (None, States.FINISH.value),
         (SpiderkeeperError('foo'), States.FAILURE.value),
-        (SpiderkeeperError('foo'), States.FAILURE.value),
     ]
 )
 async def test_consume_task(mocker, app_data, session, factory_with_session, caplog, exception, state):
     """Test consume task."""
     mocker.patch.object(
-        StorageService,
+        Kombu,
         'consume',
         new_callable=mocker.AsyncMock,
         side_effect=exception
@@ -92,14 +89,14 @@ async def test_consume_task(mocker, app_data, session, factory_with_session, cap
     fut = asyncio.Future()
     async with factory_with_session(StorageService) as service:
         await service.consume_task(app_data.app_id, fut)
-    # stmt = select(func.count()).select_from(Storage)
-    # count = await session.scalar(stmt)
-    # assert count == 1
-    # storage_obj: Storage = await session.scalar(select(Storage))
-    # if exception:
-    #     assert exception.args[0] in caplog.text
-    #
-    # assert storage_obj.state == state
+    stmt = select(func.count()).select_from(Storage)
+    count = await session.scalar(stmt)
+    assert count == 1
+    storage_obj: Storage = await session.scalar(select(Storage))
+    if exception:
+        assert exception.args[0] in caplog.text
+
+    assert storage_obj.state == state
 
 
 @pytest.mark.asyncio
@@ -139,7 +136,6 @@ async def test_has_running_task(init_storage, session, app_data, factory_with_se
         obj = await session.scalar(stmt)
         assert obj
         pk = obj.id
-        before = obj.state
     async with factory_with_session(StorageService) as service:
         await service.has_running_task(app_data.app_id)
     async with session.begin():
@@ -163,7 +159,7 @@ async def test_start(mocker, app_data, factory_with_session):
 
 
 @pytest.mark.asyncio
-async def test_server_stop(mocker, app_data, signal_send, factory_with_session):
+async def test_server_stop(mocker, app_data, factory_with_session):
     """Test server stop."""
     async with factory_with_session(StorageService) as service:
         mocker.patch.object(service, 'consume_task', new_callable=mocker.AsyncMock)

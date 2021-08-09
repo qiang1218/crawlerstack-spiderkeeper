@@ -163,12 +163,7 @@ async def migrate(engine):
     async with engine.begin() as conn:
         await conn.run_sync(BaseModel.metadata.drop_all)
         await conn.run_sync(BaseModel.metadata.create_all)
-    try:
-        yield
-    finally:
-        async with engine.begin() as conn:
-            await conn.run_sync(BaseModel.metadata.drop_all)
-    logger.info('Deleted all table from database.')
+    yield
 
 
 @pytest.fixture()

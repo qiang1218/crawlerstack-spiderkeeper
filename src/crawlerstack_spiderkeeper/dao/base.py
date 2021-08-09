@@ -20,7 +20,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     """
     model: Type[ModelType]
 
-    def __init__(self, session=None, *args, **kwargs):
+    def __init__(self, session=None):
         """"""
         self._session = session
 
