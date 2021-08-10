@@ -108,7 +108,7 @@ class Kombu(metaclass=SingletonMeta):
     ) -> None:
         """
         example:
-            def consuming_and_auto_ack(self, items: List[_T], body: _T, message: Message):
+            def consuming_and_auto_ack(self, items: list[_T], body: _T, message: Message):
                 # Consume and auto ack
                 items.append(body)
                 message.ack()
@@ -162,7 +162,7 @@ class Kombu(metaclass=SingletonMeta):
             )
 
         example:
-            def consuming_and_manual_ack(self, items: List[Tuple[_T, Message]], body: _T, message: Message):
+            def consuming_and_manual_ack(self, items: list[tuple[_T, Message]], body: _T, message: Message):
                 # Consume and auto ack
                 items.append((body, message))
 
