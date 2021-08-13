@@ -13,11 +13,11 @@ def service_depend(service_kls: Type[RT]) -> Callable[[Request], AsyncGenerator[
     async def get_service(request: Request):
         db = request.app.extra.get('db')
         async with db.scoped_session() as local_session:
-            async with local_session.begin():
-                try:
+            try:
+                async with local_session.begin():
                     yield service_kls(local_session)
-                finally:
-                    await local_session.close()
+            finally:
+                await local_session.close()
 
     return get_service
 

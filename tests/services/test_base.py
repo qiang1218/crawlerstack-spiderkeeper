@@ -17,7 +17,7 @@ from sqlalchemy import func, select, text
 from crawlerstack_spiderkeeper.db.models import Audit
 from crawlerstack_spiderkeeper.schemas.audit import AuditCreate, AuditUpdate
 from crawlerstack_spiderkeeper.services import AuditService
-from crawlerstack_spiderkeeper.services.base import Kombu
+from crawlerstack_spiderkeeper.services.utils import Kombu
 from crawlerstack_spiderkeeper.utils.exceptions import ObjectDoesNotExist
 
 
@@ -127,7 +127,7 @@ class TestBaseService:
 
 class DemoKombu(Kombu):
     """Demo Kombu mixin."""
-    name = 'test'
+    NAME = 'test'
 
 
 @pytest.mark.asyncio

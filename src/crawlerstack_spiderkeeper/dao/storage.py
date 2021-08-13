@@ -1,7 +1,7 @@
 """
 Storage dao.
 """
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import select
 
@@ -36,3 +36,9 @@ class StorageDAO(BaseDAO[Storage, StorageCreate, StorageUpdate]):
         stmt = select(self.model).filter(self.model.state == States.RUNNING.value)
         result = await self.session.execute(stmt)
         return result.scalars().all()
+
+    async def get_by_job_id(self, job_id: int) -> Optional[Storage]:
+        """使用 job id 获取 storage """
+        return await self.session.scalar(
+            select(self.model).filter(self.model.job_id == job_id)
+        )

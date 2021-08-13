@@ -26,9 +26,8 @@ async def update_artifact_state(session: AsyncSession, job_id: int, state: State
 @pytest.mark.parametrize(
     ['executor_context_exist', 'artifact_state', 'expect_value'],
     [
-        # (True, States.FINISH.value, 'skip'),
-        # (False, States.FINISH.value, 'finish'),
-        (False, States.CREATED.value, 'finish'),
+        (True, States.FINISH.value, 'skip'),
+        (False, States.FINISH.value, 'finish'),
     ]
 )
 async def test_run_with_no_run_job(
@@ -69,8 +68,7 @@ async def test_run_with_no_run_job(
 
     async with session.begin():
         # 注意：这里使用了 greenlet_spawn 对底层的同步 session 对象做了缓存的数据全部过期。
-        # 这里暂时不确定是 事务隔离级别的问题，还是异步操作中的缓存问题。
-        # 但是清理底层同步对象中缓存的数据就可以正常使用了。
+        # 由于创建 session 使用了 expire_on_commit=False ，所以对象会被缓存下来
         # 另外需要说明一点的是： sessionmaker 创建出来的 session 对象不包含 expire_all
         # 这个方法是 async_scoped_session 代理的。
         await greenlet_spawn(session.sync_session.expire_all)

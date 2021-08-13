@@ -4,17 +4,19 @@ import socket
 from itertools import count
 from typing import Any, Callable, List, Optional, TypeVar
 
-from kombu import Connection, Consumer, Exchange, Producer, Queue, connections
+from kombu import Connection, Consumer, Exchange, Producer, Queue, connections, producers
 
 from crawlerstack_spiderkeeper.config import settings
+from crawlerstack_spiderkeeper.signals import server_start, server_stop
 from crawlerstack_spiderkeeper.utils import run_in_executor, SingletonMeta
 from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
 
 _T = TypeVar('_T')
 
+logger = logging.getLogger(__name__)
 
-# TODO 完善发送确认机制
-class Kombu(metaclass=SingletonMeta):
+
+class Kombu:
     """
     Kombu server ，提供队列服务。
 
@@ -23,76 +25,68 @@ class Kombu(metaclass=SingletonMeta):
     NAME: str
 
     _connect = None
-    _channel = None
-    _should_stop = False
-    _exchange = None
+    _server_running = False
+    _server_started = False
 
     async def server_start(self):
         """Call to start when server start signal fire."""
-        self._should_stop = True
+        self._server_running = True
+        self._server_started = True
 
     async def server_stop(self):
         """Call to stop when server stop signal fire."""
-        self._should_stop = True
+        self._server_running = False
 
-    @property
-    def name(self) -> str:
-        """Server name"""
-        if not self.NAME:
-            raise SpiderkeeperError('You should define name')
-        return self.NAME
-
-    @property
-    def should_stop(self) -> bool:
-        return self._should_stop
-
-    @property
-    def exchange(self):
-        """Delay load exchange"""
-        if self._exchange is None:
-            self._exchange = Exchange(self.name)
-        return self._exchange
+    async def server_running(self) -> bool:
+        if not self._server_started:
+            logger.info('Server has not start, delay 5 seconds.')
+            await asyncio.sleep(5)
+            if not self._server_started:
+                raise SpiderkeeperError(
+                    'Server not started. You should start server or call `Kombu.server_start` first.'
+                )
+        return self._server_running
 
     @property
     def connect(self) -> Connection:
         """延迟加载单例连接"""
         if self._connect is None:
-            self._connect = Connection(settings.MQ, confirm_publish=True)
+            self._connect = Connection(settings.MQ)
         return self._connect
 
     @property
     def channel(self):
         """延迟加载单例 channel """
-        if self._channel is None:
-            self._channel = self.connect.channel()
-        return self._channel
+        return self.connect.channel()
 
-    def queue_name(self) -> str:
-        """Default queue name"""
-        return self.name
-
-    def routing_key(self) -> str:
-        """Default routing key"""
-        return self.name
-
-    async def publish(self, queue_name: str, routing_key: str, body: Any):
+    async def publish(
+            self,
+            queue_name: str,
+            routing_key: str,
+            exchange_name: str,
+            body: Any
+    ):
         """
         将消息写入队列。
         :param queue_name:
         :param routing_key:
+        :param exchange_name:
         :param body:
         :return:
         """
-        queue = Queue(name=queue_name, exchange=self.exchange, routing_key=routing_key)
-        producer = Producer(self.channel)
-        result = await run_in_executor(
-            producer.publish,
-            body=body,
-            retry=True,
-            exchange=queue.exchange,
-            routing_key=queue.routing_key,
-            declare=[queue]
-        )
+        queue = Queue(name=queue_name, exchange=Exchange(exchange_name), routing_key=routing_key)
+
+        def _publish():
+            with producers[self.connect].acquire(block=True) as producer:
+                producer.publish(
+                    body=body,
+                    retry=True,
+                    exchange=queue.exchange,
+                    routing_key=queue.routing_key,
+                    declare=[queue]
+                )
+
+        result = await run_in_executor(_publish)
 
         return result
 
@@ -100,6 +94,7 @@ class Kombu(metaclass=SingletonMeta):
             self,
             queue_name: str,
             routing_key: str,
+            exchange_name: str,
             register_callbacks: List[Callable],
             limit: Optional[int] = None,
             timeout: Optional[int] = None,
@@ -180,6 +175,7 @@ class Kombu(metaclass=SingletonMeta):
 
         :param queue_name:
         :param routing_key:
+        :param exchange_name:
         :param register_callbacks:  callback 接受两个参数 body 和 message
             注意，不能是 async 函数
             def cb(body: Dict, message: Message):
@@ -192,7 +188,8 @@ class Kombu(metaclass=SingletonMeta):
 
         :return:
         """
-        queue = Queue(name=queue_name, exchange=self.exchange, routing_key=routing_key)
+        await self.server_running()
+        queue = Queue(name=queue_name, exchange=Exchange(exchange_name), routing_key=routing_key)
         consumer = Consumer(self.channel, queues=[queue])
 
         for callback in register_callbacks:
@@ -223,9 +220,12 @@ class Kombu(metaclass=SingletonMeta):
         """
         elapsed = 0
         for _ in limit and range(limit) or count():
-            __should_stop = self._should_stop or (should_stop and should_stop.done())
-            if __should_stop:
-                logging.debug('%s should stop, so stop consuming message.', self)
+            server_running = await self.server_running()
+
+            _should_stop = not server_running or (should_stop and should_stop.done())
+            # 如果 Server 不在运行，或者 should_stop
+            if _should_stop:
+                logger.debug('%s should stop, so stop consuming message.', self)
                 break
 
             try:
@@ -237,7 +237,13 @@ class Kombu(metaclass=SingletonMeta):
                 if timeout and elapsed >= timeout:
                     raise
             except OSError:
-                if not __should_stop:
+                if not _should_stop:
                     raise
             else:
                 elapsed = 0
+
+
+_kombu = Kombu()
+# 注册事件
+server_start.connect(_kombu.server_start)
+server_stop.connect(_kombu.server_stop)

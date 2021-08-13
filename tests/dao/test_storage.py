@@ -28,3 +28,10 @@ async def test_running_storage(init_storage, dao, session):
     stmt = select(func.count()).select_from(Storage).filter(Storage.state == States.RUNNING.value)
     total = await session.scalar(stmt)
     assert len(objs) == total
+
+
+@pytest.mark.asyncio
+async def test_get_by_job_id(init_storage, dao, session):
+    storage = await session.get(Storage, 1)
+    res = await dao.get_by_job_id(storage.job_id)
+    assert res

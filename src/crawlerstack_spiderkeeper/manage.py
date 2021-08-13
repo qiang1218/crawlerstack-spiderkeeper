@@ -55,14 +55,14 @@ class SpiderKeeper:
 
     async def start(self):
         """Start api"""
-        # await server_start.send()
+        await server_start.send()
         self.rest_api.init()
-        await self.rest_api.start()
         await server_start.send()
 
     async def run(self):
         """Run"""
         try:
+            await self.rest_api.start()
             self.install_signal_handlers()
             await self.start()
             while not self.should_exit:

@@ -24,7 +24,7 @@ def router_v1():
 
     # router.include_router(log.router, tags=["Log"])
     router.include_router(metric.router, tags=["Metric"])
-    # router.include_router(storage.router, tags=["Storage"])
+    router.include_router(storage.router, tags=["Storage"])
 
     return router
 

@@ -44,7 +44,12 @@ class Database(metaclass=SingletonMeta):
 
     @property
     def session(self) -> sessionmaker:
-        return sessionmaker(self.engine, class_=AsyncSession)
+        return sessionmaker(
+            self.engine,
+            class_=AsyncSession,
+            expire_on_commit=False,  # 取消提交后过期操作，此现象会产生缓存，请注意清理。
+            # autoflush=False,
+        )
 
     @property
     def scoped_session(self) -> async_scoped_session:

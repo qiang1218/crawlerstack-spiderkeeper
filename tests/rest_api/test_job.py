@@ -56,9 +56,8 @@ def test_job_start_and_stop(client, init_job):
     """Test job start, then stop this job."""
     response = client.post(build_api_url(f'/jobs/1/_run'))
     assert_status_code(response)
-    #
-    # resp = client.get(build_api_url('/jobs'))
-    # # response = client.post(build_api_url(f'/jobs/1/_stop'))
-    # # assert_status_code(response)
-    # # response = client.get(build_api_url('/jobs/1/state'))
-    # # assert response.json()['state'] == States.STOPPED
+
+    response = client.post(build_api_url(f'/jobs/1/_stop'))
+    assert_status_code(response)
+    response = client.get(build_api_url('/jobs/1/state'))
+    assert response.json()['state'] == States.STOPPED.name

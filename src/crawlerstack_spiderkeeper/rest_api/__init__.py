@@ -53,7 +53,7 @@ class RestAPI:
         初始化 API
         :return:
         """
-        # init_middleware(self.app)
+        init_middleware(self.app)
         init_router(self.app)
 
     async def _uvicorn_server_setup(self):
@@ -66,12 +66,15 @@ class RestAPI:
 
     async def start(self) -> None:
         """"""
-        self.init()
         await self._uvicorn_server_setup()
 
     async def stop(self) -> None:
         """"""
-        await self._uvicorn_server.shutdown()
+        # 由于 _uvicorn_server 是在 startup 是初始化 servers 属性的，
+        # 所以在测试时，如果不运行 self.start 逻辑， _uvicorn_server.shutdown
+        # 会报错
+        if hasattr(self._uvicorn_server, 'servers'):
+            await self._uvicorn_server.shutdown()
 
     async def restart(self) -> None:
         """"""

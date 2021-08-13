@@ -69,8 +69,7 @@ async def create(
     :param service:
     :return:
     """
-    result = await service.create(obj_in=project_in)
-    return result
+    return await service.create(obj_in=project_in)
 
 
 @router.put('/projects/{pk}', response_model=Project)

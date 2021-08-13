@@ -3,7 +3,7 @@ Base service.
 """
 
 import logging
-from typing import Any, Dict, Generic, Optional, Type, Union, TypeVar
+from typing import Any, Dict, Generic, Optional, Type, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -167,7 +167,3 @@ class ServerEventMixin:
 
     async def server_stop(self):
         """"""
-
-
-class Kombu:
-    """TODO 测试完成后删除"""

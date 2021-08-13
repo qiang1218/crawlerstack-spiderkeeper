@@ -55,7 +55,7 @@ class JobService(EntityService[Job, JobCreate, JobUpdate]):
         """
         state = await self.dao.state(pk=pk)
         if state:
-            return state.key
+            return state.name
         return 'No run job'
 
     async def run(self, pk: int) -> str:

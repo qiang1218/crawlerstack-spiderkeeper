@@ -7,17 +7,12 @@ import os
 import tempfile
 from datetime import datetime
 from shutil import make_archive
-from typing import AsyncContextManager, Callable, Generator
-from urllib.parse import urlparse
+from typing import AsyncContextManager, Callable, Generator, TypeVar
 
 import pytest
-from aio_pydispatch import Signal
-from alembic.command import downgrade as alembic_downgrade
-from alembic.command import upgrade as alembic_upgrade
-from alembic.config import Config as AlembicConfig
+
 from fastapi import Response, UploadFile
 from sqlalchemy import select
-from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
                                     create_async_engine)
 from sqlalchemy.orm import Session, sessionmaker
@@ -27,11 +22,12 @@ from crawlerstack_spiderkeeper.config import settings
 from crawlerstack_spiderkeeper.db.models import (Artifact, Audit, Job, Project,
                                                  Server, Storage, Task, BaseModel)
 from crawlerstack_spiderkeeper.manage import SpiderKeeper
-from crawlerstack_spiderkeeper.signals import server_start, server_stop
 from crawlerstack_spiderkeeper.utils.metadata import ArtifactMetadata, Metadata
 from crawlerstack_spiderkeeper.utils.states import States
 
 logger = logging.getLogger(__name__)
+
+_T = TypeVar('_T')
 
 
 @pytest.fixture()
@@ -135,7 +131,10 @@ async def session_factory(engine):
     """Session factory fixture"""
     yield sessionmaker(
         bind=engine,
-        class_=AsyncSession
+        class_=AsyncSession,
+        autoflush=True,
+        autocommit=False,
+        expire_on_commit=False,
     )
 
 
@@ -316,15 +315,6 @@ def fixture_artifact_metadata(demo_zip):
     yield ArtifactMetadata(os.path.basename(demo_zip))
 
 
-@pytest.fixture()
-def client(migrate):
-    """Api client fixture."""
-    spider_keeper = SpiderKeeper(settings)
-    spider_keeper.rest_api.init()
-    _client = TestClient(spider_keeper.rest_api.app)
-    yield _client
-
-
 @pytest.fixture(autouse=True)
 async def spiderkeeper(migrate):
     sk = SpiderKeeper(settings)
@@ -336,9 +326,19 @@ async def spiderkeeper(migrate):
 
 
 @pytest.fixture()
-def factory_with_session(spiderkeeper) -> Callable[..., AsyncContextManager]:
+async def client(spiderkeeper):
+    """Api client fixture."""
+    _client = TestClient(
+        spiderkeeper.rest_api.app,
+        # raise_server_exceptions=False
+    )
+    yield _client
+
+
+@pytest.fixture()
+def factory_with_session(spiderkeeper) -> Callable[..., AsyncContextManager[_T]]:
     @contextlib.asynccontextmanager
-    async def factory(kls):
+    async def factory(kls: _T):
         async with spiderkeeper.db.session() as session:
             async with session.begin():
                 yield kls(session)
