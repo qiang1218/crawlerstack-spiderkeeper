@@ -8,8 +8,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
-from crawlerstack_spiderkeeper.utils.exceptions import (ObjectDoesNotExist,
-                                                        SpiderkeeperError)
+from crawlerstack_spiderkeeper.utils.exceptions import ObjectDoesNotExist
 from crawlerstack_spiderkeeper.utils.types import (CreateSchemaType, ModelType,
                                                    UpdateSchemaType)
 

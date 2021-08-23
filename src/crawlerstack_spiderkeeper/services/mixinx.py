@@ -6,7 +6,7 @@ from functools import partial
 from itertools import count
 from typing import Type, TypeVar
 
-from kombu import Consumer, Connection, connections, Queue, Exchange, Message
+from kombu import Consumer, Connection, connections, Queue, Exchange, Message, producers, Producer
 from kombu.utils.encoding import safe_repr
 
 from crawlerstack_spiderkeeper.utils import run_in_executor
@@ -72,11 +72,9 @@ class ProducerConsumerMixin:
     async def consume(self):
         """"""
 
-    async def produce(self):
-        """"""
-
     def callback_on_consuming(self, body: _T, message: Message):  # noqa
         self._data.append(body)
+        print(body)
         message.ack()
 
     async def on_iteration(self):
@@ -108,9 +106,25 @@ class ProducerConsumerMixin:
             self._producer_connection.close()
             self._producer_connection = None
 
+    @contextlib.asynccontextmanager
     async def producer(self):
         async with self.establish_connection(self.consumer_connection) as connect:
             await self.on_connection_revived()
+            producer: Producer = producers[connect].acquire(block=True)
+            await run_in_executor(producer.__enter__)
+            yield connect, producer
+            await run_in_executor(producer.__exit__)
+
+    async def produce(self, data):
+        """"""
+        async with self.producer() as (connect, producer):
+            await run_in_executor(
+                producer.publish,
+                body=data,
+                exchange=self.queue.exchange,
+                routing_key=self.queue.routing_key,
+                declare=[self.queue],
+            )
 
     @contextlib.asynccontextmanager
     async def establish_connection(self, connection: Connection):
@@ -135,10 +149,10 @@ class ProducerConsumerMixin:
         """通过连接对象初始化 consumer"""
         async with self.establish_connection(self.consumer_connection) as connect:
             await self.on_connection_revived()
+            logger.info('Connected to %s', connect.as_uri())
             # TODO
             channel = self.connect.channel()
-            logger.info('Connected to %s', connect.as_uri())
-
+            await run_in_executor(channel.__enter__)
             cls = partial(
                 Consumer,
                 channel,
@@ -146,6 +160,7 @@ class ProducerConsumerMixin:
             )
             async with self.get_consumers(cls, channel) as consumer:
                 yield connect, channel, consumer
+            await run_in_executor(channel.__exit__)
             logger.debug('Consumers canceled')
             self.on_consume_end(connect, channel)
         logger.debug('Connection closed')
@@ -158,9 +173,7 @@ class ProducerConsumerMixin:
     @contextlib.asynccontextmanager
     async def consumer_context(self, **kwargs):
         async with self.consumer() as (connection, channel, consumer):
-            async with self.extra_context(connection, channel, **kwargs):
-                await self.on_consume_ready(connection, channel, consumer, **kwargs)
-                yield connection, channel, consumer
+            yield connection, channel, consumer
 
     async def consuming(self, limit: int, timeout=None, safety_interval=1, **kwargs):
         elapsed = 0
@@ -168,8 +181,6 @@ class ProducerConsumerMixin:
             for _ in limit and range(limit) or count():
                 if self.should_stop:
                     break
-                async for i in self.on_iteration():
-                    yield i
                 try:
                     await run_in_executor(self.connect.drain_events, timeout=safety_interval)
                 except socket.timeout:
@@ -181,7 +192,6 @@ class ProducerConsumerMixin:
                     if not self.should_stop:
                         raise
                 else:
-                    yield
                     elapsed = 0
         logger.debug('consume exiting')
 

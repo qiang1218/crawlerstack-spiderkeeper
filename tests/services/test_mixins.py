@@ -6,5 +6,6 @@ from crawlerstack_spiderkeeper.services.mixinx import Demo
 @pytest.mark.asyncio
 async def test_mixins():
     demo = Demo()
-    async for x in demo.consuming(5):
-        print(x)
+    # await demo.produce({'abc': '123'})
+    await demo.consuming(10)
+    print(demo._data)
