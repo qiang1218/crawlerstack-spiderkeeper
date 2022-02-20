@@ -1,14 +1,17 @@
 """
 Artifact route.
 """
+from typing import Optional
+
 from fastapi import APIRouter, Body, Depends, File, Response, UploadFile
+from pydantic import BaseModel
 
 from crawlerstack_spiderkeeper.rest_api.route_class import AuditRoute
 from crawlerstack_spiderkeeper.rest_api.utils import (auto_commit,
                                                       service_depend)
 from crawlerstack_spiderkeeper.schemas.artifact import (Artifact,
                                                         ArtifactCreate,
-                                                        ArtifactUpdate)
+                                                        ArtifactUpdate, ArtifactFileCreate)
 from crawlerstack_spiderkeeper.services import (ArtifactFileService,
                                                 ArtifactService)
 
@@ -54,16 +57,28 @@ async def get(
 @auto_commit
 async def create(
         *,
-        artifact_in: ArtifactCreate,
+        project_id: int = Body(...),
+        file: UploadFile = File(...),
+        interpreter: Optional[str] = Body(...),
+        execute_path: Optional[str] = Body(...),
         service: service_depend(ArtifactService) = Depends(),
 ):
     """
     Create artifact
+    :param project_id:
+    :param interpreter:
+    :param execute_path:
+    :param file: File
     :param service:
-    :param artifact_in:
     :return:
     """
-    return await service.create(obj_in=artifact_in)
+    return await service.create(
+        obj_in=ArtifactFileCreate(
+            project_id=project_id,
+            file=file,
+            interpreter=interpreter,
+            execute_path=execute_path
+        ))
 
 
 @router.post('/artifacts/files')

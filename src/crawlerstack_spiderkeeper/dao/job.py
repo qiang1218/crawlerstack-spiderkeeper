@@ -28,4 +28,3 @@ class JobDAO(BaseDAO[Job, JobCreate, JobUpdate]):
         obj: Task = await self.session.scalar(stmt)
         if obj:
             return States(obj.state)
-        return None

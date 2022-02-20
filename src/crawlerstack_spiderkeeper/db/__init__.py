@@ -39,7 +39,7 @@ class Database(metaclass=SingletonMeta):
     @property
     def engine(self) -> AsyncEngine:
         if not self._engine:
-            self._engine = create_async_engine(self.settings.DATABASE, echo=True, future=True)
+            self._engine = create_async_engine(self.settings.DATABASE, future=True)
         return self._engine
 
     @property

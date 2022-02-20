@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from uvicorn import Config, Server
 
 from crawlerstack_spiderkeeper.db import Database
+from crawlerstack_spiderkeeper.rest_api.handler import init_exception_handler
 from crawlerstack_spiderkeeper.rest_api.middlewares import init_middleware
 from crawlerstack_spiderkeeper.rest_api.routers import init_router
 
@@ -54,6 +55,7 @@ class RestAPI:
         :return:
         """
         init_middleware(self.app)
+        init_exception_handler(self.app)
         init_router(self.app)
 
     async def _uvicorn_server_setup(self):
