@@ -21,9 +21,9 @@ class ExampleSpider(scrapy.Spider):
             return None
 
     def start_requests(self):
-        url = 'http://example.com'
+        url = 'http://httpbin.iclouds.work/uuid'
         urls = [
-            f'{url}' for i in range(0, 100)
+            f'{url}' for _ in range(0, 100)
         ]
 
         for url in urls:

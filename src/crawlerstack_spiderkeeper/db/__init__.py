@@ -1,7 +1,6 @@
-import contextlib
 import functools
 from asyncio import current_task
-from collections import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 from inspect import signature
 from typing import Any, Optional, Type, TypeVar
 

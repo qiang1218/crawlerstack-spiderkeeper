@@ -3,7 +3,7 @@ Log service.
 """
 import functools
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from kombu import Message
 
@@ -14,8 +14,7 @@ from crawlerstack_spiderkeeper.utils import AppId, AppData
 logger = logging.getLogger(__name__)
 
 
-class LogKombu(Kombu):
-    NAME = 'log'
+# 注册事件
 
 
 class LogService(ICRUD):
@@ -25,10 +24,11 @@ class LogService(ICRUD):
     为了方便日志服务统一管理日志，使用日志服务接收任务运行的日志，
     这样日志服务就可以直接通过该服务获取所有任务的运行日志。
     """
-    kombu = LogKombu()
+    NAME = 'log'
+    kombu = Kombu()
 
     def queue_name(self, app_id: AppId):
-        return f'{self.kombu.name}-{app_id.job_id}-{app_id.task_id}'
+        return f'{self.NAME}-{app_id.job_id}-{app_id.task_id}'
 
     def routing_key(self, app_id: AppId):
         return self.queue_name(app_id)
@@ -43,6 +43,7 @@ class LogService(ICRUD):
         await self.kombu.consume(
             queue_name=self.queue_name(app_id),
             routing_key=self.queue_name(app_id),
+            exchange_name=self.queue_name(app_id),
             register_callbacks=[consume_on_response]
         )
         return data
@@ -51,11 +52,12 @@ class LogService(ICRUD):
         await self.kombu.publish(
             queue_name=self.queue_name(app_data.app_id),
             routing_key=self.routing_key(app_data.app_id),
+            exchange_name=self.queue_name(app_data.app_id),
             body=app_data.data
         )
 
-    def update(self, *args, **kwargs) -> Any:
+    async def update(self, *args, **kwargs) -> Any:
         pass
 
-    def delete(self, *args, **kwargs) -> Any:
+    async def delete(self, *args, **kwargs) -> Any:
         pass

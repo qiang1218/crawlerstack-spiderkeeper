@@ -8,7 +8,7 @@ from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String,
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 
-from crawlerstack_spiderkeeper.utils.states import States
+from crawlerstack_spiderkeeper.utils.status import Status
 
 
 class CustomBase:
@@ -64,7 +64,7 @@ class Artifact(BaseModel):
     interpreter = Column(String(500), default='python', nullable=True, comment='解释器')
     tag = Column(String(100), nullable=True, comment='Tag')
     execute_path = Column(String(100), nullable=True, comment='执行路径')
-    state = Column(Integer, default=States.CREATED.value, comment='状态')
+    status = Column(Integer, default=Status.CREATED.value, comment='状态')
     project_id = Column(
         Integer,
         ForeignKey("project.id", ondelete='CASCADE'),
@@ -106,7 +106,7 @@ class Task(BaseModel):
     """
     create_time = Column(DateTime, default=datetime.now, comment='创建时间')
     update_time = Column(DateTime, default=datetime.now, onupdate=datetime.now, comment='更新时间')
-    state = Column(Integer, default=States.CREATED.value, comment='任务状态')
+    status = Column(Integer, default=Status.CREATED.value, comment='任务状态')
     item_count = Column(Integer, default=0, comment='写入数据数量')
     detail = Column(Text, nullable=True, comment='任务详情')
     container_id = Column(String(120), comment='容器 ID')
@@ -122,7 +122,7 @@ class Storage(BaseModel):
     update_time = Column(DateTime, default=datetime.now, onupdate=datetime.now, comment='更新时间')
 
     count = Column(Integer, default=0, comment='导出数据量')
-    state = Column(Integer, default=States.CREATED.value, comment='存储任务状态')
+    status = Column(Integer, default=Status.CREATED.value, comment='存储任务状态')
     detail = Column(String(1000), nullable=True, comment='存储任务详情，失败后的值可以存在这里，便于诊断')
 
     job_id = Column(Integer, ForeignKey('job.id', ondelete='CASCADE'))

@@ -23,7 +23,7 @@ from crawlerstack_spiderkeeper.db.models import (Artifact, Audit, Job, Project,
                                                  Server, Storage, Task, BaseModel)
 from crawlerstack_spiderkeeper.manage import SpiderKeeper
 from crawlerstack_spiderkeeper.utils.metadata import ArtifactMetadata, Metadata
-from crawlerstack_spiderkeeper.utils.states import States
+from crawlerstack_spiderkeeper.utils.status import Status
 
 logger = logging.getLogger(__name__)
 
@@ -255,8 +255,8 @@ async def init_task(session, init_job) -> list[Task]:
     async with session.begin():
         job = await session.scalar(select(Job))
         tasks = [
-            Task(job_id=job.id, state=States.RUNNING.value),
-            Task(job_id=job.id, state=States.RUNNING.value, container_id='001'),
+            Task(job_id=job.id, status=Status.RUNNING.value),
+            Task(job_id=job.id, status=Status.RUNNING.value, container_id='001'),
         ]
         session.add_all(tasks)
     return tasks
@@ -268,8 +268,8 @@ async def init_storage(session, init_job):
     async with session.begin():
         obj: Job = await session.scalar(select(Job))
         objs = [
-            Storage(count=0, state=States.RUNNING.value, job_id=obj.id),
-            Storage(count=0, state=States.STOPPED.value, detail='stop...', job_id=obj.id),
+            Storage(count=0, status=Status.RUNNING.value, job_id=obj.id),
+            Storage(count=0, status=Status.STOPPED.value, detail='stop...', job_id=obj.id),
         ]
         session.add_all(objs)
     return obj
@@ -317,11 +317,11 @@ def fixture_artifact_metadata(demo_zip):
 
 @pytest.fixture(autouse=True)
 async def spiderkeeper(migrate):
-    sk = SpiderKeeper(settings)
+    _spiderkeeper = SpiderKeeper(settings)
     logger.debug('Starting spiderkeeper!!!')
-    await sk.start()
-    yield sk
-    await sk.stop()
+    await _spiderkeeper.start()
+    yield _spiderkeeper
+    await _spiderkeeper.stop()
     logger.debug('Stopped spiderkeeper!!!')
 
 

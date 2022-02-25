@@ -19,7 +19,7 @@ from crawlerstack_spiderkeeper.services.base import EntityService
 from crawlerstack_spiderkeeper.services.utils import Kombu
 from crawlerstack_spiderkeeper.utils import AppData, AppId
 from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
-from crawlerstack_spiderkeeper.utils.states import States
+from crawlerstack_spiderkeeper.utils.status import Status
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +154,7 @@ class StorageBackgroundTask:
         :return:
         """
         logger.debug('Start storage consume task: %s', self.app_id)
-        state = States.RUNNING
+        state = Status.RUNNING
         detail = None
         async with self.session.begin():  # 手动开启事务
             storage_obj = await self.storage_dao.get_by_job_id(self.app_id.job_id)
@@ -183,10 +183,10 @@ class StorageBackgroundTask:
                 register_callbacks=[callback],
             )
             logger.debug('Consume task finish.')
-            state = States.FINISH
+            state = Status.FINISH
         except SpiderkeeperError as ex:
             logger.debug('Consume fail.')
-            state = States.FAILURE
+            state = Status.FAILURE
             detail = str(ex)
             logger.error(ex)
 
@@ -296,15 +296,14 @@ class StorageService(EntityService):
                 await self.storage_dao.update_by_id(
                     pk=storage.id,
                     obj_in=StorageUpdate(
-                        state=States.STOPPED.value,
+                        state=Status.STOPPED.value,
                         detail='storage task already stop, update db state'
                     )
                 )
         # 检查任务是否在正在运行的任务列表中
         if self.background_task_id(job_id) in self._storage_background_tasks:
             return True
-        else:
-            return False
+        return False
 
     async def start(self, app_id: AppId) -> str:
         """启动一个任务"""

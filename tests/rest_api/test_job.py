@@ -6,7 +6,7 @@ import asyncio
 import pytest
 
 from crawlerstack_spiderkeeper.db.models import Artifact, Job, Server, Task
-from crawlerstack_spiderkeeper.utils.states import States
+from crawlerstack_spiderkeeper.utils.status import States
 from tests.conftest import assert_status_code, build_api_url
 
 

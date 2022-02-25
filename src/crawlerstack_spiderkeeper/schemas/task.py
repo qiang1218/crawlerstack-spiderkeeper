@@ -6,14 +6,13 @@ from datetime import datetime
 from pydantic import BaseModel, constr  # pylint: disable=no-name-in-module
 
 from crawlerstack_spiderkeeper.schemas.base import InDBMixin
-from crawlerstack_spiderkeeper.utils.states import States
 
 
 class TaskBase(BaseModel):
     """Task base schema."""
     create_time: datetime = None
     update_time: datetime = None
-    state: int = None
+    status: int = None
     item_count: int = 0
     detail: str = None
     container_id: constr(max_length=120) = None

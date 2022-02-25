@@ -31,16 +31,16 @@ class ICRUD:  # noqa
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    def get(self, *args, **kwargs) -> Any:
+    async def get(self, *args, **kwargs) -> Any:
         raise NotImplementedError
 
-    def create(self, *args, **kwargs) -> Any:
+    async def create(self, *args, **kwargs) -> Any:
         raise NotImplementedError
 
-    def update(self, *args, **kwargs) -> Any:
+    async def update(self, *args, **kwargs) -> Any:
         raise NotImplementedError
 
-    def delete(self, *args, **kwargs) -> Any:
+    async def delete(self, *args, **kwargs) -> Any:
         raise NotImplementedError
 
 

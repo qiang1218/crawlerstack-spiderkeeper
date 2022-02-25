@@ -1,5 +1,5 @@
 import functools
-from collections import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator, Callable
 from typing import Type, TypeVar
 
 from starlette.requests import Request

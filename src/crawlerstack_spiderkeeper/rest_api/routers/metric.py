@@ -7,7 +7,7 @@ from fastapi.responses import Response
 
 from crawlerstack_spiderkeeper import schemas
 from crawlerstack_spiderkeeper.rest_api.utils import service_depend
-from crawlerstack_spiderkeeper.services import MetricService, metric_service
+from crawlerstack_spiderkeeper.services import MetricService
 from crawlerstack_spiderkeeper.utils import AppData
 
 router = APIRouter()
@@ -25,5 +25,5 @@ async def post(
     :param app_data:
     :return:
     """
-    await service.create_msg(AppData(**jsonable_encoder(app_data)))
+    await service.create(AppData(**jsonable_encoder(app_data)))
     return Response(status_code=200)

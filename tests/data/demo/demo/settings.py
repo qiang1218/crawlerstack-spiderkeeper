@@ -97,3 +97,6 @@ DEFAULT_MOCK_SERVER = '127.0.0.1:3000'
 
 MOCK_SERVER_HOST = '127.0.0.1'
 MOCK_SERVER_PORT = '3333'
+
+from spiderkeeper_support_scrapy.handler import init_handler
+init_handler()

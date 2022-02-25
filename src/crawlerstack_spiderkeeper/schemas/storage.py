@@ -7,7 +7,7 @@ from typing import Optional
 from pydantic import BaseModel, constr  # pylint: disable=no-name-in-module
 
 from crawlerstack_spiderkeeper.schemas.base import InDBMixin
-from crawlerstack_spiderkeeper.utils.states import States
+from crawlerstack_spiderkeeper.utils.status import Status
 
 
 class StorageBase(BaseModel):
@@ -30,7 +30,7 @@ class Storage(StorageBase, InDBMixin):
 class StorageCreate(StorageBase):
     """Storage create schema."""
     job_id: int
-    state: States
+    status: Status
 
 
 class StorageUpdate(StorageBase):

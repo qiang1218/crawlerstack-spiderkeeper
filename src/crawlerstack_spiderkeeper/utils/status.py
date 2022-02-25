@@ -10,7 +10,7 @@
 from enum import IntEnum
 
 
-class States(IntEnum):
+class Status(IntEnum):
     """
     State enum
     """

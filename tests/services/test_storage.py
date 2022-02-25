@@ -16,7 +16,7 @@ from crawlerstack_spiderkeeper.services.storage import StorageBackgroundTask
 from crawlerstack_spiderkeeper.services.utils import Kombu
 from crawlerstack_spiderkeeper.utils import AppData, AppId
 from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
-from crawlerstack_spiderkeeper.utils.states import States
+from crawlerstack_spiderkeeper.utils.status import Status
 
 
 @pytest.fixture()
@@ -94,13 +94,13 @@ class TestStorageBackgroundTask:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        ['exception', 'state'],
+        ['exception', 'status'],
         [
-            (None, States.FINISH.value),
-            (SpiderkeeperError('foo'), States.FAILURE.value),
+            (None, Status.FINISH.value),
+            (SpiderkeeperError('foo'), Status.FAILURE.value),
         ]
     )
-    async def test_consume_task(self, mocker, app_data, session, caplog, exception, state):
+    async def test_consume_task(self, mocker, app_data, session, caplog, exception, status):
         """Test consume task."""
         mocker.patch.object(
             Kombu,
@@ -117,7 +117,7 @@ class TestStorageBackgroundTask:
         if exception:
             assert exception.args[0] in caplog.text
 
-        assert storage_obj.state == state
+        assert storage_obj.status == status
 
     @pytest.mark.asyncio
     async def test_run(self, mocker, app_data, event_loop, session):
@@ -130,7 +130,7 @@ class TestStorageBackgroundTask:
         count = await session.scalar(select(func.count()).select_from(Storage))
         assert count == 1
         storage = await session.get(Storage, 1)
-        assert storage.state == States.FINISH.value
+        assert storage.status == Status.FINISH.value
 
 
 class TestStorageService:
@@ -152,7 +152,7 @@ class TestStorageService:
     @pytest.mark.asyncio
     async def test_has_running_task(self, init_storage, session, app_data, factory_with_session):
         """Test has running task."""
-        stmt = select(Storage).filter(Storage.state == States.RUNNING.value)
+        stmt = select(Storage).filter(Storage.status == Status.RUNNING.value)
         async with session.begin():
             obj = await session.scalar(stmt)
             assert obj
@@ -164,7 +164,7 @@ class TestStorageService:
             # 使用 populate_existing=True 显示指定从数据库查询，并刷新对象。
             # 这么做的目的是避免前面查询后中间其他连接修改了，再次查询直接读缓存的情况。
             obj = await session.get(Storage, pk, populate_existing=True)
-            assert obj.state == States.STOPPED.value
+            assert obj.status == Status.STOPPED.value
 
     @pytest.mark.asyncio
     async def test_start(self, mocker, app_data, factory_with_session):

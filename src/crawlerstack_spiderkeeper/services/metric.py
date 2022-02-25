@@ -3,16 +3,13 @@ Metric service.
 """
 
 import asyncio
-import functools
 import logging
 from typing import Any, Dict, Optional
 
 from kombu import Message
 from prometheus_client import Histogram
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from crawlerstack_spiderkeeper.db import session_provider
-from crawlerstack_spiderkeeper.services.base import ServerEventMixin, ICRUD
+from crawlerstack_spiderkeeper.services.base import ICRUD
 from crawlerstack_spiderkeeper.services.utils import Kombu
 from crawlerstack_spiderkeeper.signals import server_start, server_stop
 from crawlerstack_spiderkeeper.utils import AppId, AppData
@@ -39,15 +36,15 @@ logger = logging.getLogger(__name__)
 
 class MetricBackgroundTask:
     """Metric background task"""
-    NAME = 'storage'
+    NAME = 'metric'
     kombu = Kombu()
 
     metrics = {name: Histogram(name, name, labels) for name in metric_name}
-
-    _should_stop: Optional[asyncio.Future] = asyncio.Future()
+    _task: None | asyncio.Task = None
+    _should_stop: asyncio.Future = asyncio.Future()
 
     @classmethod
-    async def run_from_cls(cls):
+    async def run_from_cls(cls, **kwargs):
         """
         运行任务
         :return:
@@ -56,7 +53,7 @@ class MetricBackgroundTask:
         await obj.start()
 
     @classmethod
-    async def stop_from_cls(cls):
+    async def stop_from_cls(cls, **kwargs):
         """
         Stop server
         :return:
@@ -84,13 +81,13 @@ class MetricBackgroundTask:
         :return:
         """
         logger.info(f'Starting metric task.')
-        if self._should_stop is None or not self._should_stop.done():
-            self._should_stop = asyncio.Future()
+        if self._should_stop.done():
+            MetricBackgroundTask._should_stop = asyncio.Future()
 
         # 系统启动后开启监控数据消费任务
         loop = asyncio.get_running_loop()
         logger.debug('Start consuming metric data from kombu.')
-        task = loop.create_task(self.kombu.consume(
+        MetricBackgroundTask._task = loop.create_task(self.kombu.consume(
             queue_name=self.queue_name,
             routing_key=self.routing_key,
             exchange_name=self.exchange_name,
@@ -104,9 +101,12 @@ class MetricBackgroundTask:
         Stop server
         :return:
         """
-        if self._should_stop and not self._should_stop.done():
-            self._should_stop.set_result('Stop')
-            self._should_stop = None
+        if not self._should_stop.done():
+            MetricBackgroundTask._should_stop.set_result('Stop')
+            await asyncio.sleep(0)
+            if self._task and not self._task.done():
+                self._task.cancel()
+                logger.debug('Cancel metric task.')
         logger.info('Stopped metric task')
 
     def consume_on_response(self, body: Dict, message: Message):
@@ -168,14 +168,14 @@ class MetricService(ICRUD):
     def exchange_name(self):
         return self.NAME
 
-    def get(self, *args, **kwargs) -> Any:
+    async def get(self, *args, **kwargs) -> Any:
         pass
 
     async def create(self, app_data: AppData) -> Any:
         body = {
-                   'app_id': str(app_data.app_id),
-                   'data': app_data.data
-               },
+            'app_id': str(app_data.app_id),
+            'data': app_data.data
+        }
 
         await self.kombu.publish(
             queue_name=self.queue_name,
@@ -190,13 +190,13 @@ class MetricService(ICRUD):
             f'body={body}>'
         )
 
-    def update(self, *args, **kwargs) -> Any:
+    async def update(self, *args, **kwargs) -> Any:
         pass
 
-    def delete(self, *args, **kwargs) -> Any:
+    async def delete(self, *args, **kwargs) -> Any:
         pass
 
 
 # # 注册事件
-# server_start.connect(MetricBackgroundTask.run_from_cls)
-# server_stop.connect(MetricBackgroundTask.stop_from_cls)
+server_start.connect(MetricBackgroundTask.run_from_cls)
+server_stop.connect(MetricBackgroundTask.stop_from_cls)

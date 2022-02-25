@@ -4,7 +4,8 @@ from sqlalchemy import func, select
 
 from crawlerstack_spiderkeeper.dao.storage import StorageDAO
 from crawlerstack_spiderkeeper.db.models import Storage
-from crawlerstack_spiderkeeper.utils.states import States
+from crawlerstack_spiderkeeper.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper.utils.status import Status
 
 
 @pytest.fixture()
@@ -25,13 +26,33 @@ async def test_increase_storage_count(init_storage, dao, session):
 async def test_running_storage(init_storage, dao, session):
     """test running_storage"""
     objs = await dao.running_storage()
-    stmt = select(func.count()).select_from(Storage).filter(Storage.state == States.RUNNING.value)
+    stmt = select(
+        func.count()
+    ).select_from(Storage).filter(
+        Storage.status == Status.RUNNING.value
+    )
     total = await session.scalar(stmt)
     assert len(objs) == total
 
 
 @pytest.mark.asyncio
-async def test_get_by_job_id(init_storage, dao, session):
-    storage = await session.get(Storage, 1)
-    res = await dao.get_by_job_id(storage.job_id)
-    assert res
+async def test_running_storage_error(dao, session):
+    """test running_storage"""
+    with pytest.raises(ObjectDoesNotExist):
+        await dao.running_storage()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'exist',
+    [True, False]
+)
+async def test_get_by_job_id(init_storage, dao, session, exist):
+    """test get by job id."""
+    if exist:
+        storage = await session.get(Storage, 1)
+        res = await dao.get_by_job_id(storage.job_id)
+        assert res
+    else:
+        with pytest.raises(ObjectDoesNotExist):
+            await dao.get_by_job_id(100)

@@ -23,11 +23,27 @@ class SpiderkeeperError(Exception):
 class ObjectDoesNotExist(SpiderkeeperError):
     """
     Object does not exist.
+
+    http code: 404
     """
 
     def __init__(
             self,
             detail: Optional[str] = 'Object does not exist!',
+    ):
+        super().__init__(detail)
+
+
+class UnprocessableEntityError(SpiderkeeperError):
+    """
+    Unprocessable entity error
+
+    http code: 422
+    """
+
+    def __init__(
+            self,
+            detail: str | list | dict = 'Unprocessable entity error',
     ):
         super().__init__(detail)
 

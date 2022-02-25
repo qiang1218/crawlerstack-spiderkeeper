@@ -142,7 +142,7 @@ class ArtifactMetadata:
         Timestamp
         :return:
         """
-        timestamp = float(self._filename.split('-')[1].rstrip('.zip'))
+        timestamp = float(self._filename.split('-')[-1].rstrip('.zip'))
         return timestamp
 
     @property

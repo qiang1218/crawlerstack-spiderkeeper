@@ -141,6 +141,7 @@ async def test_kombu():
     await kombu.publish(
         queue_name='foo',
         routing_key='bar',
+        exchange_name='foo',
         body=json.dumps({
             'datetime': datetime.now().strftime('%Y-%h-%mT%H:%M:%S+0800'),
             'msg': 'foo'
@@ -166,6 +167,7 @@ async def test_kombu():
     await kombu.consume(
         queue_name='foo',
         routing_key='bar',
+        exchange_name='foo',
         limit=1,
         register_callbacks=[callback],
     )

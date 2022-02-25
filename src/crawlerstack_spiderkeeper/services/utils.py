@@ -15,6 +15,10 @@ _T = TypeVar('_T')
 
 logger = logging.getLogger(__name__)
 
+# FIXME pylint W0603
+_SERVER_RUNNING = False
+_SERVER_STARTED = False
+
 
 class Kombu:
     """
@@ -25,27 +29,58 @@ class Kombu:
     NAME: str
 
     _connect = None
-    _server_running = False
-    _server_started = False
 
-    async def server_start(self):
+    @property
+    def server_running(self):
+        global _SERVER_RUNNING
+        return _SERVER_RUNNING
+
+    @server_running.setter
+    def server_running(self, value: bool):
+        global _SERVER_RUNNING
+        _SERVER_RUNNING = value
+
+    @property
+    def server_started(self):
+        global _SERVER_STARTED
+        return _SERVER_STARTED
+
+    @server_started.setter
+    def server_started(self, value: bool):
+        global _SERVER_STARTED
+        _SERVER_STARTED = value
+
+    @property
+    def name(self):
+        return self.NAME
+
+    async def server_start(self, **_kwargs):
         """Call to start when server start signal fire."""
-        self._server_running = True
-        self._server_started = True
+        self.server_running = True
+        self.server_started = True
 
-    async def server_stop(self):
+    async def server_stop(self, **_kwargs):
         """Call to stop when server stop signal fire."""
-        self._server_running = False
+        _server_running = False
+        if self.connect:
+            logger.debug('Stop kombu connection.')
+            self.connect.close()
 
-    async def server_running(self) -> bool:
-        if not self._server_started:
+    async def check_server(self) -> bool:
+        """
+        检查 server 的状态，如果 server 没启动，
+        则等待 5 秒后再次检查，如果仍没有启动，抛出异常。
+        :return:
+        """
+        if not self.server_started:
             logger.info('Server has not start, delay 5 seconds.')
             await asyncio.sleep(5)
-            if not self._server_started:
+            if not self.server_started:
                 raise SpiderkeeperError(
-                    'Server not started. You should start server or call `Kombu.server_start` first.'
+                    'Server not started. You should start server or '
+                    'call `Kombu.server_start` first.'
                 )
-        return self._server_running
+        return self.server_running
 
     @property
     def connect(self) -> Connection:
@@ -56,7 +91,7 @@ class Kombu:
 
     @property
     def channel(self):
-        """延迟加载单例 channel """
+        """创建并返回一个新的 channel"""
         return self.connect.channel()
 
     async def publish(
@@ -65,7 +100,7 @@ class Kombu:
             routing_key: str,
             exchange_name: str,
             body: Any
-    ):
+    ) -> None:
         """
         将消息写入队列。
         :param queue_name:
@@ -86,9 +121,7 @@ class Kombu:
                     declare=[queue]
                 )
 
-        result = await run_in_executor(_publish)
-
-        return result
+        await run_in_executor(_publish)
 
     async def consume(
             self,
@@ -102,6 +135,7 @@ class Kombu:
             should_stop: Optional[asyncio.Future] = None,
     ) -> None:
         """
+
         example:
             def consuming_and_auto_ack(self, items: list[_T], body: _T, message: Message):
                 # Consume and auto ack
@@ -188,7 +222,7 @@ class Kombu:
 
         :return:
         """
-        await self.server_running()
+        await self.check_server()
         queue = Queue(name=queue_name, exchange=Exchange(exchange_name), routing_key=routing_key)
         consumer = Consumer(self.channel, queues=[queue])
 
@@ -220,7 +254,7 @@ class Kombu:
         """
         elapsed = 0
         for _ in limit and range(limit) or count():
-            server_running = await self.server_running()
+            server_running = await self.check_server()
 
             _should_stop = not server_running or (should_stop and should_stop.done())
             # 如果 Server 不在运行，或者 should_stop
@@ -243,7 +277,6 @@ class Kombu:
                 elapsed = 0
 
 
-_kombu = Kombu()
-# 注册事件
-server_start.connect(_kombu.server_start)
-server_stop.connect(_kombu.server_stop)
+kombu = Kombu()
+server_start.connect(kombu.server_start)
+server_stop.connect(kombu.server_stop)

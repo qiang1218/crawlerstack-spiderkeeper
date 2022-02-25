@@ -7,14 +7,13 @@ from fastapi import UploadFile
 from pydantic import BaseModel, constr  # pylint: disable=no-name-in-module
 
 from crawlerstack_spiderkeeper.schemas.base import InDBMixin
-from crawlerstack_spiderkeeper.utils.states import States
 
 
 class ArtifactBase(BaseModel):
     """
     Base artifact schema.
     """
-    state: int = None
+    status: int = None
     filename: constr(max_length=200) = None
     interpreter: constr(max_length=500) = None
     execute_path: constr(max_length=100) = None

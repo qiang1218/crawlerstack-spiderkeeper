@@ -11,23 +11,23 @@ from sqlalchemy.util import greenlet_spawn
 
 from crawlerstack_spiderkeeper.db.models import Artifact, Job, Task
 from crawlerstack_spiderkeeper.services import JobService
-from crawlerstack_spiderkeeper.utils.states import States
+from crawlerstack_spiderkeeper.utils.status import Status
 
 
-async def update_artifact_state(session: AsyncSession, job_id: int, state: States):
-    """Update artifact state."""
+async def update_artifact_status(session: AsyncSession, job_id: int, status: Status):
+    """Update artifact status."""
     async with session.begin():
         job = await session.get(Job, job_id)
-        stmt = update(Artifact).where(Artifact.id == job.artifact_id).values(state=state)
+        stmt = update(Artifact).where(Artifact.id == job.artifact_id).values(status=status)
         await session.execute(stmt)
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ['executor_context_exist', 'artifact_state', 'expect_value'],
+    ['executor_context_exist', 'artifact_status', 'expect_value'],
     [
-        (True, States.FINISH.value, 'skip'),
-        (False, States.FINISH.value, 'finish'),
+        (True, Status.FINISH.value, 'skip'),
+        (False, Status.FINISH.value, 'finish'),
     ]
 )
 async def test_run_with_no_run_job(
@@ -36,7 +36,7 @@ async def test_run_with_no_run_job(
         session,
         factory_with_session,
         executor_context_exist,
-        artifact_state,
+        artifact_status,
         expect_value,
         caplog,
 ):
@@ -44,7 +44,7 @@ async def test_run_with_no_run_job(
     async with session.begin():
         job: Job = await session.scalar(select(Job))
         artifact_id = job.artifact_id
-    await update_artifact_state(session, job.id, artifact_state)
+    await update_artifact_status(session, job.id, artifact_status)
 
     async with factory_with_session(JobService) as service:
         mocker.patch.object(
@@ -74,7 +74,7 @@ async def test_run_with_no_run_job(
         await greenlet_spawn(session.sync_session.expire_all)
         artifact = await session.get(Artifact, artifact_id)
 
-    assert artifact.state == States.FINISH.value
+    assert artifact.status == Status.FINISH.value
 
 
 @pytest.fixture()
@@ -84,8 +84,8 @@ async def init_job_have_no_running_task(init_job, session):
         result = await session.execute(select(Job))
         jobs = result.scalars().all()
         tasks = [
-            Task(job_id=jobs[0].id, state=States.STOPPED.value),
-            Task(job_id=jobs[1].id, state=States.RUNNING.value, container_id='001'),
+            Task(job_id=jobs[0].id, status=Status.STOPPED.value),
+            Task(job_id=jobs[1].id, status=Status.RUNNING.value, container_id='001'),
         ]
         session.add_all(tasks)
 
@@ -93,7 +93,7 @@ async def init_job_have_no_running_task(init_job, session):
 @pytest.mark.asyncio
 async def test_run_with_run_job(init_task, session, caplog, factory_with_session):
     """Test run a running job."""
-    stmt = select(Job).join(Job.tasks.and_(Task.state == States.RUNNING.value))
+    stmt = select(Job).join(Job.tasks.and_(Task.status == Status.RUNNING.value))
     job = await session.scalar(stmt)
     async with factory_with_session(JobService) as service:
         res = await service.run(job.id)
@@ -120,8 +120,8 @@ async def test_stop(
         caplog
 ):
     """Test stop a job."""
-    state = States.RUNNING.value if have_running_task else States.STOPPED.value
-    stmt = select(Job).join(Job.tasks.and_(Task.state == state))
+    status = Status.RUNNING.value if have_running_task else Status.STOPPED.value
+    stmt = select(Job).join(Job.tasks.and_(Task.status == status))
     job = await session.scalar(stmt)
 
     async with factory_with_session(JobService) as service:

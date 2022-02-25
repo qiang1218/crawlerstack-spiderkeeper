@@ -1,5 +1,5 @@
 import contextlib
-from collections import Callable
+from collections.abc import Callable
 from typing import AsyncContextManager, Type
 
 import pytest

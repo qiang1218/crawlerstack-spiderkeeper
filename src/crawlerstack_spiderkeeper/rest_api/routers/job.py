@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Response
 
 from crawlerstack_spiderkeeper.rest_api.utils import (auto_commit,
                                                       service_depend)
+from crawlerstack_spiderkeeper.schemas import ActionResult
 from crawlerstack_spiderkeeper.schemas.job import Job, JobCreate, JobUpdate
 from crawlerstack_spiderkeeper.services import JobService
 
@@ -82,7 +83,7 @@ async def create(
     return await service.create(obj_in=job_in)
 
 
-@router.post('/jobs/{pk}', response_model=Job)
+@router.put('/jobs/{pk}', response_model=Job)
 @auto_commit
 async def update(
         *,
@@ -116,35 +117,33 @@ async def delete(
     return await service.delete_by_id(pk=pk)
 
 
-@router.post('/jobs/{pk}/_run')
+@router.post('/jobs/{pk}/_run', response_model=ActionResult)
 @auto_commit
 async def run(
         *,
         pk: int,
         service: service_depend(JobService) = Depends(),
-):
+) -> ActionResult:
     """
     Run job by id
     :param service:
     :param pk:
     :return:
     """
-    res = await service.run(pk=pk)
-    return {'res': res}
+    return await service.run(pk=pk)
 
 
-@router.post('/jobs/{pk}/_stop')
+@router.post('/jobs/{pk}/_stop', response_model=ActionResult)
 @auto_commit
 async def stop(
         *,
         pk: int,
         service: service_depend(JobService) = Depends(),
-):
+) -> ActionResult:
     """
     Stop job by id
     :param service:
     :param pk:
     :return:
     """
-    res = await service.stop(pk=pk)
-    return {'res': res}
+    return await service.stop(pk=pk)

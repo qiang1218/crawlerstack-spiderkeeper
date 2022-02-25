@@ -92,7 +92,7 @@ def init_logging_config() -> Dict:
             #     'level': level,
             #     'propagate': False
             # },
-            'amqp.connection.Connection.heartbeat_tick': {'level': 'INFO'}
+            # 'amqp.connection.Connection.heartbeat_tick': {'level': 'INFO'}
         }
     }
     return default_logging

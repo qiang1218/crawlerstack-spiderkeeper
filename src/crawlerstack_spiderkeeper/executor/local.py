@@ -26,7 +26,7 @@ from crawlerstack_spiderkeeper.utils import Tail, kill_proc_tree
 from crawlerstack_spiderkeeper.utils.exceptions import (
     ExecutorStopError, PKGInstallError, RequirementsFileNotFound)
 from crawlerstack_spiderkeeper.utils.metadata import ArtifactMetadata
-from crawlerstack_spiderkeeper.utils.states import States
+from crawlerstack_spiderkeeper.utils.status import Status
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ class LocalExecuteContext(BaseExecuteContext):
 
     async def exist(self) -> bool:
         """
-        Check if context is exist.
+        Check if context exist.
         :return:
         """
         has_source_code = os.path.exists(self.artifact.source_code)
@@ -254,7 +254,7 @@ class LocalExecutor(BaseExecutor):
 
         process = await customs_create_subprocess_shell(
             cmd=' '.join(cmdline),
-            std_path=std_log_path,
+            std_path=str(std_log_path),
             back_count=10,
             max_bytes=1024 * 1024 * 20,
             loop=loop,
@@ -317,18 +317,18 @@ class LocalExecutor(BaseExecutor):
         """
         if self._process.is_running():
             detail = 'Process %s is running', self.pid
-            state = States.RUNNING
+            state = Status.RUNNING
         else:
             exit_code = await self.loop.run_in_executor(None, self._process.wait, 0)
             if exit_code < 0:
                 detail = 'Process %s terminated by a signal', self.pid
-                state = States.STOPPED
+                state = Status.STOPPED
             elif exit_code > 0:
                 detail = 'Process %s exit, code: %s', self.pid, exit_code
-                state = States.STOPPED
+                state = Status.STOPPED
             else:
                 detail = 'Process %s finished.', self.pid
-                state = States.FINISH
+                state = Status.FINISH
         self.logger.debug(*detail)
         return {
             'state': state,

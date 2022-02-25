@@ -21,9 +21,9 @@ async def test_job_state(init_task, session, dao, exist):
     """test job_state"""
     if exist:
         obj = await session.scalar(select(Job))
-        state = await dao.state(pk=obj.id)
+        status = await dao.status(pk=obj.id)
         task = await session.scalar(select(Task))
-        assert task.state == state.value
+        assert task.status == status.value
     else:
-        state = await dao.state(pk=100)
-        assert not state
+        status = await dao.status(pk=100)
+        assert not status

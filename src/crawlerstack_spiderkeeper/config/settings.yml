@@ -28,7 +28,7 @@ default:
   ##########################################################
   # Kombu
 #  mq: 'amqp://guest:guest@localhost:5672//'
-  mq: memory://
+  mq: memory://localhost
 
   ##########################################################
   # Executor: local / docker
@@ -40,7 +40,7 @@ default:
   docker_url: "unix:///var/run/docker.sock"
   docker_network: spiderkeeper_container
   # 服务的外部地址，用于任务容器通信
-  host_addr: '127.0.0.1:8080'
+  host_addr: '127.0.0.1:8000'
 
   ##########################################################
   # Artifact

@@ -79,7 +79,7 @@ exports: List[Type[BaseExporter]] = [
 def exporters_factory(schema: str) -> Optional[Type[BaseExporter]]:
     """
     Export factory.
-    Create a exporter by schema.
+    Create exporter by schema.
     :param schema:
     :return:
     """

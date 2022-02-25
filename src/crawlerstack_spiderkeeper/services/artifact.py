@@ -18,6 +18,7 @@ from crawlerstack_spiderkeeper.schemas.artifact import (ArtifactCreate,
 from crawlerstack_spiderkeeper.services.base import EntityService
 from crawlerstack_spiderkeeper.utils import run_in_executor, upload
 from crawlerstack_spiderkeeper.utils.metadata import ArtifactMetadata
+from crawlerstack_spiderkeeper.utils.types import ModelType
 
 
 class ArtifactService(EntityService[Artifact, ArtifactCreate, ArtifactUpdate]):
@@ -48,7 +49,13 @@ class ArtifactService(EntityService[Artifact, ArtifactCreate, ArtifactUpdate]):
         self.logger.debug('Write artifact to %s.', file_metadata.file)
         return await upload(file, file_metadata)
 
-    async def create(self, obj_in: ArtifactFileCreate):
+    async def create(self, *, obj_in: ArtifactFileCreate):
+        """
+        Create obj.
+
+        :param obj_in:
+        :return:
+        """
         filename = await self.create_file(obj_in.project_id, obj_in.file)
         return await self.dao.create(
             obj_in=ArtifactCreate(
@@ -60,7 +67,8 @@ class ArtifactService(EntityService[Artifact, ArtifactCreate, ArtifactUpdate]):
 
     async def get_project_of_artifacts(self, project_id: int) -> List[Artifact]:
         """
-        Get project of artifacts
+        Get project of artifacts.
+
         :param project_id:
         :return:
         """
@@ -81,6 +89,11 @@ class ArtifactFileService(EntityService):
 
     @property
     def project_dao(self) -> ProjectDAO:
+        """
+        project dao.
+
+        :return:
+        """
         return self._project_dao
 
     async def create_file(
@@ -99,10 +112,7 @@ class ArtifactFileService(EntityService):
         self.logger.debug('Write artifact to %s.', file_metadata.file)
         return await upload(file, file_metadata)
 
-    async def delete_file(
-            self,
-            filename: str
-    ) -> None:
+    async def delete_file(self, filename: str) -> None:  # noqa
         """
         Delete artifact file.
         :param filename:

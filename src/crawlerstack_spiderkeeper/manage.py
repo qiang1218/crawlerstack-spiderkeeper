@@ -55,7 +55,6 @@ class SpiderKeeper:
 
     async def start(self):
         """Start api"""
-        await server_start.send()
         self.rest_api.init()
         await server_start.send()
 

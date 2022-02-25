@@ -17,11 +17,8 @@ from dynaconf import Dynaconf
 
 base_dir = Path(__file__).parent.parent
 
-user_local = Path(os.getenv('HOME')) / '.local'
-
-os.makedirs(user_local, exist_ok=True)
-
-user_local_path = user_local / 'spiderkeeper'
+default_path = base_dir / '.local'
+os.makedirs(default_path, exist_ok=True)
 
 settings_files = [
     Path(__file__).parent / 'settings.yml',
@@ -42,13 +39,13 @@ settings = Dynaconf(
 
 
 if not settings.LOGPATH:
-    settings.set('LOGPATH', user_local_path / 'logs')
+    settings.set('LOGPATH', default_path / 'logs')
 
 if not os.path.isabs(settings.LOGPATH):
-    settings.set('LOGPATH', user_local_path / settings.LOGPATH)
+    settings.set('LOGPATH', default_path / settings.LOGPATH)
 
 if not settings.ARTIFACT_PATH:
-    settings.set('ARTIFACT_PATH', user_local_path / 'artifacts')
+    settings.set('ARTIFACT_PATH', default_path / 'artifacts')
 
 if not os.path.isabs(settings.ARTIFACT_PATH):
-    settings.set('ARTIFACT_PATH', settings.ARTIFACT_PATH)
+    settings.set('ARTIFACT_PATH', default_path / settings.ARTIFACT_PATH)

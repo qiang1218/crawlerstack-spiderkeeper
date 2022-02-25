@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from crawlerstack_spiderkeeper.dao.base import BaseDAO
 from crawlerstack_spiderkeeper.db.models import Task
 from crawlerstack_spiderkeeper.schemas.task import TaskCreate, TaskUpdate
-from crawlerstack_spiderkeeper.utils.states import States
+from crawlerstack_spiderkeeper.utils.status import Status
 
 
 class TaskDAO(BaseDAO[Task, TaskCreate, TaskUpdate]):
@@ -30,7 +30,7 @@ class TaskDAO(BaseDAO[Task, TaskCreate, TaskUpdate]):
         :param limit:
         :return:
         """
-        condition = {'state': States.RUNNING.value}
+        condition = {'status': Status.RUNNING.value}
         if job_id:
             condition.update({'job_id': job_id})
         stmt = select(self.model).filter_by(**condition).offset(offset).limit(limit)
@@ -43,7 +43,7 @@ class TaskDAO(BaseDAO[Task, TaskCreate, TaskUpdate]):
         :param job_id:
         :return:
         """
-        condition = {'state': States.RUNNING.value}
+        condition = {'status': Status.RUNNING.value}
         if job_id:
             condition.update({'job_id': job_id})
         stmt = select(func.count()).select_from(self.model).filter_by(**condition)

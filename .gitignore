@@ -218,3 +218,5 @@ cython_debug/
 **/*.local.yml
 
 demo.py
+
+src/crawlerstack_spiderkeeper/.local

@@ -9,7 +9,8 @@ from crawlerstack_spiderkeeper.dao.base import BaseDAO
 from crawlerstack_spiderkeeper.db.models import Storage
 from crawlerstack_spiderkeeper.schemas.storage import (StorageCreate,
                                                        StorageUpdate)
-from crawlerstack_spiderkeeper.utils.states import States
+from crawlerstack_spiderkeeper.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper.utils.status import Status
 
 
 class StorageDAO(BaseDAO[Storage, StorageCreate, StorageUpdate]):
@@ -28,17 +29,23 @@ class StorageDAO(BaseDAO[Storage, StorageCreate, StorageUpdate]):
         obj.count += 1
         return obj
 
-    async def running_storage(self) -> List[Storage]:
+    async def running_storage(self) -> list[Storage]:
         """
         Run storage task.
         :return:
         """
-        stmt = select(self.model).filter(self.model.state == States.RUNNING.value)
+        stmt = select(self.model).filter(self.model.status == Status.RUNNING.value)
         result = await self.session.execute(stmt)
-        return result.scalars().all()
+        objs = result.scalars().all()
+        if objs:
+            return objs
+        raise ObjectDoesNotExist()
 
-    async def get_by_job_id(self, job_id: int) -> Optional[Storage]:
+    async def get_by_job_id(self, job_id: int) -> Storage:
         """使用 job id 获取 storage """
-        return await self.session.scalar(
+        obj = await self.session.scalar(
             select(self.model).filter(self.model.job_id == job_id)
         )
+        if not obj:
+            raise ObjectDoesNotExist()
+        return obj

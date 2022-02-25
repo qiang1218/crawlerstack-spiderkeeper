@@ -29,5 +29,9 @@ def init_exception_handler(app: FastAPI):
     # handle ObjectDoseNotExist with http code 404
     app.add_exception_handler(
         exc_class_or_status_code=exs.ObjectDoesNotExist,
-        handler=exh.object_does_not_exist_handler
+        handler=exh.object_does_not_exist_handler,
+    )
+    app.add_exception_handler(
+        exc_class_or_status_code=exs.UnprocessableEntityError,
+        handler=exh.unprocessable_entity_error_handler
     )

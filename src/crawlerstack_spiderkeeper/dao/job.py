@@ -1,14 +1,12 @@
 """
 Jbo dao.
 """
-from typing import Optional
-
 from sqlalchemy import select
 
 from crawlerstack_spiderkeeper.dao.base import BaseDAO
 from crawlerstack_spiderkeeper.db.models import Job, Task
 from crawlerstack_spiderkeeper.schemas.job import JobCreate, JobUpdate
-from crawlerstack_spiderkeeper.utils.states import States
+from crawlerstack_spiderkeeper.utils.status import Status
 
 
 class JobDAO(BaseDAO[Job, JobCreate, JobUpdate]):
@@ -17,9 +15,11 @@ class JobDAO(BaseDAO[Job, JobCreate, JobUpdate]):
     """
     model = Job
 
-    async def state(self, *, pk: int) -> Optional[States]:
+    async def status(self, *, pk: int) -> None | Status:
         """
-        Job state.
+        Job status.
+
+        通过获取 Job 下的所有 Task 判断 Job 是否在运行。
         :param pk:
         :return:
         """
@@ -27,4 +27,4 @@ class JobDAO(BaseDAO[Job, JobCreate, JobUpdate]):
 
         obj: Task = await self.session.scalar(stmt)
         if obj:
-            return States(obj.state)
+            return Status(obj.status)

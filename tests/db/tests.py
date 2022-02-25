@@ -28,14 +28,14 @@ async def test_engine():
             table_names = await connector.run_sync(get_table_names)
 
             assert table_names
-            assert 'alembic_version' in table_names
+            assert 'project' in table_names
 
 
 @pytest.mark.asyncio
 async def test_session(migrate):
     async with Database() as db:
         async with db.session() as session:
-            result = await session.scalar(text('SELECT * FROM alembic_version'))
+            result = await session.scalar(text('SHOW TABLES'))
             assert result
 
 
@@ -43,13 +43,13 @@ async def test_session(migrate):
 async def test_session_provider_1(migrate, spiderkeeper):
     @session_provider
     async def _func(session: AsyncSession):
-        return await session.scalar(text('SELECT * FROM alembic_version'))
+        return await session.scalar(text('SHOW TABLES'))
 
     assert await _func()
 
     @session_provider()
     async def _func(session: AsyncSession):
-        return await session.scalar(text('SELECT * FROM alembic_version'))
+        return await session.scalar(text('SHOW TABLES'))
 
     async with spiderkeeper.db.session() as se:
         assert await _func(se)
