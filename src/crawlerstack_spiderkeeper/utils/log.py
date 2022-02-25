@@ -37,22 +37,21 @@ def init_logging_config() -> Dict:
 
     os.makedirs(settings.LOGPATH, exist_ok=True)
 
+    # TODO 测试 datefmt 在 Windows 下的兼容性，并增加时区
     default_logging = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
             'verbose': {
-                'format': '%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(process)d %(thread)d - %(pathname)s:%(lineno)d %(message)s',
-                'datefmt': '%Y-%m-%dT%H:%M:%S.%s+0800',
+                'format': '%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(process)d '
+                          '%(thread)d - %(pathname)s:%(lineno)d %(message)s',
             },
             'simple': {
                 'format': '%(asctime)s - %(name)s - %(levelname)s %(message)s',
-                'datefmt': '%Y-%m-%dT%H:%M:%S.%s+0800',
             },
             "access": {
                 "()": "uvicorn.logging.AccessFormatter",
                 "fmt": '%(asctime)s %(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
-                'datefmt': '%Y-%m-%dT%H:%M:%S.%s+0800',
             },
         },
         "handlers": {
