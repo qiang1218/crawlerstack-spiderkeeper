@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 from sqlalchemy import inspect, text
 from sqlalchemy.engine import Connection
@@ -7,6 +5,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from crawlerstack_spiderkeeper.db import Database, session_provider
 from crawlerstack_spiderkeeper.db.models import Audit
+
+
+def show_table_sql(name: str) -> str:
+    """
+    由于 sqlite 没有 `SHOW TABLES` 命令，所以使用此方法进行适配。
+
+    通过查看 `inspector.get_table_names()` 执行的实际命令，发现在查询 sqlite 的时候
+    使用的实际 SQL 语言是  `SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`
+    """
+    if name == 'sqlite':
+        return "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+    return 'SHOW TABLES'
 
 
 @pytest.mark.asyncio
@@ -35,7 +45,7 @@ async def test_engine():
 async def test_session(migrate):
     async with Database() as db:
         async with db.session() as session:
-            result = await session.scalar(text('SHOW TABLES'))
+            result = await session.scalar(text(show_table_sql(db.engine.name)))
             assert result
 
 
@@ -43,13 +53,13 @@ async def test_session(migrate):
 async def test_session_provider_1(migrate, spiderkeeper):
     @session_provider
     async def _func(session: AsyncSession):
-        return await session.scalar(text('SHOW TABLES'))
+        return await session.scalar(text(show_table_sql(session.bind.name)))
 
     assert await _func()
 
     @session_provider()
     async def _func(session: AsyncSession):
-        return await session.scalar(text('SHOW TABLES'))
+        return await session.scalar(text(show_table_sql(session.bind.name)))
 
     async with spiderkeeper.db.session() as se:
         assert await _func(se)

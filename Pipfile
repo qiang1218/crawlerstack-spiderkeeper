@@ -13,6 +13,8 @@ aiodocker = "*"
 # orm
 sqlalchemy = "*"
 mysqlclient = "*"
+aiomysql = "*"
+aiosqlite = "*"
 # migrate
 alembic = "*"
 # web
@@ -20,6 +22,8 @@ uvicorn = "*"
 fastapi = "*"
 aiofiles = "*"
 python-multipart = "*"
+pydantic = "*"
+starlette = "*"
 # metric
 prometheus-client = "*"
 starlette-exporter = "*"
@@ -27,10 +31,8 @@ starlette-exporter = "*"
 kombu = "*"
 furl = "*"
 toml = "*"
-pydantic = "*"
-starlette = "*"
 virtualenv = "*"
-aiomysql = "*"
+
 
 [dev-packages]
 tox = "*"
@@ -43,6 +45,7 @@ requests = "*"
 asyncmock = "*"
 pylint = "*"
 pylint-pytest = "*"
+atomicwrites = "*"
 
 [requires]
 python_version = "3.10"

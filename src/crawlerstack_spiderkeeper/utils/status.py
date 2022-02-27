@@ -12,7 +12,7 @@ from enum import IntEnum
 
 class Status(IntEnum):
     """
-    State enum
+    Status enum
     """
     CREATED = 1
     BUILDING = 2

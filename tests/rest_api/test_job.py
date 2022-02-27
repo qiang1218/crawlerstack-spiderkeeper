@@ -5,8 +5,7 @@ import asyncio
 
 import pytest
 
-from crawlerstack_spiderkeeper.db.models import Artifact, Job, Server, Task
-from crawlerstack_spiderkeeper.utils.status import States
+from crawlerstack_spiderkeeper.utils.status import Status
 from tests.conftest import assert_status_code, build_api_url
 
 
@@ -59,5 +58,5 @@ def test_job_start_and_stop(client, init_job):
 
     response = client.post(build_api_url(f'/jobs/1/_stop'))
     assert_status_code(response)
-    response = client.get(build_api_url('/jobs/1/state'))
-    assert response.json()['state'] == States.STOPPED.name
+    response = client.get(build_api_url('/jobs/1/status'))
+    assert response.json()['status'] == Status.STOPPED.name

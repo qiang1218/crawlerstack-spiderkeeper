@@ -35,15 +35,6 @@ class SingletonMeta(type):
         return cls.__instances[cls]
 
 
-def get_db(request: Request):
-    """
-    从 Request 对象中获取已注入的 db 对象。
-    :param request:
-    :return:
-    """
-    return request.state.db
-
-
 async def run_in_executor(func: Callable, *args, **kwargs) -> Any:
     """
     如果自定义 executor 请在 kwargs 中传入。
@@ -175,6 +166,7 @@ def kill_proc_tree(
     "sig" and return a (gone, still_alive) tuple.
     "on_terminate", if specified, is a callback function which is
     called as soon as a child terminates.
+
     :param pid:
     :param sig:
     :param include_parent:
@@ -194,7 +186,8 @@ def kill_proc_tree(
         # 但这么做会造成处于队列中的数据丢失。
         # 如果发送一次 ctrl-c，会由于 scrapy 处理队列数据耗时太长，造成无法立即返回进程已结束的结果
         child_process.send_signal(sig)
-        child_process.send_signal(sig)
+        if child_process.is_running():
+            child_process.send_signal(sig)
     gone, alive = psutil.wait_procs(
         children,
         timeout=timeout,

@@ -3,6 +3,7 @@ Test local executor.
 """
 import logging
 import os
+from pathlib import Path
 
 import psutil
 import pytest
@@ -29,7 +30,7 @@ class TestVirtualenv:
         """Fixture virtualenv path"""
         venv_path = os.path.join(temp_dir, 'venv')
         await event_loop.run_in_executor(None, cli_run, [venv_path])
-        yield venv_path
+        yield Path(venv_path)
 
     @pytest.fixture()
     async def pipfile(self, temp_dir, event_loop):

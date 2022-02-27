@@ -1,6 +1,9 @@
 """
 Storage route.
 """
+import asyncio
+import logging
+
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import Response
@@ -53,8 +56,22 @@ async def start(
     :param service:
     :return:
     """
-    res = await service.start(AppId.from_str(app_id))
-    return {'res': res}
+    loop = asyncio.get_running_loop()
+
+    async def foo():
+        for i in range(10):
+            logging.debug('Sleep ..................')
+            await asyncio.sleep(0.1)
+
+    task = loop.create_task(foo())
+
+    def cb(*args):
+        print(args)
+
+    task.add_done_callback(cb)
+
+    return {'foo': 1}
+    # return await service.start(AppId.from_str(app_id))
 
 
 @router.post('/storage/{app_id}/_stop')
@@ -69,5 +86,4 @@ async def stop(
     :param service:
     :return:
     """
-    res = await service.stop(AppId.from_str(app_id))
-    return {'res': res}
+    return await service.stop(AppId.from_str(app_id))

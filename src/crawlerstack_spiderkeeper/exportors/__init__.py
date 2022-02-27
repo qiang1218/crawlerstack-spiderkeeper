@@ -5,6 +5,8 @@ exporter interface
 # TODO Change package name. This package name spelling mistakes.
 
 import os
+from urllib.parse import unquote
+from pathlib import Path
 from typing import List, Optional, Type
 
 from furl import furl
@@ -13,11 +15,14 @@ from furl import furl
 class BaseExporter:
     """
     数据导出抽象类
+
     """
     schema: str
 
     # https://github.com/gruns/furl
-    url: Optional[furl] = None
+    # Windows:  /d:\\demo\\result.txt
+    # unix: /opt/result.txt
+    url: furl | None = None
 
     @classmethod
     def from_url(cls, url: str):
@@ -53,13 +58,14 @@ class FileExporter(BaseExporter):
     schema = 'file'
 
     def __init__(self):
-        file_path = str(self.url.path)
+        file_path = Path(unquote(str(self.url.path)).lstrip('/'))
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         self.client = open(file_path, 'w')  # pylint: disable=consider-using-with
 
     def write(self, item):
         """
         Write data to file, one item one line, and flush.
+
         :param item:
         :return:
         """

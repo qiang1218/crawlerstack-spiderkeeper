@@ -139,14 +139,21 @@ class Virtualenv:
         return requirements
 
     @property
-    def python_path(self) -> str:
+    def python_path(self) -> Path:
         """
         虚拟环境 python 脚本的位置。
         :return:
         """
         if self.__python_path:
             return self.__python_path
-        return os.path.join(self.artifact.virtualenv, 'bin', 'python')
+
+        if os.name == 'nt':
+            # Windows
+            path = self.artifact.virtualenv / 'Scripts' / 'python.exe'
+        else:
+            path = self.artifact.virtualenv / 'bin' / 'python'
+
+        return path
 
     async def create(self) -> None:
         """
@@ -188,6 +195,7 @@ class Virtualenv:
         code = await process.wait()
         (stdout_data, stderr_data) = await process.communicate()
         if code:
+            # FIXME 在 Windows 中如果默认编码不是 utf-8 下面解码会报错
             raise PKGInstallError(stderr_data.decode(), code)
         self.logger.debug(
             'Install pkg: %s success. \nDetail: %s',
@@ -247,8 +255,8 @@ class LocalExecutor(BaseExecutor):
         os.chdir(artifact.source_code)
 
         env.update({
-            'ARTIFACT_FILENAME': artifact.filename,
-            'VIRTUAL_ENV': artifact.virtualenv,
+            'ARTIFACT_FILENAME': str(artifact.filename),
+            'VIRTUAL_ENV': str(artifact.virtualenv),
             'PATH': f'{artifact.virtualenv}/bin:{os.environ.get("PATH")}'
         })
 
@@ -317,21 +325,21 @@ class LocalExecutor(BaseExecutor):
         """
         if self._process.is_running():
             detail = 'Process %s is running', self.pid
-            state = Status.RUNNING
+            status = Status.RUNNING
         else:
             exit_code = await self.loop.run_in_executor(None, self._process.wait, 0)
             if exit_code < 0:
                 detail = 'Process %s terminated by a signal', self.pid
-                state = Status.STOPPED
+                status = Status.STOPPED
             elif exit_code > 0:
                 detail = 'Process %s exit, code: %s', self.pid, exit_code
-                state = Status.STOPPED
+                status = Status.STOPPED
             else:
                 detail = 'Process %s finished.', self.pid
-                state = Status.FINISH
+                status = Status.FINISH
         self.logger.debug(*detail)
         return {
-            'state': state,
+            'status': status,
             'detail': detail
         }
 
@@ -341,7 +349,7 @@ class LocalExecutor(BaseExecutor):
         :param follow:
         :return:
         """
-        tail = Tail(std_log_path / f'pid-{self.pid}.log')
+        tail = Tail(str(std_log_path / f'pid-{self.pid}.log'))
         if follow:
             return tail.follow()
         return tail.last()

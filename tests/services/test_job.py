@@ -11,6 +11,7 @@ from sqlalchemy.util import greenlet_spawn
 
 from crawlerstack_spiderkeeper.db.models import Artifact, Job, Task
 from crawlerstack_spiderkeeper.services import JobService
+from crawlerstack_spiderkeeper.utils.exceptions import UnprocessableEntityError
 from crawlerstack_spiderkeeper.utils.status import Status
 
 
@@ -95,9 +96,10 @@ async def test_run_with_run_job(init_task, session, caplog, factory_with_session
     """Test run a running job."""
     stmt = select(Job).join(Job.tasks.and_(Task.status == Status.RUNNING.value))
     job = await session.scalar(stmt)
-    async with factory_with_session(JobService) as service:
-        res = await service.run(job.id)
-    assert res == 'Job already run.'
+
+    with pytest.raises(UnprocessableEntityError, match='Job already run.'):
+        async with factory_with_session(JobService) as service:
+            await service.run(job.id)
 
 
 @pytest.mark.asyncio
@@ -133,11 +135,12 @@ async def test_stop(
         )
 
         with caplog.at_level(level=logging.DEBUG, logger='crawlerstack_spiderkeeper.services.job'):
-            res = await service.stop(job.id)
             if have_running_task:
-                assert res == 'Stopped'
+                result = await service.stop(job.id)
+                assert result.success
             else:
-                assert res == 'No task run.'
+                with pytest.raises(UnprocessableEntityError):
+                    await service.stop(job.id)
 
             if have_running_task and stop_error:
                 assert 'Stop fail' in caplog.text

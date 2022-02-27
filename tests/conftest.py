@@ -6,12 +6,14 @@ import logging
 import os
 import tempfile
 from datetime import datetime
+from pathlib import Path
 from shutil import make_archive
 from typing import AsyncContextManager, Callable, Generator, TypeVar
 
 import pytest
 
 from fastapi import Response, UploadFile
+from furl import furl
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
                                     create_async_engine)
@@ -40,7 +42,7 @@ def temp_dir():
     """
     with tempfile.TemporaryDirectory(prefix='spiderkeeper-test-') as path:
         settings.ARTIFACT_PATH = path
-        yield path
+        yield Path(path)
 
 
 @pytest.fixture()
@@ -199,7 +201,7 @@ async def init_server(session, temp_dir):
     """Init server fixture."""
     async with session.begin():
         servers = [
-            Server(name='file', type='file', uri=f'file://{temp_dir}/storage/test.txt'),
+            Server(name='file', type='file', uri=f'file:///{temp_dir / "storage" / "test.txt"}'),
             Server(name='redis2', type='redis', uri='redis://localhost'),
         ]
         session.add_all(servers)

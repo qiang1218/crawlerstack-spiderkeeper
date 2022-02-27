@@ -27,16 +27,24 @@ def test_get_by_id(client, init_artifact):
 
 
 @pytest.mark.integration
-def test_create(client, init_project):
+def test_create(client, init_project, demo_zip):
     """Test create artifact."""
     data = {
-        'filename': 'xxx',
-        'project_id': 1
+        'project_id': 1,
+        'execute_path': '',
+        'interpreter': '',
     }
-    api = build_api_url('/artifacts')
-    response = client.post(api, json=data)
-    assert_status_code(response)
-    assert response.json().get('filename') == data.get('filename')
+    with open(demo_zip, 'rb') as file:
+        api = build_api_url('/artifacts')
+        response = client.post(
+            api,
+            data=data,
+            files={
+                'file': file
+            }
+        )
+        assert_status_code(response)
+        assert response.json().get('filename')
 
 
 @pytest.mark.integration

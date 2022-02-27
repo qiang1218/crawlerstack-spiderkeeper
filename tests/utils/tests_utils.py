@@ -4,6 +4,7 @@ Test utils.
 import os
 import tempfile
 import time
+from pathlib import Path
 from subprocess import Popen
 
 import pytest
@@ -21,9 +22,12 @@ from crawlerstack_spiderkeeper.utils import (AppData, AppId, ArtifactMetadata,
 def demo_file(temp_dir):
     """Fixture demo file"""
     with tempfile.NamedTemporaryFile(
+            mode='w',
             prefix='test-tail',
             suffix='.txt',
-            dir=temp_dir
+            dir=temp_dir,
+            newline=os.linesep,  # Windows `\r\n`  unix `\r\n`
+            delete=False
     ) as file:
         file.write("""MIT License
 
@@ -46,9 +50,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-""".encode())
+""")
         file.flush()
-        yield file.name
+        name = file.name
+    # Windows 如果打开要给已经打开的文件，会报错，这里将临时文件的 delete=False
+    # 临时目录会自动删除该目录下的文件。
+    yield name
 
 
 @pytest.fixture()
@@ -146,7 +153,11 @@ def test_app_id_eq():
 
 def test_kill_proc_tree():
     """Test kill process tree."""
-    with Popen('sleep 5'.split()) as process:
+    # timeout = 1000
+    # command = f'sleep {timeout}'
+    # if os.name == 'nt':
+    #     command = f'timeout {timeout}'
+    with Popen('ping 127.0.0.1'.split()) as process:
         gone, _ = kill_proc_tree(process.pid)
         assert process.pid in [p.pid for p in gone]
 
@@ -154,7 +165,7 @@ def test_kill_proc_tree():
 def test_staging_path(temp_dir):
     """Test staging path."""
     with staging_path(temp_dir):
-        assert os.getcwd() == temp_dir
+        assert Path(os.getcwd()) == temp_dir
 
 
 @pytest.mark.asyncio

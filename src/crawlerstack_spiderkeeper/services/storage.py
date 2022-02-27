@@ -13,12 +13,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from crawlerstack_spiderkeeper.dao import ServerDAO, StorageDAO, TaskDAO
 from crawlerstack_spiderkeeper.db import session_provider
 from crawlerstack_spiderkeeper.exportors import BaseExporter, exporters_factory
+from crawlerstack_spiderkeeper.schemas import ActionResult
 from crawlerstack_spiderkeeper.schemas.storage import (StorageCreate,
                                                        StorageUpdate)
 from crawlerstack_spiderkeeper.services.base import EntityService
 from crawlerstack_spiderkeeper.services.utils import Kombu
 from crawlerstack_spiderkeeper.utils import AppData, AppId
-from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
+from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError, ObjectDoesNotExist, UnprocessableEntityError
 from crawlerstack_spiderkeeper.utils.status import Status
 
 logger = logging.getLogger(__name__)
@@ -154,17 +155,23 @@ class StorageBackgroundTask:
         :return:
         """
         logger.debug('Start storage consume task: %s', self.app_id)
-        state = Status.RUNNING
+        status = Status.RUNNING
         detail = None
         async with self.session.begin():  # 手动开启事务
-            storage_obj = await self.storage_dao.get_by_job_id(self.app_id.job_id)
-            if not storage_obj:
+            try:
+                logger.debug(f'Get storage ')
+                storage_obj = await self.storage_dao.get_by_job_id(self.app_id.job_id)
+                logger.debug(f'Storage objs: {storage_obj}')
+            except Exception as ex:
+                logger.exception(ex)
                 storage_obj = await self.storage_dao.create(
-                    obj_in=StorageCreate(job_id=self.app_id.job_id, state=state.value)
+                    obj_in=StorageCreate(job_id=self.app_id.job_id, status=status.value)
                 )
+
         storage_id = storage_obj.id
         logger.debug('Consume task for storage id: %d', storage_id)
         event_loop = asyncio.get_running_loop()
+        exporter = None
         try:
             exporter = await self.exporter()
             callback = functools.partial(
@@ -183,18 +190,21 @@ class StorageBackgroundTask:
                 register_callbacks=[callback],
             )
             logger.debug('Consume task finish.')
-            state = Status.FINISH
+            status = Status.FINISH
         except SpiderkeeperError as ex:
             logger.debug('Consume fail.')
-            state = Status.FAILURE
+            status = Status.FAILURE
             detail = str(ex)
             logger.error(ex)
+        finally:
+            if exporter:
+                exporter.close()
 
-        logger.debug('storage task : %s %s', self.app_id, state)
+        logger.debug('storage task status: %s %s', self.app_id, status)
         async with self.session.begin():
             await self.storage_dao.update_by_id(
                 pk=storage_id,
-                obj_in=StorageUpdate(state=state.value, detail=detail),
+                obj_in=StorageUpdate(status=status.value, detail=detail),
             )
 
     async def start(self):
@@ -280,35 +290,42 @@ class StorageService(EntityService):
         logger.debug('Increase task: %s item count.', app_data.app_id.task_id)
 
     async def is_running(self, job_id: int) -> bool:
-        running_storage = await self.storage_dao.running_storage()
-        for storage in running_storage:
-            task_id = self.background_task_id(storage.job_id)  # 后台任务 id
-            # 如果后台任务列表中没有该任务，但数据库中该任务的状态不是完成或停止，
-            # 则更新数据库中的任务状态为停止。
-            # 因为这种状态是由于任务没有正常停止造成的。
-            # 比如服务器突然宕机
-            # 某些为止逻辑问题，导致状态不一致。
-            if task_id not in self._storage_background_tasks and storage.state > 0:
-                logger.info(
-                    'Because storage: %s already stop, update db state',
-                    storage.id
-                )
-                await self.storage_dao.update_by_id(
-                    pk=storage.id,
-                    obj_in=StorageUpdate(
-                        state=Status.STOPPED.value,
-                        detail='storage task already stop, update db state'
+        try:
+            running_storage = await self.storage_dao.running_storage()
+            for storage in running_storage:
+                task_id = self.background_task_id(storage.job_id)  # 后台任务 id
+                # 如果后台任务列表中没有该任务，但数据库中该任务的状态不是完成或停止，
+                # 则更新数据库中的任务状态为停止。
+                # 因为这种状态是由于任务没有正常停止造成的。
+                # 比如服务器突然宕机
+                # 某些为止逻辑问题，导致状态不一致。
+                if task_id not in self._storage_background_tasks and storage.status > 0:
+                    logger.info(
+                        'Because storage: %s already stop, update db status',
+                        storage.id
                     )
-                )
+                    await self.storage_dao.update_by_id(
+                        pk=storage.id,
+                        obj_in=StorageUpdate(
+                            status=Status.STOPPED.value,
+                            detail='storage task already stop, update db status'
+                        )
+                    )
+        except ObjectDoesNotExist:
+            pass
         # 检查任务是否在正在运行的任务列表中
         if self.background_task_id(job_id) in self._storage_background_tasks:
             return True
         return False
 
-    async def start(self, app_id: AppId) -> str:
+    async def start(self, app_id: AppId) -> ActionResult:
         """启动一个任务"""
         if await self.is_running(app_id.job_id):
-            msg = 'Storage task already run.'
+            result = ActionResult(
+                success=False,
+                message='Storage task already run.'
+            )
+            raise UnprocessableEntityError(detail=result.dict())
         else:
             future = asyncio.Future()
             task = self.event_loop.create_task(
@@ -324,20 +341,35 @@ class StorageService(EntityService):
                 )
             )
             self._storage_background_tasks.setdefault(self.background_task_id(app_id.job_id), future)  # noqa
-            msg = 'Run storage task.'
+            result = ActionResult(
+                success=True,
+                message='Run storage task.'
+            )
 
-        return msg
+        return result
 
-    async def stop(self, app_id: AppId) -> str:
+    async def stop(self, app_id: AppId) -> ActionResult:
         """停止任务"""
+        print(self._storage_background_tasks)
         if self.background_task_id(app_id.job_id) in self._storage_background_tasks:
+            # FIXME 可能存在逻辑 BUG
+            # 比如任务没有真正停止
             fut = self._storage_background_tasks.pop(self.background_task_id(app_id.job_id), None)
             if fut and not fut.done():
                 fut.set_result(True)
                 logger.debug('Stopping storage task: %s', app_id)
-                msg = 'Stopping storage task.'
+                return ActionResult(
+                    success=True,
+                    message='Stopping storage task.'
+                )
             else:
-                msg = 'Task already stopped.'
+                result = ActionResult(
+                    success=False,
+                    message='Task already stopped.'
+                )
         else:
-            msg = 'No storage task.'
-        return msg
+            result = ActionResult(
+                success=False,
+                message='No storage task.'
+            )
+        raise UnprocessableEntityError(detail=result.dict())

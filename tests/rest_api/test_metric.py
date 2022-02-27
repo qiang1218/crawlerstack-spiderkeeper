@@ -8,7 +8,7 @@ from crawlerstack_spiderkeeper.utils import AppId
 from tests.conftest import assert_status_code, build_api_url
 
 
-def test_metric(init_task, client, server_start_signal):
+def test_metric(init_task, client):
     """Test metric."""
     task = init_task[0]
     data = {

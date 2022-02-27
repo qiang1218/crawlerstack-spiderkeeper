@@ -83,9 +83,9 @@ async def test_create_subprocess_shell(create_subprocess_shell_log_dir, count_fi
     """Test create subprocess shell"""
     back_count = 2
     process = await create_subprocess_shell(
-        cmd='echo "12345678" && echo "abc"',
+        cmd='echo "abcdefghijkl" && echo kjihgfedcba',
         std_path=create_subprocess_shell_log_dir,
-        max_bytes=10,
+        max_bytes=20,
         back_count=back_count,
     )
     await process.wait()

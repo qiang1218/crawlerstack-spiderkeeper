@@ -170,6 +170,7 @@ class JobService(EntityService[Job, JobCreate, JobUpdate]):
                     detail = 'Stopped.'
                 except Exception as ex:  # pylint: disable=broad-except
                     # FIXME task 可能无法正确停止，但结果已经标记失败。
+                    # 为了记录无法预知的错误情况而捕获异常信息，并记录
                     status = Status.FAILURE.value
                     detail = f'Stop fail. {str(ex)}'
                     logger.error(detail)

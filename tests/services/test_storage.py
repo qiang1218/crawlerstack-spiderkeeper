@@ -11,11 +11,12 @@ from sqlalchemy import select, func
 
 from crawlerstack_spiderkeeper.dao import TaskDAO, ServerDAO
 from crawlerstack_spiderkeeper.db.models import Storage, Task, Server, Job
+from crawlerstack_spiderkeeper.schemas import ActionResult
 from crawlerstack_spiderkeeper.services import StorageService
 from crawlerstack_spiderkeeper.services.storage import StorageBackgroundTask
 from crawlerstack_spiderkeeper.services.utils import Kombu
 from crawlerstack_spiderkeeper.utils import AppData, AppId
-from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
+from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError, UnprocessableEntityError
 from crawlerstack_spiderkeeper.utils.status import Status
 
 
@@ -100,7 +101,7 @@ class TestStorageBackgroundTask:
             (SpiderkeeperError('foo'), Status.FAILURE.value),
         ]
     )
-    async def test_consume_task(self, mocker, app_data, session, caplog, exception, status):
+    async def test_consume_task(self, init_task, mocker, app_data, session, caplog, exception, status):
         """Test consume task."""
         mocker.patch.object(
             Kombu,
@@ -171,41 +172,18 @@ class TestStorageService:
         """Test start storage task."""
 
         async def mock_method(app_id, should_stop, session=None):
-            """"""
+            """mock method"""
             await should_stop
 
         mock_task = mocker.patch('crawlerstack_spiderkeeper.services.storage.StorageBackgroundTask')
         mock_task.run_from_cls = mock_method
 
         async with factory_with_session(StorageService) as service:
-            result = await service.start(app_data.app_id)
-            assert result == 'Run storage task.'
-            result = await service.start(app_data.app_id)
-            assert result == 'Storage task already run.'
-            result = await service.stop(app_data.app_id)
-            assert result == 'Stopping storage task.'
-            result = await service.stop(app_data.app_id)
-            assert result == 'No storage task.'
-
-    @pytest.mark.parametrize(
-        'a',
-        [1, 2]
-    )
-    @pytest.mark.integration
-    @pytest.mark.asyncio
-    async def test_start_stop_task(self, mocker, app_data, init_job, session, factory_with_session, a):
-        """"""
-        event_loop = asyncio.get_running_loop()
-        mock_exporter = mocker.MagicMock()
-        mocker.patch.object(StorageBackgroundTask, 'exporter', return_value=mock_exporter)
-        mock_write = mocker.MagicMock()
-        mock_exporter.write = mock_write
-        async with factory_with_session(StorageService) as service:
-            await service.create(app_data)
-            res = await service.start(app_data.app_id)
-            assert 'Run storage task.' == res
-            await asyncio.sleep(0.1)
-            res = await service.stop(app_data.app_id)
-            await asyncio.sleep(1)
-            print('test event_loop status:', id(event_loop), event_loop.is_running())
-            mock_write.assert_called_once_with(app_data.data)
+            result: ActionResult = await service.start(app_data.app_id)
+            assert result.success
+            with pytest.raises(UnprocessableEntityError):
+                await service.start(app_data.app_id)
+            result: ActionResult = await service.stop(app_data.app_id)
+            assert result.success
+            with pytest.raises(UnprocessableEntityError):
+                await service.stop(app_data.app_id)

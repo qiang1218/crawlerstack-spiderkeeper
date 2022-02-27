@@ -83,6 +83,7 @@ class RotatingFileHandler(FileHandle):
     async def write(self, line: bytes) -> None:
         """
         Write line.
+
         :param line:
         :return:
         """

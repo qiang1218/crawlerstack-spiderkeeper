@@ -14,21 +14,21 @@ from crawlerstack_spiderkeeper.services import JobService
 router = APIRouter()
 
 
-@router.get('/jobs/{pk}/state')
-async def job_state(
+@router.get('/jobs/{pk}/status')
+async def job_status(
         *,
         pk: int,
         service: service_depend(JobService) = Depends(),
 ) -> Dict[str, str]:
     """
-    Get job state
+    Get job status
     :param service:
     :param pk:
     :return:
     """
-    result = await service.state(pk)
+    result = await service.status(pk)
     return {
-        'state': result
+        'status': result
     }
 
 

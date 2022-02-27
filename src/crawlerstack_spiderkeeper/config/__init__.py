@@ -17,8 +17,8 @@ from dynaconf import Dynaconf
 
 base_dir = Path(__file__).parent.parent
 
-default_path = base_dir / '.local'
-os.makedirs(default_path, exist_ok=True)
+local_path = base_dir / '.local'
+os.makedirs(local_path, exist_ok=True)
 
 settings_files = [
     Path(__file__).parent / 'settings.yml',
@@ -33,19 +33,20 @@ settings = Dynaconf(
     lowercase_read=False,  # 禁用小写访问， settings.name 是不允许的
     includes=['/etc/spiderkeeper/settings.yml'],  # 自定义配置覆盖默认配置
     base_dir=base_dir,  # 编码传入配置
+    localpath=local_path
 )
 
 # 环境变量的优先级比配置文件要低，所以环境变量会覆盖配置文件。
 
 
 if not settings.LOGPATH:
-    settings.set('LOGPATH', default_path / 'logs')
+    settings.set('LOGPATH', local_path / 'logs')
 
 if not os.path.isabs(settings.LOGPATH):
-    settings.set('LOGPATH', default_path / settings.LOGPATH)
+    settings.set('LOGPATH', local_path / settings.LOGPATH)
 
 if not settings.ARTIFACT_PATH:
-    settings.set('ARTIFACT_PATH', default_path / 'artifacts')
+    settings.set('ARTIFACT_PATH', local_path / 'artifacts')
 
 if not os.path.isabs(settings.ARTIFACT_PATH):
-    settings.set('ARTIFACT_PATH', default_path / settings.ARTIFACT_PATH)
+    settings.set('ARTIFACT_PATH', local_path / settings.ARTIFACT_PATH)

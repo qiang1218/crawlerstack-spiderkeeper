@@ -23,11 +23,11 @@ class Database(metaclass=SingletonMeta):
         db.init(settings)
     """
 
-    _engine: Optional[AsyncEngine] = None
-    _settings: Optional[Dynaconf] = None
+    _engine: AsyncEngine | None = None
+    _settings: Dynaconf | None = None
 
     def init(self, settings: Dynaconf) -> None:
-        self._settings = settings
+        Database._settings = settings
 
     @property
     def settings(self) -> Dynaconf:
@@ -38,7 +38,7 @@ class Database(metaclass=SingletonMeta):
     @property
     def engine(self) -> AsyncEngine:
         if not self._engine:
-            self._engine = create_async_engine(self.settings.DATABASE, future=True)
+            Database._engine = create_async_engine(self.settings.DATABASE, future=True)
         return self._engine
 
     @property

@@ -92,6 +92,7 @@ def init_logging_config() -> Dict:
             #     'propagate': False
             # },
             # 'amqp.connection.Connection.heartbeat_tick': {'level': 'INFO'}
+            'aiosqlite': {'level': 'INFO'}
         }
     }
     return default_logging
