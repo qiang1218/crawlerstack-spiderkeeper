@@ -32,15 +32,43 @@ class ICRUD:  # noqa
         self._session = session
 
     async def get(self, *args, **kwargs) -> Any:
+        """
+        查询记录。
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
         raise NotImplementedError
 
     async def create(self, *args, **kwargs) -> Any:
+        """
+        创建记录。
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
         raise NotImplementedError
 
     async def update(self, *args, **kwargs) -> Any:
+        """
+        更新记录。
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
         raise NotImplementedError
 
     async def delete(self, *args, **kwargs) -> Any:
+        """
+        删除记录。
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
         raise NotImplementedError
 
 

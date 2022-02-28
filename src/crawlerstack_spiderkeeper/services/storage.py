@@ -19,7 +19,8 @@ from crawlerstack_spiderkeeper.schemas.storage import (StorageCreate,
 from crawlerstack_spiderkeeper.services.base import EntityService
 from crawlerstack_spiderkeeper.services.utils import Kombu
 from crawlerstack_spiderkeeper.utils import AppData, AppId
-from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError, ObjectDoesNotExist, UnprocessableEntityError
+from crawlerstack_spiderkeeper.utils.exceptions import (
+    ObjectDoesNotExist, SpiderkeeperError, UnprocessableEntityError)
 from crawlerstack_spiderkeeper.utils.status import Status
 
 logger = logging.getLogger(__name__)

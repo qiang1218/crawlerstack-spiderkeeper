@@ -4,7 +4,7 @@ Test job api
 import asyncio
 
 import pytest
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 from crawlerstack_spiderkeeper.db.models import Job, Task
 from crawlerstack_spiderkeeper.utils.status import Status

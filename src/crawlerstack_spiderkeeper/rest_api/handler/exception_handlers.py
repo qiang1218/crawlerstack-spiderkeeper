@@ -7,8 +7,8 @@ from starlette import status
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from crawlerstack_spiderkeeper.utils.exceptions import (ObjectDoesNotExist,
-                                                        SpiderkeeperError, UnprocessableEntityError)
+from crawlerstack_spiderkeeper.utils.exceptions import (
+    ObjectDoesNotExist, SpiderkeeperError, UnprocessableEntityError)
 
 
 async def spiderkeeper_exception_handler(request: Request, ex: SpiderkeeperError):

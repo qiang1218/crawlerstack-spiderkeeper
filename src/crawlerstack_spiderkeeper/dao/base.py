@@ -71,6 +71,12 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return db_obj
 
     def _sort(self, stmt: Select, sorting_fields: Union[tuple[str], list[str]]) -> Select:
+        """
+        构造排序逻辑。
+        :param stmt:
+        :param sorting_fields:
+        :return:
+        """
         order_by_fields = []
         for field in sorting_fields:
             if field.startswith('-'):
@@ -82,10 +88,17 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                 order_by_fields.append(table_field.asc())
         return stmt.order_by(*order_by_fields)
 
-    def _search(self, stmt: Select, search_fields: dict[str, str]) -> Select:
+    def _search(self, stmt: Select, search_fields: dict[str, str]) -> Select:   # pylint: disable=no-self-use
+        """
+        构造搜索逻辑.
+
+        :param stmt:
+        :param search_fields:
+        :return:
+        """
         return stmt.filter_by(**search_fields)
 
-    def _paginate_by_limit_offset(self, stmt: Select, limit: int, offset: int) -> Select:
+    def _paginate_by_limit_offset(self, stmt: Select, limit: int, offset: int) -> Select:   # pylint: disable=no-self-use
         """Page result by limit and offset"""
         return stmt.limit(limit).offset(offset)
 

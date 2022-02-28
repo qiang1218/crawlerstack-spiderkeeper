@@ -12,7 +12,7 @@ from prometheus_client import Histogram
 from crawlerstack_spiderkeeper.services.base import ICRUD
 from crawlerstack_spiderkeeper.services.utils import Kombu
 from crawlerstack_spiderkeeper.signals import server_start, server_stop
-from crawlerstack_spiderkeeper.utils import AppId, AppData
+from crawlerstack_spiderkeeper.utils import AppData, AppId
 
 metric_name = [
     'downloader_request_count',
@@ -44,7 +44,7 @@ class MetricBackgroundTask:
     _should_stop: asyncio.Future = asyncio.Future()
 
     @classmethod
-    async def run_from_cls(cls, **kwargs):
+    async def run_from_cls(cls, **_kwargs):
         """
         运行任务
         :return:
@@ -53,7 +53,7 @@ class MetricBackgroundTask:
         await obj.start()
 
     @classmethod
-    async def stop_from_cls(cls, **kwargs):
+    async def stop_from_cls(cls, **_kwargs):
         """
         Stop server
         :return:
@@ -73,6 +73,7 @@ class MetricBackgroundTask:
 
     @property
     def exchange_name(self):
+        """Exchange name."""
         return self.NAME
 
     async def start(self):
@@ -80,7 +81,7 @@ class MetricBackgroundTask:
         Start server
         :return:
         """
-        logger.info(f'Starting metric task.')
+        logger.info('Starting metric task.')
         if self._should_stop.done():
             MetricBackgroundTask._should_stop = asyncio.Future()
 
@@ -166,12 +167,20 @@ class MetricService(ICRUD):
 
     @property
     def exchange_name(self):
+        """Exchange name."""
         return self.NAME
 
     async def get(self, *args, **kwargs) -> Any:
+        """获取一条记录。"""
         pass
 
     async def create(self, app_data: AppData) -> Any:
+        """
+        创建一条监控记录。
+
+        :param app_data:
+        :return:
+        """
         body = {
             'app_id': str(app_data.app_id),
             'data': app_data.data
@@ -191,9 +200,11 @@ class MetricService(ICRUD):
         )
 
     async def update(self, *args, **kwargs) -> Any:
+        """更新一条记录。。"""
         pass
 
     async def delete(self, *args, **kwargs) -> Any:
+        """删除一条记录。"""
         pass
 
 

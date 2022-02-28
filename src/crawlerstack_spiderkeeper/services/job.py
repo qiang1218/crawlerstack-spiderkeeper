@@ -15,7 +15,7 @@ from crawlerstack_spiderkeeper.schemas.artifact import ArtifactUpdate
 from crawlerstack_spiderkeeper.schemas.job import JobCreate, JobUpdate
 from crawlerstack_spiderkeeper.schemas.task import TaskCreate, TaskUpdate
 from crawlerstack_spiderkeeper.services.base import EntityService
-from crawlerstack_spiderkeeper.utils import (AppId, ArtifactMetadata)
+from crawlerstack_spiderkeeper.utils import AppId, ArtifactMetadata
 from crawlerstack_spiderkeeper.utils.exceptions import UnprocessableEntityError
 from crawlerstack_spiderkeeper.utils.status import Status
 

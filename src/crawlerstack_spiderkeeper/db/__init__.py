@@ -33,23 +33,43 @@ class Database(metaclass=SingletonMeta):
     _engine: AsyncEngine | None = None
     _settings: Dynaconf | None = None
 
-    def init(self, settings: Dynaconf) -> None:
+    def init(self, settings: Dynaconf) -> None:  # pylint: disable=no-self-use
+        """
+        初始化 database 设置
+        :param settings:
+        :return:
+        """
         Database._settings = settings
 
     @property
     def settings(self) -> Dynaconf:
+        """
+        settings.
+
+        :return:
+        """
         if self._settings is None:
             raise SpiderkeeperError('You should init Database.')
         return self._settings
 
     @property
     def engine(self) -> AsyncEngine:
+        """
+        engine.
+
+        :return:
+        """
         if not self._engine:
             Database._engine = create_async_engine(self.settings.DATABASE, future=True)
         return self._engine
 
     @property
     def session(self) -> sessionmaker:
+        """
+        session.
+
+        :return:
+        """
         return sessionmaker(
             self.engine,
             class_=AsyncSession,
@@ -59,29 +79,63 @@ class Database(metaclass=SingletonMeta):
 
     @property
     def scoped_session(self) -> async_scoped_session:
+        """
+        scoped_session.
+
+        :return:
+        """
         return async_scoped_session(self.session, scopefunc=current_task)
 
     async def close(self) -> None:
+        """
+        Close database.
+
+        :return:
+        """
         await self.engine.dispose()
         logger.info('Close database.')
 
     async def __aenter__(self) -> 'Database':
+        """
+        async ctx db.
+
+        :return:
+        """
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        """
+        async exit.
+        :param exc_type:
+        :param exc_val:
+        :param exc_tb:
+        :return:
+        """
         await self.close()
 
 
 def init_db(settings: Dynaconf) -> Database:
-    db = Database()
-    db.init(settings)
-    return db
+    """
+    Init db.
+
+    :param settings:
+    :return:
+    """
+    _db = Database()
+    _db.init(settings)
+    return _db
 
 
 RT = TypeVar("RT")
 
 
 def find_session_idx(func: Callable[..., Awaitable[RT]]) -> int:
+    """
+    查找 func 的 session 参数。
+
+    :param func:
+    :return:
+    """
     func_params = signature(func).parameters
     try:
         session_args_idx = tuple(func_params).index("session")
@@ -105,8 +159,8 @@ class SessionProvider:
         """
         self._auto_commit = auto_commit
         self._nested = nested
-        self._session: Optional[AsyncSession] = None
-        self._tarns: Optional[AsyncSessionTransaction] = None
+        self._session: AsyncSession | None = None
+        self._trans: AsyncSessionTransaction | None = None
 
     def _create_cm(self):
         """Return context manager"""
@@ -143,6 +197,12 @@ class SessionProvider:
         await self._session.__aexit__(exc_type, exc_val, exc_tb)
 
     def __call__(self, func: Callable[..., Awaitable[RT]]) -> Callable[..., Awaitable[RT]]:
+        """
+        SessionProvider instance call
+        :param func:
+        :return:
+        """
+
         @functools.wraps(func)
         async def inner(*args, **kwargs):
             session_args_idx = find_session_idx(func)
@@ -198,8 +258,7 @@ def session_provider(
     """
     if callable(func):
         return SessionProvider(auto_commit, nested)(func)
-    else:
-        return SessionProvider(auto_commit)
+    return SessionProvider(auto_commit)
 
 
 @event.listens_for(Engine, "connect")

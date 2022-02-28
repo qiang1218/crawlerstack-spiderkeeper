@@ -188,24 +188,25 @@ class SubprocessRotatingFileProtocol(SubprocessStreamProtocol):
             loop=self._loop
         )
 
-        self._loop.create_task(self.transform(self.stdout, self.stdout_handler))
-        self._loop.create_task(self.transform(self.stderr, self.stderr_handler))
+        self._loop.create_task(transform(self.stdout, self.stdout_handler))
+        self._loop.create_task(transform(self.stderr, self.stderr_handler))
 
-    async def transform(self, reader: StreamReader, handler: 'RotatingFileHandler'):
-        """
-        transform
-        :param reader:
-        :param handler:
-        :return:
-        """
-        try:
-            while True:
-                line = await reader.readline()
-                if line == b'':
-                    break
-                await handler.write(line)
-        finally:
-            await handler.close()
+
+async def transform(reader: StreamReader, handler: 'RotatingFileHandler'):
+    """
+    transform
+    :param reader:
+    :param handler:
+    :return:
+    """
+    try:
+        while True:
+            line = await reader.readline()
+            if line == b'':
+                break
+            await handler.write(line)
+    finally:
+        await handler.close()
 
 
 _DEFAULT_LIMIT = 2 ** 16  # 64 KiB

@@ -5,8 +5,8 @@ from fastapi import APIRouter, FastAPI
 from starlette_exporter import handle_metrics
 
 from crawlerstack_spiderkeeper.rest_api.routers import (artifact, audit, job,
-                                                        metric, project,
-                                                        server, storage, task, log)
+                                                        log, metric, project,
+                                                        server, storage, task)
 
 
 def router_v1():

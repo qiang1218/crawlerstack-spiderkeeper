@@ -7,16 +7,17 @@ from pathlib import Path
 
 import pytest
 from furl import furl
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
-from crawlerstack_spiderkeeper.dao import TaskDAO, ServerDAO
-from crawlerstack_spiderkeeper.db.models import Storage, Task, Server, Job
+from crawlerstack_spiderkeeper.dao import ServerDAO, TaskDAO
+from crawlerstack_spiderkeeper.db.models import Job, Server, Storage, Task
 from crawlerstack_spiderkeeper.schemas import ActionResult
 from crawlerstack_spiderkeeper.services import StorageService
 from crawlerstack_spiderkeeper.services.storage import StorageBackgroundTask
 from crawlerstack_spiderkeeper.services.utils import Kombu
 from crawlerstack_spiderkeeper.utils import AppData, AppId
-from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError, UnprocessableEntityError
+from crawlerstack_spiderkeeper.utils.exceptions import (
+    SpiderkeeperError, UnprocessableEntityError)
 from crawlerstack_spiderkeeper.utils.status import Status
 
 

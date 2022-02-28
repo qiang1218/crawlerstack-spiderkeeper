@@ -26,6 +26,12 @@ logger = logging.getLogger(__name__)
 
 
 class SingletonMeta(type):
+    """
+    单例元类
+
+    example:
+        class Foo(metaclass=SingletonMeta):...
+    """
     __instances = {}
 
     def __call__(cls, *args, **kwargs):

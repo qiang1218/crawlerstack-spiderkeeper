@@ -1,8 +1,6 @@
 """
 Storage dao.
 """
-from typing import List, Optional
-
 from sqlalchemy import select
 
 from crawlerstack_spiderkeeper.dao.base import BaseDAO

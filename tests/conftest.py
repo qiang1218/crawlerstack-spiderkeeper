@@ -11,7 +11,6 @@ from shutil import make_archive
 from typing import AsyncContextManager, Callable, Generator, TypeVar
 
 import pytest
-
 from fastapi import Response, UploadFile
 from furl import furl
 from sqlalchemy import select
@@ -21,8 +20,9 @@ from sqlalchemy.orm import Session, sessionmaker
 from starlette.testclient import TestClient
 
 from crawlerstack_spiderkeeper.config import settings
-from crawlerstack_spiderkeeper.db.models import (Artifact, Audit, Job, Project,
-                                                 Server, Storage, Task, BaseModel)
+from crawlerstack_spiderkeeper.db.models import (Artifact, Audit, BaseModel,
+                                                 Job, Project, Server, Storage,
+                                                 Task)
 from crawlerstack_spiderkeeper.manage import SpiderKeeper
 from crawlerstack_spiderkeeper.utils.metadata import ArtifactMetadata, Metadata
 from crawlerstack_spiderkeeper.utils.status import Status

@@ -1,14 +1,17 @@
+"""
+utils
+"""
 import asyncio
 import logging
 import socket
 from itertools import count
 from typing import Any, Callable, List, Optional, TypeVar
 
-from kombu import Connection, Consumer, Exchange, Producer, Queue, connections, producers
+from kombu import (Connection, Consumer, Exchange, Queue, producers)
 
 from crawlerstack_spiderkeeper.config import settings
 from crawlerstack_spiderkeeper.signals import server_start, server_stop
-from crawlerstack_spiderkeeper.utils import run_in_executor, SingletonMeta
+from crawlerstack_spiderkeeper.utils import run_in_executor
 from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
 
 _T = TypeVar('_T')

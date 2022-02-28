@@ -51,7 +51,8 @@ def init_logging_config() -> Dict:
             },
             "access": {
                 "()": "uvicorn.logging.AccessFormatter",
-                "fmt": '%(asctime)s %(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
+                "fmt": '%(asctime)s %(levelprefix)s '
+                       '%(client_addr)s - "%(request_line)s" %(status_code)s',
             },
         },
         "handlers": {

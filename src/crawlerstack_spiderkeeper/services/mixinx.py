@@ -1,12 +1,13 @@
 import asyncio
+import contextlib
 import logging
 import socket
-import contextlib
 from functools import partial
 from itertools import count
 from typing import Type, TypeVar
 
-from kombu import Consumer, Connection, connections, Queue, Exchange, Message, producers, Producer
+from kombu import (Connection, Consumer, Exchange, Message, Producer, Queue,
+                   connections, producers)
 from kombu.utils.encoding import safe_repr
 
 from crawlerstack_spiderkeeper.utils import run_in_executor

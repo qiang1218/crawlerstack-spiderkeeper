@@ -14,11 +14,11 @@ from starlette.datastructures import UploadFile
 from crawlerstack_spiderkeeper.dao import ArtifactDAO, ProjectDAO
 from crawlerstack_spiderkeeper.db.models import Artifact
 from crawlerstack_spiderkeeper.schemas.artifact import (ArtifactCreate,
-                                                        ArtifactUpdate, ArtifactFileCreate)
+                                                        ArtifactFileCreate,
+                                                        ArtifactUpdate)
 from crawlerstack_spiderkeeper.services.base import EntityService
 from crawlerstack_spiderkeeper.utils import run_in_executor, upload
 from crawlerstack_spiderkeeper.utils.metadata import ArtifactMetadata
-from crawlerstack_spiderkeeper.utils.types import ModelType
 
 
 class ArtifactService(EntityService[Artifact, ArtifactCreate, ArtifactUpdate]):
@@ -112,7 +112,7 @@ class ArtifactFileService(EntityService):
         self.logger.debug('Write artifact to %s.', file_metadata.file)
         return await upload(file, file_metadata)
 
-    async def delete_file(self, filename: str) -> None:  # noqa
+    async def delete_file(self, filename: str) -> None:  # noqa pylint: disable=no-self-use
         """
         Delete artifact file.
         :param filename:

@@ -4,7 +4,7 @@ Test artifact api.
 import os
 
 import pytest
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 from crawlerstack_spiderkeeper.db.models import Artifact, Project
 from tests.conftest import assert_status_code, build_api_url

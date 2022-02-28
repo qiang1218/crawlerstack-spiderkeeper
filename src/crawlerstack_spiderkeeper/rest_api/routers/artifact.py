@@ -11,7 +11,8 @@ from crawlerstack_spiderkeeper.rest_api.utils import (auto_commit,
                                                       service_depend)
 from crawlerstack_spiderkeeper.schemas.artifact import (Artifact,
                                                         ArtifactCreate,
-                                                        ArtifactUpdate, ArtifactFileCreate)
+                                                        ArtifactFileCreate,
+                                                        ArtifactUpdate)
 from crawlerstack_spiderkeeper.services import (ArtifactFileService,
                                                 ArtifactService)
 

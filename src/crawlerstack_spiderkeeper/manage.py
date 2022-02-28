@@ -3,7 +3,6 @@ Manager.
 """
 import asyncio
 import logging
-import signal
 import signal as system_signal
 from typing import Optional
 
@@ -46,11 +45,16 @@ class SpiderKeeper:
         self.force_exit = True
 
     @property
-    def db(self) -> Database:
+    def db(self) -> Database:   # pylint: disable=invalid-name
+        """
+        Database
+        :return:
+        """
         return self._db
 
     @property
     def rest_api(self):
+        """rest api"""
         return self._rest_api
 
     async def start(self):
@@ -65,7 +69,7 @@ class SpiderKeeper:
             self.install_signal_handlers()
             await self.start()
             while not self.should_exit:
-                """暂时不做任何处理。"""
+                # 暂时不做任何处理。
                 await asyncio.sleep(0.001)
         except SpiderkeeperError as ex:
             logging.exception(ex)
@@ -79,6 +83,11 @@ class SpiderKeeper:
         await self.db.close()
 
     def install_signal_handlers(self) -> None:
+        """
+        覆盖信号处理函数，捕获 Ctrl-C 信号，以便于优雅的处理强制结束逻辑。
+
+        :return:
+        """
         loop = asyncio.get_event_loop()
 
         try:
@@ -87,9 +96,16 @@ class SpiderKeeper:
         except NotImplementedError:  # pragma: no cover
             # Windows
             for sig in HANDLED_SIGNALS:
-                signal.signal(sig, self.handle_exit)
+                system_signal.signal(sig, self.handle_exit)
 
-    def handle_exit(self, sig, frame):
+    def handle_exit(self, _sig, _frame):
+        """
+        处理退出逻辑。
+
+        :param _sig:
+        :param _frame:
+        :return:
+        """
         if self.should_exit:
             self.force_exit = True
         else:

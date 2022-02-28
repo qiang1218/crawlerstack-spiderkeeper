@@ -9,7 +9,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import Response
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
-from crawlerstack_spiderkeeper.rest_api.utils import service_depend, auto_commit
+from crawlerstack_spiderkeeper.rest_api.utils import (auto_commit,
+                                                      service_depend)
 from crawlerstack_spiderkeeper.schemas import AppData as AppDataSchema
 # from crawlerstack_spiderkeeper.services import StorageService
 # from crawlerstack_spiderkeeper.utils import AppData, AppId

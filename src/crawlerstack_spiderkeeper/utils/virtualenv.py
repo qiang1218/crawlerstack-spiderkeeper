@@ -58,7 +58,7 @@ def build_parser(args=None, options=None):
     discover = get_discover(parser, args)
     parser._interpreter = interpreter = discover.interpreter    # pylint: disable=protected-access
     if interpreter is None:
-        raise RuntimeError("failed to find interpreter for {}".format(discover))
+        raise RuntimeError(f"failed to find interpreter for {discover}")
     elements = [
         CreatorSelector(interpreter, parser),
         SeederSelector(interpreter, parser),

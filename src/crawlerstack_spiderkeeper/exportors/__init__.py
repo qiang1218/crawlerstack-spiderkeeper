@@ -5,9 +5,9 @@ exporter interface
 # TODO Change package name. This package name spelling mistakes.
 
 import os
-from urllib.parse import unquote
 from pathlib import Path
 from typing import List, Optional, Type
+from urllib.parse import unquote
 
 from furl import furl
 
@@ -68,7 +68,7 @@ class FileExporter(BaseExporter):
 
         file_path = Path(clean_path)
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        self.client = open(file_path, 'w')  # pylint: disable=consider-using-with
+        self.client = open(file_path, 'w', encoding='utf-8')  # pylint: disable=consider-using-with
 
     def write(self, item):
         """

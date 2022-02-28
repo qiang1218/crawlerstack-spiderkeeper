@@ -10,7 +10,7 @@ import pytest
 from furl import furl
 from sqlalchemy import select
 
-from crawlerstack_spiderkeeper.db.models import Server, Task, Job
+from crawlerstack_spiderkeeper.db.models import Job, Server, Task
 from crawlerstack_spiderkeeper.utils import AppId
 from tests.conftest import assert_status_code, build_api_url
 

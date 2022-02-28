@@ -8,10 +8,10 @@ import json
 from asyncio import AbstractEventLoop
 from concurrent.futures import Future
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
 
 import pytest
-from kombu import Message, Queue, Exchange, Consumer
+from kombu import Consumer, Exchange, Message, Queue
 from sqlalchemy import func, select, text
 
 from crawlerstack_spiderkeeper.db.models import Audit
