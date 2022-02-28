@@ -1,4 +1,6 @@
 """Test project api"""
+import logging
+
 import pytest
 from sqlalchemy import func, select
 
@@ -42,21 +44,25 @@ def test_put(client, init_project):
     assert response.json().get('name') == 'changed'
 
 
-def test_delete(client, init_project):
+@pytest.mark.asyncio
+async def test_delete(client, init_project, event_loop, session):
     """Test delete a project."""
     response = client.delete(build_api_url(f'/projects/1'))
     assert_status_code(response)
-    response = client.get(build_api_url('/projects'))
-    assert int(response.headers['X-Total-Count']) == 1
+
+    result = await session.scalar(select(func.count()).select_from(Project))
+    assert result == 1
 
 
-def test_delete_with_cascade(client, init_project, init_artifact):
+@pytest.mark.asyncio
+async def test_delete_with_cascade(client, init_project, init_artifact, session):
     """Test delete project with it's children."""
     api = build_api_url(f'/projects/1')
     response = client.delete(api)
     assert_status_code(response)
-    response = client.get(build_api_url('/projects'))
-    assert int(response.headers['X-Total-Count']) == 1
+
+    result = await session.scalar(select(func.count()).select_from(Project))
+    assert result == 1
 
 
 def test_delete_with_cascade_error(client, init_project, init_job):

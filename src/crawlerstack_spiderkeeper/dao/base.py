@@ -142,7 +142,8 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         :return:
         """
         obj = await self.get_by_id(pk)
-        return await self.delete(db_obj=obj)
+        await self.delete(db_obj=obj)
+        return obj
 
     async def count(self) -> int:
         """

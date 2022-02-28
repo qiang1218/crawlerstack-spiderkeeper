@@ -332,7 +332,7 @@ async def client(spiderkeeper):
     """Api client fixture."""
     _client = TestClient(
         spiderkeeper.rest_api.app,
-        # raise_server_exceptions=False
+        raise_server_exceptions=False
     )
     yield _client
 

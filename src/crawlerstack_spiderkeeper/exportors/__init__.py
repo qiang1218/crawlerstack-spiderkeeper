@@ -58,7 +58,15 @@ class FileExporter(BaseExporter):
     schema = 'file'
 
     def __init__(self):
-        file_path = Path(unquote(str(self.url.path)).lstrip('/'))
+        full_path = unquote(str(self.url.path))
+        if os.name == 'nt' and full_path.startswith('/'):
+            clean_path = full_path[1:]
+        elif os.name != 'nt' and full_path.startswith('//'):
+            clean_path = full_path[1:]
+        else:
+            clean_path = full_path
+
+        file_path = Path(clean_path)
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         self.client = open(file_path, 'w')  # pylint: disable=consider-using-with
 

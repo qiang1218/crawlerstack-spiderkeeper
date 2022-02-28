@@ -4,6 +4,7 @@ Test artifact api.
 import os
 
 import pytest
+from sqlalchemy import select, func
 
 from crawlerstack_spiderkeeper.db.models import Artifact, Project
 from tests.conftest import assert_status_code, build_api_url
@@ -60,13 +61,15 @@ def test_put(client, init_artifact):
 
 
 @pytest.mark.integration
-def test_delete(client, init_artifact):
+@pytest.mark.asyncio
+async def test_delete(client, init_artifact, session):
     """Test delete a artifact."""
     api = build_api_url(f'/artifacts/1')
     response = client.delete(api)
     assert_status_code(response)
-    response = client.get(build_api_url('/artifacts'))
-    assert int(response.headers['X-Total-Count']) == 1
+
+    result = await session.scalar(select(func.count()).select_from(Artifact))
+    assert result == 1
 
 
 @pytest.mark.integration

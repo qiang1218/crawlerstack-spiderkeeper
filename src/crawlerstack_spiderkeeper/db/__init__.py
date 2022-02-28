@@ -1,4 +1,9 @@
+"""
+Database
+"""
+import asyncio
 import functools
+import logging
 from asyncio import current_task
 from collections.abc import Awaitable, Callable
 from inspect import signature
@@ -14,6 +19,8 @@ from sqlalchemy.orm import sessionmaker
 
 from crawlerstack_spiderkeeper.utils import SingletonMeta
 from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
+
+logger = logging.getLogger(__name__)
 
 
 class Database(metaclass=SingletonMeta):
@@ -56,6 +63,7 @@ class Database(metaclass=SingletonMeta):
 
     async def close(self) -> None:
         await self.engine.dispose()
+        logger.info('Close database.')
 
     async def __aenter__(self) -> 'Database':
         return self

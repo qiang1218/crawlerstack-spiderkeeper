@@ -13,11 +13,8 @@ def service_depend(service_kls: Type[RT]) -> Callable[[Request], AsyncGenerator[
     async def get_service(request: Request):
         db = request.app.extra.get('db')
         async with db.scoped_session() as local_session:
-            try:
-                async with local_session.begin():
-                    yield service_kls(local_session)
-            finally:
-                await local_session.close()
+            async with local_session.begin():
+                yield service_kls(local_session)
 
     return get_service
 
@@ -45,6 +42,7 @@ def auto_commit(func: Callable):
     :param func:
     :return:
     """
+
     @functools.wraps(func)
     async def _wrapper(*args, **kwargs):
         service = kwargs.get('service')
