@@ -29,6 +29,11 @@ virtualenv = "^20.16.7"
 uvicorn = "^0.20.0"
 fastapi = "^0.87.0"
 python-multipart = "^0.0.5"
+fastapi-sa = "^0.0.1.dev1"
+inflection = "^0.5.1"
+pymysql = "^1.0.2"
+apscheduler = "^3.9.1.post1"
+cryptography = "^39.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -54,10 +59,11 @@ build-backend = "poetry.core.masonry.api"
 crawlerstack_spiderkeeper = 'crawlerstack_spiderkeeper.cmdline:main'
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 testpaths = "tests"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
-#log_cli = true
-#log_cli_level = "INFO"
+log_cli = true
+#log_cli_level = "DEBUG"
 #log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
 #log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 

@@ -1,0 +1,22 @@
+DEBUG: false
+verbose: false
+
+##########################################################
+HOST: localhost
+PORT: 8083
+
+cors_origins:
+  - http://localhost:3001
+  - http://127.0.0.1:3001
+
+##########################################################
+# Log
+# default log path is `/home/<user>/.local/spiderkeeper/log`
+LOGPATH: logs
+LOGLEVEL: INFO
+
+
+##########################################################
+# Kombu
+#  mq: 'amqp://guest:guest@localhost:5672//'
+MQ: memory://localhost
