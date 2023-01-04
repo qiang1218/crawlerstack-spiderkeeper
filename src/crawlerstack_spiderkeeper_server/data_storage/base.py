@@ -1,10 +1,12 @@
 """base"""
 import dataclasses
+import logging
+from datetime import datetime
 from typing import Any
 
-from datetime import datetime
-
 from crawlerstack_spiderkeeper_server.utils import SingletonMeta
+
+logger = logging.getLogger(__name__)
 
 
 class Storage(metaclass=SingletonMeta):
@@ -16,11 +18,13 @@ class Storage(metaclass=SingletonMeta):
     def server_running(self) -> bool:
         return self._server_running
 
-    def server_start(self, **_):
+    async def server_start(self, **_):
         if self._server_running is None:
+            logger.debug(f'Change {self.__class__.name}.server_running to "True"')
             self._server_running = True
 
-    def server_stop(self, **_):
+    async def server_stop(self, **_):
+        logger.debug(f'Change {self.__class__.name}.server_running to "False"')
         self._server_running = False
 
     def save(self, *args, **kwargs) -> Any:

@@ -1,10 +1,11 @@
 """mysql storage"""
+import asyncio
 import logging
-import time
+from datetime import datetime, timedelta
 from typing import Any
 
 import pymysql
-from datetime import datetime, timedelta
+
 from crawlerstack_spiderkeeper_server.config import settings
 from crawlerstack_spiderkeeper_server.data_storage.base import Storage, Connector
 from crawlerstack_spiderkeeper_server.data_storage.utils import transform_mysql_db_str
@@ -20,6 +21,7 @@ class MysqlStorage(Storage):
     # TODO: open
     # expire_interval = settings.EXPIRE_INTERVAL
     expire_interval = 0.1
+    expire_task: asyncio.Task | None = None
 
     def start(self, *args, **kwargs):
         """init db"""
@@ -76,17 +78,19 @@ class MysqlStorage(Storage):
         conn = pymysql.connect(**config)
         return conn
 
-    @classmethod
-    def clear(cls, name) -> Any:
+    def clear(self, name) -> Any:
         """clear"""
         logger.debug("Clear db connection with name: %s", name)
-        cls._connectors.get(name).conn.close()
-        cls._connectors.pop(name)
+        self._connectors.get(name).conn.close()
+        self._connectors.pop(name)
 
-    def expired(self, **kwargs) -> Any:
+    async def expired(self, **kwargs) -> Any:
         """expired"""
+        self.expire_task = asyncio.create_task(self._expiring())
+
+    async def _expiring(self):
         while True:
-            logger.info(f'Server status {self.server_running}')
+            logger.debug(f'Server status {self.server_running}')
             if not self.server_running:
                 break
             # 遍历获取_connector中过期的对象,进行删除对象操作
@@ -98,9 +102,16 @@ class MysqlStorage(Storage):
             if should_remove_names:
                 for name in should_remove_names:
                     self.clear(name)
-            time.sleep(self.expire_interval)
+            await asyncio.sleep(self.expire_interval)
+        logger.debug(f'Stopped {self.__class__.name} expired background task.')
 
-    def stop(self, **kwargs) -> Any:
+    async def stop(self, **kwargs) -> Any:
         """stop"""
         for key, value in self._connectors.items():
             value.conn.close()
+
+    async def server_stop(self, **kwargs):
+        """server stop"""
+        await super().server_stop(**kwargs)
+        if self.expire_task and not self.expire_task.done():
+            self.expire_task.cancel('server stop!')
