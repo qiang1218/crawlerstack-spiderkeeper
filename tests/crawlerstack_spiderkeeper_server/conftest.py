@@ -62,7 +62,7 @@ async def migrate(db_url):
     await _engine.dispose()
 
 
-# @pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)
 async def spiderkeeper_server(migrate, db_url, settings):
     settings.DATABASE = db_url
     logger.debug('Starting spiderkeeper!!!')

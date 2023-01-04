@@ -1,11 +1,9 @@
 """data storage"""
-import asyncio
 
 from crawlerstack_spiderkeeper_server.data_storage.base import Storage
-from crawlerstack_spiderkeeper_server.data_storage.mysql import MysqlStorage
-from crawlerstack_spiderkeeper_server.data_storage.mongo import MongoStorage
 from crawlerstack_spiderkeeper_server.data_storage.file import FileStorage
-
+from crawlerstack_spiderkeeper_server.data_storage.mongo import MongoStorage
+from crawlerstack_spiderkeeper_server.data_storage.mysql import MysqlStorage
 from crawlerstack_spiderkeeper_server.signals import server_start, server_stop
 
 
@@ -21,12 +19,8 @@ class StorageFactory:
         return storage_kls().start(name=name, url=url)
 
 
-async def expired_task(**_):
-    await asyncio.to_thread(MysqlStorage().expired)
-
-
-server_start.connect(expired_task)
-server_stop.connect(MysqlStorage().stop)
-
 server_start.connect(MysqlStorage().server_start)
 server_stop.connect(MysqlStorage().server_stop)
+
+server_start.connect(MysqlStorage().expired)
+server_stop.connect(MysqlStorage().stop)
