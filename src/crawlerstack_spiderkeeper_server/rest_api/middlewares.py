@@ -18,8 +18,6 @@ def init_middleware(app: FastAPI):
     """
     # 监控
     app.add_middleware(PrometheusMiddleware)
-    # 数据库session
-    app.add_middleware(DBSessionMiddleware)
     # cors
     if settings.CORS_ORIGINS and len(settings.CORS_ORIGINS) > 0:
         app.add_middleware(
@@ -29,3 +27,5 @@ def init_middleware(app: FastAPI):
             allow_methods=["*"],
             allow_headers=["*"],
         )
+    # 数据库session
+    app.add_middleware(DBSessionMiddleware)

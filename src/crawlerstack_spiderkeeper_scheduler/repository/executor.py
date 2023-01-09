@@ -39,8 +39,8 @@ class ExecutorRepository(BaseRepository[Executor, ExecutorCreate, ExecutorUpdate
         """
         stmt = select(self.model).filter(self.model.type == executor_type, self.model.status == status).options(
             selectinload(self.model.executor_detail))
-        objs = await self.session.scalar(stmt)
-        results = objs.scalars().all()
+        objs = await self.session.scalars(stmt)
+        results = objs.all()
         if not results:
             raise ObjectDoesNotExist()
         return [ExecutorAndDetailSchema.from_orm(obj) for obj in results]

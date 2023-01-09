@@ -57,7 +57,11 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.poetry.scripts]
-crawlerstack_spiderkeeper = 'crawlerstack_spiderkeeper.cmdline:main'
+crawlerstack_spiderkeeper_server = 'crawlerstack_spiderkeeper_server.cmdline:main'
+crawlerstack_spiderkeeper_scheduler = 'crawlerstack_spiderkeeper_scheduler.cmdline:main'
+crawlerstack_spiderkeeper_forwarder = 'crawlerstack_spiderkeeper_forwarder.cmdline:main'
+crawlerstack_spiderkeeper_executor = 'crawlerstack_spiderkeeper_executor.cmdline:main'
+
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

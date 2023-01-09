@@ -7,6 +7,7 @@ from crawlerstack_spiderkeeper_server.services.task import TaskService
 from crawlerstack_spiderkeeper_server.services.task_detail import TaskDetailService
 from crawlerstack_spiderkeeper_server.services.log import LogService
 from crawlerstack_spiderkeeper_server.services.metric import MetricService
+from crawlerstack_spiderkeeper_server.services.data import DataService
 
 __all__ = [
     'ProjectService',
@@ -17,4 +18,5 @@ __all__ = [
     'TaskDetailService',
     'LogService',
     'MetricService',
+    'DataService',
 ]

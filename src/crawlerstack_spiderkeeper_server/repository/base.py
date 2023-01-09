@@ -123,6 +123,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Mode
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
+            # 显式设置的数据，而不包括默认值
             update_data = obj_in.dict(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_obj, field, value)
@@ -165,7 +166,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Mode
         await self.delete(db_obj=obj)
         return self.model_schema.from_orm(obj)
 
-    async def count(self, search_fields: dict[str, str]) -> int:
+    async def count(self, search_fields: dict[str, str] = None) -> int:
         """
         Get total .
         :return:

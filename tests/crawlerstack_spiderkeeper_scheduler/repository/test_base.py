@@ -5,21 +5,21 @@ import pytest
 from sqlalchemy import select, func
 from sqlalchemy.exc import InvalidRequestError
 
-from crawlerstack_spiderkeeper_server.models import Project
-from crawlerstack_spiderkeeper_server.repository.project import ProjectRepository
-from crawlerstack_spiderkeeper_server.schemas.project import ProjectUpdate, ProjectCreate
-from crawlerstack_spiderkeeper_server.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper_scheduler.models import Executor
+from crawlerstack_spiderkeeper_scheduler.repository.executor import ExecutorRepository
+from crawlerstack_spiderkeeper_scheduler.schemas.executor import ExecutorCreate, ExecutorUpdate
+from crawlerstack_spiderkeeper_scheduler.utils.exceptions import ObjectDoesNotExist
 
 
 @pytest.fixture()
 async def repo():
     """repo fixture"""
-    return ProjectRepository()
+    return ExecutorRepository()
 
 
-async def test_get_by_id(init_project, repo, session):
+async def test_get_by_id(init_executor, repo, session):
     """Test get a object."""
-    exist_obj = await session.scalar(select(Project).where(Project.id == 1))
+    exist_obj = await session.scalar(select(Executor).where(Executor.id == 1))
     obj = await repo.get_by_id(exist_obj.id)
     assert obj
     assert exist_obj.id == obj.id
@@ -43,11 +43,11 @@ async def test_get_not_exist(repo, session):
         (None, None, 'lt'),
         (['id'], None, 'lt',),
         (['-id'], None, 'gt'),
-        (None, {'name': 'test1'}, 'gt'),
+        (None, {'name': 'docker_executor_1'}, 'gt'),
         (None, {'abc': 'bar'}, InvalidRequestError),
     ]
 )
-async def test_get(init_project, session, repo, sort, search, expect_value):
+async def test_get(init_executor, session, repo, sort, search, expect_value):
     """Test get multi object."""
     kwargs = {}
     if search:
@@ -63,7 +63,7 @@ async def test_get(init_project, session, repo, sort, search, expect_value):
 
         if len(objs) > 1:
 
-            stmt = select(func.count()).select_from(Project)
+            stmt = select(func.count()).select_from(Executor)
             assert len(objs) == await session.scalar(stmt)
             if expect_value == 'gt':
                 assert objs[0].id > objs[1].id
@@ -79,7 +79,8 @@ async def test_get(init_project, session, repo, sort, search, expect_value):
 async def test_create(repo, session):
     """Test create a object."""
     obj = await repo.create(
-        obj_in=Project(name='test1', desc='test1')
+        obj_in=ExecutorCreate(name="docker_executor_1", selector="test", url="http://localhost:2375", type="docker",
+                              memory=32, cpu=50)
     )
     assert obj.id == 1
 
@@ -89,19 +90,19 @@ async def test_create(repo, session):
     [True, False]
 )
 @pytest.mark.asyncio
-async def test_update(init_project, session, repo, is_dict):
+async def test_update(init_executor, session, repo, is_dict):
     """Test update a object"""
 
-    exist_obj = await session.scalar(select(Project))
-    before = exist_obj.desc
+    exist_obj = await session.scalar(select(Executor))
+    before = exist_obj.selector
     changed = f'updated_{before}'
-    obj_in = {'desc': changed}
+    obj_in = {'selector': changed}
     if not is_dict:
-        obj_in = ProjectUpdate(**obj_in)
+        obj_in = ExecutorUpdate(**obj_in)
     obj = await repo.get_by_id(pk=exist_obj.id)
     obj = await repo.update(db_obj=obj, obj_in=obj_in, )  # noqa
-    assert obj.desc == changed
-    assert before != obj.desc
+    assert obj.selector == changed
+    assert before != obj.selector
 
 
 @pytest.mark.parametrize(
@@ -109,25 +110,25 @@ async def test_update(init_project, session, repo, is_dict):
     [True, False]
 )
 @pytest.mark.asyncio
-async def test_update_by_id(init_project, session, repo, exist):
+async def test_update_by_id(init_executor, session, repo, exist):
     """Test update an object by id."""
     if exist:
-        exist_obj = await session.scalar(select(Project))
-        before = exist_obj.desc
+        exist_obj = await session.scalar(select(Executor))
+        before = exist_obj.selector
         changed = f'changed_{before}'
-        obj = await repo.update_by_id(pk=exist_obj.id, obj_in={'desc': changed})
-        assert obj.desc == changed
-        assert before != obj.desc
+        obj = await repo.update_by_id(pk=exist_obj.id, obj_in={'selector': changed})
+        assert obj.selector == changed
+        assert before != obj.selector
     else:
         with pytest.raises(ObjectDoesNotExist):
             await repo.update_by_id(pk=500, obj_in={})
 
 
 @pytest.mark.asyncio
-async def test_delete(init_project, session, repo):
+async def test_delete(init_executor, session, repo):
     """Test delete a object."""
-    exist_obj = await session.scalar(select(Project))
-    total = await session.scalar(select(func.count()).select_from(Project))
+    exist_obj = await session.scalar(select(Executor))
+    total = await session.scalar(select(func.count()).select_from(Executor))
     obj = await repo.get_by_id(exist_obj.id)
     await repo.delete(db_obj=obj)  # noqa
     assert await repo.count() == total - 1
@@ -138,11 +139,11 @@ async def test_delete(init_project, session, repo):
     [True, False]
 )
 @pytest.mark.asyncio
-async def test_delete_by_id(init_project, session, repo, exist):
+async def test_delete_by_id(init_executor, session, repo, exist):
     """Test delete a object by id."""
     if exist:
-        exist_obj = await session.scalar(select(Project))
-        total = await session.scalar(select(func.count()).select_from(Project))
+        exist_obj = await session.scalar(select(Executor))
+        total = await session.scalar(select(func.count()).select_from(Executor))
         await repo.delete_by_id(pk=exist_obj.id)
         assert await repo.count() == total - 1
     else:
@@ -165,7 +166,7 @@ async def test_count(repo, session):
 
 
 @pytest.mark.asyncio
-async def test_count_exist(init_project, repo, session):
+async def test_count_exist(init_executor, repo, session):
     """Test count objects."""
     total = await repo.count()
     assert total == 2

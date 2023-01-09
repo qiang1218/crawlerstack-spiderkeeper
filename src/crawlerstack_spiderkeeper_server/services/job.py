@@ -106,7 +106,7 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
         # 1. 任务数据库获取
         job = await self.repository.get_by_id(pk=pk)
         # 2. 状态一致性判断
-        if not (job.enabled and job.pause):
+        if not job.enabled:
             # 3. 调用调度器接口
             resp = self.request_session.request('GET', self.start_url % pk)
             if resp.get('message') == 'ok':

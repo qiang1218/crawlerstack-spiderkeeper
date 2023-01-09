@@ -1,4 +1,5 @@
 """log"""
+from pathlib import Path
 from typing import List, Any
 
 from crawlerstack_spiderkeeper_server.services.base import ICRUD
@@ -9,7 +10,7 @@ from crawlerstack_spiderkeeper_server.config import settings, local_path
 class LogService(ICRUD):
 
     @staticmethod
-    def gen_log_path_str(task_name: str, ) -> str:
+    def gen_log_path_str(task_name: str) -> Path:
         """
         gen log path str with task name
 
@@ -19,9 +20,8 @@ class LogService(ICRUD):
         :param task_name:
         :return:
         """
-        return '/'.join(
-            [local_path, settings.LOG_TASK_PATH_PREFIX,
-             *task_name.split(settings.LOG_TASK_PATH_SEPARATOR)]) + settings.LOG_TASK_PATH_SUFFIX
+        task_name += settings.LOG_TASK_PATH_SUFFIX
+        return Path(local_path, settings.LOG_TASK_PATH_PREFIX, *task_name.split(settings.LOG_TASK_PATH_SEPARATOR))
 
     async def get(self, query: dict) -> List[str]:
         """
@@ -31,10 +31,7 @@ class LogService(ICRUD):
         """
         filename = self.gen_log_path_str(query.get('task_name'))
         rows = query.get('rows')
-        data = []
-        async for line in File(filename).last(line=rows):
-            data.append(line)
-        return data
+        return await File(filename).last(line=rows)
 
     async def create(self, data: dict) -> None:
         """create log by task name"""

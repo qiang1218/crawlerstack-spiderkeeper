@@ -1,12 +1,24 @@
 """test metric"""
-from crawlerstack_spiderkeeper_server.services import MetricService
+
+import asyncio
+
+import pytest
+
 from tests.crawlerstack_spiderkeeper_server.rest_api.conftest import assert_status_code
+from crawlerstack_spiderkeeper_server.services.metric import MetricService
 
 
-def test_get(client, api_url, mocker):
-    """test get"""
-    api = api_url + '/metrics'
-    get_method = mocker.patch.object(MetricService, 'get', return_value={'downloader_request_count': 2})
-    response = client.get(api, params={'task_name': 'test'})
-    assert_status_code(response)
-    assert get_method.called
+@pytest.fixture
+def metric_service():
+    """metric service fixture"""
+    return MetricService()
+
+
+def test_metric(client, metric_service):
+    """test metric."""
+    metric_service.set_metric('2-scheduled-20191215152202', {'downloader_request_count': 10086})
+    asyncio.run(asyncio.sleep(2))
+
+    metric_response = client.get('/metrics')
+    assert_status_code(metric_response)
+    assert '10086' in metric_response.text

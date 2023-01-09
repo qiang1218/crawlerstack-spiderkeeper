@@ -20,7 +20,7 @@ metric_name = [
     'downloader_exception_count',
 ]
 
-labels = ('App_id', 'Task_name')
+labels = ('Job_id', 'Task_name')
 
 metrics = {name: Histogram(name, name, labels) for name in metric_name}
 
@@ -29,7 +29,6 @@ class MetricService(ICRUD):
 
     async def get(self, task_name):
         """get metric from prometheus with task_name"""
-        # todo 指标的查询
         pass
 
     async def create(self, data: dict) -> None:
@@ -53,12 +52,12 @@ class MetricService(ICRUD):
         :param data:
         :return:
         """
-        app_id = task_name.split('-')[0]
+        job_id = task_name.split('-')[0]
         try:
             for name, value in data.items():
                 metric: Histogram = metrics.get(name)
                 if metric:
-                    metric.labels(app_id, task_name).observe(value)
+                    metric.labels(job_id, task_name).observe(value)
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
                 'Metric task: %s data parser error. data: %s. %s',

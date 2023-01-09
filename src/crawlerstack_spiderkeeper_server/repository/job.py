@@ -35,7 +35,7 @@ class JobRepository(BaseRepository[Job, JobCreate, JobUpdate, JobSchema]):
         :param task_name:
         :return:
         """
-        stmt = select(Task).filter(Task.id == task_name).options(selectinload(Task.job))
+        stmt = select(Task).filter(Task.name == task_name).options(selectinload(Task.job))
         task: Task = await self.session.scalar(stmt)
         if not task:
             # Task does not exist

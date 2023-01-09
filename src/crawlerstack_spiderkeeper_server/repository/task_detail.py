@@ -16,15 +16,16 @@ class TaskDetailRepository(BaseRepository[TaskDetail, TaskDetailCreate, TaskDeta
     model = TaskDetail
     model_schema = TaskDetailSchema
 
-    async def get_task_detail_from_task_name(self, task_name: str):
+    async def get_task_detail_from_task_name(self, task_name: str) -> TaskDetailSchema:
         """
         get task detail from task name
         :param task_name:
         :return:
         """
+        # 从上向下取会有多指情况，结合task 和 task_detail 关系为 1对1
         stmt = select(Task).filter(Task.name == task_name).options(selectinload(Task.task_details))
         task: Task = await self.session.scalar(stmt)
         if not task:
             # Task does not exist
             raise ObjectDoesNotExist()
-        return self.model_schema.from_orm(task.task_details)
+        return self.model_schema.from_orm(task.task_details[0])

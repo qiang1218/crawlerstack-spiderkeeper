@@ -16,11 +16,9 @@ logger = logging.getLogger(__name__)
 class MysqlStorage(Storage):
     name: str = 'mysql'
     _connectors = {}
-    default_connector = Connector
+    default_connector: Connector = None
     expire_day = settings.EXPIRE_DAY
-    # TODO: open
-    # expire_interval = settings.EXPIRE_INTERVAL
-    expire_interval = 0.1
+    expire_interval = settings.EXPIRE_INTERVAL
     expire_task: asyncio.Task | None = None
 
     def start(self, *args, **kwargs):
@@ -54,7 +52,7 @@ class MysqlStorage(Storage):
         # 数据存储
         cursor = conn.cursor()
         cursor.executemany(sql, data.get('datas'))
-        cursor.commit()
+        conn.commit()
         cursor.close()
         # 引擎过期时间更新
         self.default_connector.expire_date = datetime.now() + timedelta(self.expire_day)

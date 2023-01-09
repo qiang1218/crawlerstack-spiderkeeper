@@ -5,89 +5,63 @@ import asyncio
 import logging
 import socket
 from itertools import count
+from time import sleep
 from typing import Any, Callable, List, Optional
 
 from kombu import (Connection, Consumer, Exchange, Queue, producers)
 
 from crawlerstack_spiderkeeper_forwarder.config import settings
-from crawlerstack_spiderkeeper_forwarder.utils import run_in_executor
+from crawlerstack_spiderkeeper_forwarder.utils import run_in_executor, SingletonMeta
 from crawlerstack_spiderkeeper_forwarder.utils.exceptions import SpiderkeeperError
 
 logger = logging.getLogger(__name__)
 
-# FIXME pylint W0603
-_SERVER_RUNNING = False
-_SERVER_STARTED = False
 
-
-class Kombu:
+class Kombu(metaclass=SingletonMeta):
     """
     Kombu server ，提供队列服务。
 
     具有单例性质。
     """
-    NAME: str
 
-    _connect = None
+    __connect = None
+    _server_running = False
 
-    @property
-    def server_running(self):
-        global _SERVER_RUNNING
-        return _SERVER_RUNNING
+    async def server_start(self, **_):
+        """server start"""
+        self._server_running = True
 
-    @server_running.setter
-    def server_running(self, value: bool):
-        global _SERVER_RUNNING
-        _SERVER_RUNNING = value
-
-    @property
-    def server_started(self):
-        global _SERVER_STARTED
-        return _SERVER_STARTED
-
-    @server_started.setter
-    def server_started(self, value: bool):
-        global _SERVER_STARTED
-        _SERVER_STARTED = value
-
-    @property
-    def name(self):
-        return self.NAME
-
-    async def server_start(self, **_kwargs):
-        """Call to start when server start signal fire."""
-        self.server_running = True
-        self.server_started = True
-
-    async def server_stop(self, **_kwargs):
+    async def server_stop(self, **_):
         """Call to stop when server stop signal fire."""
-        _server_running = False
+        self._server_running = False
         if self.connect:
             logger.debug('Stop kombu connection.')
             self.connect.close()
 
-    async def check_server(self) -> bool:
+    def check_server(self) -> bool:
         """
         检查 server 的状态，如果 server 没启动，
         则等待 5 秒后再次检查，如果仍没有启动，抛出异常。
         :return:
         """
-        if not self.server_started:
+        if not self._server_running:
             logger.info('Server has not start, delay 5 seconds.')
-            await asyncio.sleep(5)
-            if not self.server_started:
+            sleep(2)
+            if not self._server_running:
                 raise SpiderkeeperError(
                     'Server not started. You should start server or '
                     'call `Kombu.server_start` first.'
                 )
-        return self.server_running
+        logger.info(f'Server status {self._server_running}')
+        return self._server_running
 
     @property
     def connect(self) -> Connection:
         """延迟加载单例连接"""
-        if self._connect is None:
-            self._connect = Connection(settings.MQ)
-        return self._connect
+        if self.__connect is None:
+            logger.debug(f'Kube connect to {settings.MQ}')
+            self.__connect = Connection(settings.MQ)
+        return self.__connect
 
     @property
     def channel(self):
@@ -222,21 +196,21 @@ class Kombu:
 
         :return:
         """
-        await self.check_server()
+        self.check_server()
         queue = Queue(name=queue_name, exchange=Exchange(exchange_name), routing_key=routing_key)
         consumer = Consumer(self.channel, queues=[queue])
 
         for callback in register_callbacks:
             consumer.register_callback(callback)
         consumer.consume()
-        await self._consuming(
+        await asyncio.to_thread(self._consuming(
             limit=limit,
             timeout=timeout,
             safety_interval=safety_interval,
             should_stop=should_stop
-        )
+        ))
 
-    async def _consuming(
+    def _consuming(
             self,
             limit: Optional[int] = None,
             timeout: Optional[int] = None,
@@ -254,16 +228,16 @@ class Kombu:
         """
         elapsed = 0
         for _ in limit and range(limit) or count():
-            server_running = await self.check_server()
+            server_running = self.check_server()
 
             _should_stop = not server_running or (should_stop and should_stop.done())
             # 如果 Server 不在运行，或者 should_stop
             if _should_stop:
                 logger.debug('%s should stop, so stop consuming message.', self)
                 break
-
             try:
-                await run_in_executor(self.connect.drain_events, timeout=1)
+                logger.debug('Kumbu draining event 1 seconds.')
+                self.connect.drain_events(timeout=1)
             except socket.timeout:
                 self.connect.heartbeat_check()
                 # 超时计时，如果超时时间 elapsed 大于给定的超时时间 timeout 则退出

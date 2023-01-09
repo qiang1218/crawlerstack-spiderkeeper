@@ -152,7 +152,7 @@ class EntityService(ICRUD, Generic[ModelType, CreateSchemaType, UpdateSchemaType
         """
         return await self.delete_by_id(pk=pk)
 
-    async def count(self, search_fields: dict[str, str]) -> int:
+    async def count(self, search_fields: dict[str, str] = None) -> int:
         """
         Count.
         :return:

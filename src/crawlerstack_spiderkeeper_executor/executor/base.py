@@ -3,10 +3,12 @@ Base executor.
 """
 import logging
 
+from crawlerstack_spiderkeeper_executor.utils import SingletonMeta
+
 logger = logging.getLogger(__name__)
 
 
-class BaseExecutor:
+class BaseExecutor(metaclass=SingletonMeta):
     """
     Base executor.
     """
@@ -48,7 +50,7 @@ class BaseExecutor:
         """
         raise NotImplementedError
 
-    async def log(self,  *args, **kwargs):
+    async def log(self, *args, **kwargs):
         """
         Get container logs.
         :param args:

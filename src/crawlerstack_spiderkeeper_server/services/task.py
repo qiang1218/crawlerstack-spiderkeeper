@@ -46,7 +46,7 @@ class TaskService(EntityService[Task, TaskCreate, TaskUpdate, TaskSchema]):
         """
         job_id = obj_in.job_id
         if job_id is not None:
-            await self.job_repository.exists(obj_in.artifact_id)
+            await self.job_repository.exists(obj_in.job_id)
         return await self.repository.update_by_id(pk=pk, obj_in=obj_in)
 
     async def get_job_from_task_id(self, pk: int) -> JobSchema:

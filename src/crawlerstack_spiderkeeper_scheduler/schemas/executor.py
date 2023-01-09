@@ -34,10 +34,8 @@ class ExecutorCreate(ExecutorBase):
 class ExecutorUpdate(ExecutorBase):
     """Executor update schema."""
     status: int = Status.ONLINE.value
-    memory: int
-    cpu: int
 
 
 class ExecutorAndDetailSchema(ExecutorSchema):
     """Executor and detail schema"""
-    executor_detail: ExecutorDetailSchema
+    executor_detail: list[ExecutorDetailSchema]

@@ -28,4 +28,4 @@ class StorageServerRepository(BaseRepository[StorageServer, StorageServerCreate,
         if not job:
             # Job does not exist
             raise ObjectDoesNotExist()
-        return self.model_schema.from_orm(job.artifact)
+        return self.model_schema.from_orm(job.storage_server)

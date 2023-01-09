@@ -11,4 +11,4 @@ def transform_mysql_db_str(db_str: str) -> dict:
     matcher = mysql_pattern.match(db_str)
     if matcher:
         return matcher.groupdict()
-    return {}
+    return dict()

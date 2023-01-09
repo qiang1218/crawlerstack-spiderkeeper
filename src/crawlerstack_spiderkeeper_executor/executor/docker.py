@@ -7,7 +7,6 @@ from typing import Any
 
 from aiodocker import Docker
 
-from crawlerstack_spiderkeeper_executor.signals import server_stop
 from crawlerstack_spiderkeeper_executor.config import settings
 from crawlerstack_spiderkeeper_executor.executor.base import BaseExecutor
 
@@ -16,33 +15,12 @@ from crawlerstack_spiderkeeper_executor.schemas.base import TaskSchema, SpiderSc
 logger = logging.getLogger(__name__)
 
 
-class SingletonDocker(Docker):
-    """
-    Docker singleton.
-    """
-    __instance = None
-
-    def __new__(cls, *args, **kwargs):  # pylint: disable=unused-argument
-        if not isinstance(cls.__instance, cls):
-            cls.__instance = object.__new__(cls)
-            server_stop.connect(cls.__instance.close)
-        return cls.__instance
-
-    async def close(self) -> None:
-        """
-        将 close 绑定到 server_stop 事件上，在事件触发时，先移除此单利对象然后停止 Docker 的连接。
-        :return:
-        """
-        self.__instance = None  # pylint: disable=unused-private-member
-        await super().close()
-
-
 class DockerExecutor(BaseExecutor):
     NAME = 'docker'
 
-    def __init__(self, ):
-        super().__init__()
-        self.client = SingletonDocker(url=settings.EXECUTOR_REMOTE_URL)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.client = Docker(url=settings.EXECUTOR_REMOTE_URL)
         self.logger = logger
 
     async def run(self, obj_in: TaskSchema) -> str:

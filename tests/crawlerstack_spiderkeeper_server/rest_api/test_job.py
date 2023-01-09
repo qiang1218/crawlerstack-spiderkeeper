@@ -59,7 +59,7 @@ def test_run(client, init_job, api_url, mocker):
     request = mocker.patch.object(RequestWithSession, 'request', return_value={'message': 'ok'})
     response = client.get(api)
     assert_status_code(response)
-    assert request.called
+    request.assert_called_once()
 
 
 def test_pause(client, init_job, api_url, mocker):
@@ -68,7 +68,7 @@ def test_pause(client, init_job, api_url, mocker):
     request = mocker.patch.object(RequestWithSession, 'request', return_value={'message': 'ok'})
     response = client.get(api)
     assert_status_code(response)
-    assert request.called
+    request.assert_called_once()
 
 
 def test_unpause(client, init_job, api_url, mocker):
@@ -77,7 +77,7 @@ def test_unpause(client, init_job, api_url, mocker):
     request = mocker.patch.object(RequestWithSession, 'request', return_value={'message': 'ok'})
     response = client.get(api)
     assert_status_code(response)
-    assert request.called
+    request.assert_called_once()
 
 
 def test_stop(client, init_job, api_url, mocker):
@@ -86,5 +86,4 @@ def test_stop(client, init_job, api_url, mocker):
     request = mocker.patch.object(RequestWithSession, 'request', return_value={'message': 'ok'})
     response = client.get(api)
     assert_status_code(response)
-    assert request.called
-
+    request.assert_called_once()

@@ -165,7 +165,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Mode
         await self.delete(db_obj=obj)
         return self.model_schema.from_orm(obj)
 
-    async def count(self, search_fields: dict[str, str]) -> int:
+    async def count(self, search_fields: dict[str, str] = None) -> int:
         """
         Get total .
         :return:

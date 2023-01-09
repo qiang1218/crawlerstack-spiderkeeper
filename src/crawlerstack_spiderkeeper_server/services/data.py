@@ -73,7 +73,7 @@ class DataService(ICRUD):
         # 获取task_name对应的task_id
         task_id = 0
         try:
-            task = await self.task_repository.get(search_fields={'task_name': task_name})
+            task = await self.task_repository.get(search_fields={'name': task_name})
             task_id = task[0].id
         except ObjectDoesNotExist:
             logger.warning('Task data is not exist, task_name is %s', task_name)

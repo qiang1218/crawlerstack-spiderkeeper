@@ -67,8 +67,8 @@ class File:
     File文件处理
     """
 
-    def __init__(self, filename: str):
-        self.filename = Path(filename)
+    def __init__(self, filename: Path):
+        self.filename = filename
 
     async def write(self, datas: Union[List[str], tuple[str]]) -> None:
         """
@@ -79,7 +79,7 @@ class File:
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
         async with aiofiles.open(self.filename, 'wb+') as f_obj:
             for line in datas:
-                await f_obj.writeline(line)
+                await f_obj.write((line + '\n').encode('utf-8'))
 
     async def head(self, line_number: int = 50) -> AsyncIterable[str]:
         """
@@ -95,7 +95,7 @@ class File:
                 line_count += 1
                 yield line.decode()
 
-    async def last(self, line: int = 50, buffer_size=1024) -> AsyncIterable[str]:
+    async def last(self, line: int = 50, buffer_size=1024) -> list[str]:
         """
         通过 buffer_size 不断从文件最后往前查找所出现的 `\n` 行分隔符，统计出所需要行数位置，然后从该出读取文件。
         注意：行分隔符使用的是 `\n`
@@ -110,8 +110,10 @@ class File:
             # 直到找到最后 n 行
             if self.filename.stat().st_size > abs(buffer_size):
                 await self.forward_fd(reader, buffer_size, line)
+            data = []
             async for i in reader:
-                yield i.decode()
+                data.append(i.decode())
+            return data[-line:]
 
     async def follow(
             self,
@@ -157,7 +159,7 @@ class File:
         offset_line = 0
         # 开始调整位置
         while True:
-            await reader.seek(-offset, os.SEEK_CUR)  # 从当前位置向钱调整偏移量
+            await reader.seek(-offset, os.SEEK_CUR)  # 从当前位置向前调整偏移量
             # 从调整位置读取所有内容，然后统计操作系统的换行符数量
             txt = await reader.read(offset)
             temp_offset_line = txt.count(os.linesep.encode('utf-8')) + offset_line
@@ -178,7 +180,7 @@ class File:
 
                 if temp_offset_line < line / 2:
                     # 当统计行数小于所需要行数的一半时
-                    # 每当进行 40 次调整时，将 buffer_size 增大一倍
+                    # 每当进行 10 次调整时，将 buffer_size
                     # 这么做可以更快速的向前调整
                     if offset_times % 10 == 0:
                         offset += buffer_size
@@ -186,5 +188,5 @@ class File:
                     if offset > buffer_size and offset_times % 10 == 0:
                         # 当统计行数大于所需要行数的一般时，
                         # 如果 offset 大于 buffer_size 则不断缩小范围
-                        # 目的是获取更精确的行数，而不会和预期行数偏差太大
+                        # 目的是获取更精确行数，而不会和预期行数偏差太大
                         offset -= buffer_size

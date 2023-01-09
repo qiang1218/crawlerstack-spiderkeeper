@@ -15,15 +15,15 @@ class ProjectRepository(BaseRepository[Project, ProjectCreate, ProjectUpdate, Pr
     model = Project
     model_schema = ProjectSchema
 
-    async def get_project_from_artifact_id(self, task_id: int) -> ProjectSchema:
+    async def get_project_from_artifact_id(self, artifact_id: int) -> ProjectSchema:
         """
-        Get job from task id
-        :param task_id:
+        Get job from artifact id
+        :param artifact_id:
         :return:
         """
-        stmt = select(Artifact).filter(Artifact.id == task_id).options(selectinload(Artifact.project))
+        stmt = select(Artifact).filter(Artifact.id == artifact_id).options(selectinload(Artifact.project))
         artifact: Artifact = await self.session.scalar(stmt)
         if not artifact:
-            # Task does not exist
+            # artifact does not exist
             raise ObjectDoesNotExist()
         return self.model_schema.from_orm(artifact.project)

@@ -1116,7 +1116,11 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
+<<<<<<< Updated upstream
 content-hash = "b146a45740d77b0ca732fe982cd8439f6af781bbceebe6a5a6bd4e73b97a823c"
+=======
+content-hash = "7d4d8212c1bcd79235542cd2e5e7e01c6f48ac1f78541073ef42fda5fca5fc73"
+>>>>>>> Stashed changes
 
 [metadata.files]
 aio-pydispatch = [
