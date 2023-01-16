@@ -2,7 +2,7 @@
 import json
 
 import pytest
-from requests import Session, Response
+from requests import Response, Session
 
 from crawlerstack_spiderkeeper_server.utils.request import RequestWithSession
 

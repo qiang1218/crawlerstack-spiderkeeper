@@ -1,10 +1,10 @@
 """Test job"""
-from sqlalchemy import select, func
-
-from crawlerstack_spiderkeeper_server.utils.request import RequestWithSession
-from tests.crawlerstack_spiderkeeper_server.rest_api.conftest import assert_status_code
+from sqlalchemy import func, select
 
 from crawlerstack_spiderkeeper_server.models import Job
+from crawlerstack_spiderkeeper_server.utils.request import RequestWithSession
+from tests.crawlerstack_spiderkeeper_server.rest_api.conftest import \
+    assert_status_code
 
 
 def test_get_multi(client, init_job, api_url):

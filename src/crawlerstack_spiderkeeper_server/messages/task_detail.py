@@ -2,7 +2,8 @@
 from typing import List, Optional
 
 from crawlerstack_spiderkeeper_server.messages.base import Message, Messages
-from crawlerstack_spiderkeeper_server.schemas.task_detail import TaskDetailSchema
+from crawlerstack_spiderkeeper_server.schemas.task_detail import \
+    TaskDetailSchema
 
 
 class TaskDetailMessage(Message):

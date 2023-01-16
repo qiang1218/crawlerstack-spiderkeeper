@@ -1,8 +1,9 @@
 """test executor"""
 from crawlerstack_spiderkeeper_executor.executor import DockerExecutor
-from tests.crawlerstack_spiderkeeper_executor.rest_api.conftest import assert_status_code
-
-from crawlerstack_spiderkeeper_executor.services.executor import ExecutorService
+from crawlerstack_spiderkeeper_executor.services.executor import \
+    ExecutorService
+from tests.crawlerstack_spiderkeeper_executor.rest_api.conftest import \
+    assert_status_code
 
 
 async def test_run(client, api_url, mocker):

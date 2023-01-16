@@ -1,7 +1,7 @@
 """test mysql storage"""
-import pytest
-
 from datetime import datetime, timedelta
+
+import pytest
 
 from crawlerstack_spiderkeeper_server.data_storage import MysqlStorage
 from crawlerstack_spiderkeeper_server.data_storage.base import Connector

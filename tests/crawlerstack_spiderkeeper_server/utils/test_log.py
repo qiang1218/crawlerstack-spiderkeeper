@@ -1,7 +1,8 @@
 """test log config."""
 import pytest
 
-from crawlerstack_spiderkeeper_server.utils.log import log_level, verbose_formatter
+from crawlerstack_spiderkeeper_server.utils.log import (log_level,
+                                                        verbose_formatter)
 
 
 @pytest.mark.parametrize(

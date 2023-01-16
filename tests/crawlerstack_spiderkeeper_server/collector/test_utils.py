@@ -4,7 +4,7 @@ import json
 from asyncio import AbstractEventLoop
 from datetime import datetime
 
-from crawlerstack_spiderkeeper_server.collectior import Kombu
+from crawlerstack_spiderkeeper_server.collector import Kombu
 
 
 class DemoKombu(Kombu):
@@ -41,7 +41,7 @@ async def test_kombu():
     def consume_and_auto_ack(loop: AbstractEventLoop, body, message):
         """Registered the callback to consumer """
         # To submit a coroutine object to the event loop. (thread safe)
-        fut = asyncio.run_coroutine_threadsafe(asyncio.sleep(1), loop)
+        fut = asyncio.run_coroutine_threadsafe(use_data(body), loop)
         fut.result(5)  # Wait for the result from other os thread
         message.ack()  # then manual ack
 

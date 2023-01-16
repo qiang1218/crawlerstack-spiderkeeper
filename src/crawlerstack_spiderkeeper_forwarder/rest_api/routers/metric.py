@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends
 
 from crawlerstack_spiderkeeper_forwarder.messages.base import BaseMessage
 from crawlerstack_spiderkeeper_forwarder.schemas.metric import MetricSchema
-
 from crawlerstack_spiderkeeper_forwarder.services.metric import MetricService
 
 router = APIRouter()

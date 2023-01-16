@@ -1,9 +1,11 @@
 """test artifact"""
 import pytest
 
+from crawlerstack_spiderkeeper_server.schemas.artifact import (ArtifactCreate,
+                                                               ArtifactUpdate)
 from crawlerstack_spiderkeeper_server.services.artifact import ArtifactService
-from crawlerstack_spiderkeeper_server.schemas.artifact import ArtifactCreate, ArtifactUpdate
-from crawlerstack_spiderkeeper_server.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper_server.utils.exceptions import \
+    ObjectDoesNotExist
 
 
 @pytest.fixture()

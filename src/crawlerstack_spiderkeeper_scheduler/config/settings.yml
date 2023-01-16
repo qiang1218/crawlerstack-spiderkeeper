@@ -30,7 +30,7 @@ SIZE: 10
 
 ##########################################################
 # scheduler
-SCHEDULER_JOB_STORE_DEFAULT: mysql://root:1qazZAQ!@192.168.6.15:3306/spiderkeeper_scheduler?charset=UTF8MB4
+SCHEDULER_JOB_STORE_DEFAULT: mysql://root:1qazZAQ!@192.168.6.15:3306/spiderkeeper_scheduler
 SCHEDULER_EXECUTORS_DEFAULT_COUNT: 20
 SCHEDULER_JOB_DEFAULTS_COALESCE: false
 SCHEDULER_JOB_DEFAULTS_MAX_INSTANCES: 3
@@ -51,6 +51,7 @@ SERVER_TASK_UPDATE_SUFFIX: /tasks/%s
 EXECUTOR_RUN_SUFFIX: /_run
 EXECUTOR_WAIT_SUFFIX: /_check/%s
 EXECUTOR_RM_SUFFIX: /_rm/%s
+HEARTBEAT_INTERVAL: 5
 
 ##########################################################
 # collector

@@ -2,10 +2,13 @@
 import logging
 
 from crawlerstack_spiderkeeper_scheduler.config import settings
-from crawlerstack_spiderkeeper_scheduler.services.scheduler import SchedulerServer
-
-from crawlerstack_spiderkeeper_scheduler.utils.request import RequestWithSession
-from crawlerstack_spiderkeeper_scheduler.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper_scheduler.services.scheduler import \
+    SchedulerServer
+from crawlerstack_spiderkeeper_scheduler.tasks.task import Task
+from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
+    ObjectDoesNotExist
+from crawlerstack_spiderkeeper_scheduler.utils.request import \
+    RequestWithSession
 
 logger = logging.getLogger(__name__)
 
@@ -17,11 +20,11 @@ class JobService:
 
     @property
     def job_url(self):
-        return settings.SERVER_URL + settings.SERVER_JOB_SUFFIX
+        return settings.SERVER_BASE_URL + settings.SERVER_JOB_SUFFIX
 
     @property
     def artifact_url(self):
-        return settings.SERVER_URL + settings.SERVER_ARTIFACT_SUFFIX
+        return settings.SERVER_BASE_URL + settings.SERVER_ARTIFACT_SUFFIX
 
     @property
     def data_url(self):
@@ -37,7 +40,7 @@ class JobService:
 
     @property
     def scheduler(self):
-        return SchedulerServer()
+        return SchedulerServer(settings)
 
     @property
     def request_session(self):
@@ -48,8 +51,8 @@ class JobService:
         # 任务的单次触发
         # 获取任务需要的参数，即调用接口，获取对应调度参数
         # 1 先获取server中job的相关数据
-        job = self.request_session.request('GET', self.job_url % job_id).get('data')
-        artifact = self.request_session.request('GET', self.artifact_url % job_id).get('data')
+        job = self.get_job(job_id)
+        artifact = self.get_artifact(job_id)
 
         if not (job and artifact):
             raise ObjectDoesNotExist()
@@ -59,8 +62,16 @@ class JobService:
         executor_params = self.executor_params(job, artifact)
 
         # 任务调用
-        return self.scheduler.add_job(job_id, trigger_expression, spider_params=spider_params,
-                                      executor_params=executor_params, job_id=job_id)
+        self.scheduler.add_job(Task(settings).run, trigger_expression=trigger_expression, spider_params=spider_params,
+                               executor_params=executor_params, job_id=job_id)
+
+    def get_job(self, job_id: str):
+        """get job data"""
+        return self.request_session.request('GET', self.job_url % job_id).get('data')
+
+    def get_artifact(self, job_id: str):
+        """get artifact data"""
+        return self.request_session.request('GET', self.artifact_url % job_id).get('data')
 
     def spider_params(self, job: dict) -> dict:
         """

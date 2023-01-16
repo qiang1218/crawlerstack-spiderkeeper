@@ -1,12 +1,13 @@
 """StorageServer repository"""
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from crawlerstack_spiderkeeper_server.repository.base import BaseRepository
 
-from crawlerstack_spiderkeeper_server.models import StorageServer, Job
-from crawlerstack_spiderkeeper_server.schemas.storage_server import (StorageServerCreate, StorageServerUpdate,
-                                                                     StorageServerSchema)
-from crawlerstack_spiderkeeper_server.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper_server.models import Job, StorageServer
+from crawlerstack_spiderkeeper_server.repository.base import BaseRepository
+from crawlerstack_spiderkeeper_server.schemas.storage_server import (
+    StorageServerCreate, StorageServerSchema, StorageServerUpdate)
+from crawlerstack_spiderkeeper_server.utils.exceptions import \
+    ObjectDoesNotExist
 
 
 class StorageServerRepository(BaseRepository[StorageServer, StorageServerCreate,

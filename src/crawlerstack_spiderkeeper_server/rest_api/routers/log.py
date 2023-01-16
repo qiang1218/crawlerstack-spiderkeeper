@@ -2,10 +2,11 @@
 import logging
 
 from fastapi import APIRouter, Depends
+
 from crawlerstack_spiderkeeper_server.messages.log import LogMessage
 from crawlerstack_spiderkeeper_server.services.log import LogService
-
-from crawlerstack_spiderkeeper_server.utils.extractor import log_query_extractor
+from crawlerstack_spiderkeeper_server.utils.extractor import \
+    log_query_extractor
 
 router = APIRouter()
 

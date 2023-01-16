@@ -1,9 +1,12 @@
 """test task detail"""
 import pytest
 
-from crawlerstack_spiderkeeper_server.services.task_detail import TaskDetailService
-from crawlerstack_spiderkeeper_server.schemas.task_detail import TaskDetailCreate, TaskDetailUpdate
-from crawlerstack_spiderkeeper_server.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper_server.schemas.task_detail import (
+    TaskDetailCreate, TaskDetailUpdate)
+from crawlerstack_spiderkeeper_server.services.task_detail import \
+    TaskDetailService
+from crawlerstack_spiderkeeper_server.utils.exceptions import \
+    ObjectDoesNotExist
 
 
 @pytest.fixture()

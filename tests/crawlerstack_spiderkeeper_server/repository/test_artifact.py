@@ -4,9 +4,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from crawlerstack_spiderkeeper_server.models import Job
-
-from crawlerstack_spiderkeeper_server.utils.exceptions import ObjectDoesNotExist
-from crawlerstack_spiderkeeper_server.repository.artifact import ArtifactRepository
+from crawlerstack_spiderkeeper_server.repository.artifact import \
+    ArtifactRepository
+from crawlerstack_spiderkeeper_server.utils.exceptions import \
+    ObjectDoesNotExist
 
 
 @pytest.fixture()

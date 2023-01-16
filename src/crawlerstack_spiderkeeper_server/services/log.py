@@ -1,10 +1,10 @@
 """log"""
 from pathlib import Path
-from typing import List, Any
+from typing import Any, List
 
+from crawlerstack_spiderkeeper_server.config import local_path, settings
 from crawlerstack_spiderkeeper_server.services.base import ICRUD
 from crawlerstack_spiderkeeper_server.utils import File
-from crawlerstack_spiderkeeper_server.config import settings, local_path
 
 
 class LogService(ICRUD):

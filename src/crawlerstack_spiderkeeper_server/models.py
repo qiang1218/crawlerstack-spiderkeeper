@@ -2,7 +2,7 @@
 from datetime import datetime
 
 import inflection
-from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String)
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 

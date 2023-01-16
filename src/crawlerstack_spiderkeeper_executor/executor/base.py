@@ -14,6 +14,9 @@ class BaseExecutor(metaclass=SingletonMeta):
     """
     NAME: str
 
+    def __init__(self, settings):
+        self.settings = settings
+
     async def run(self, *args, **kwargs):
         """
         Run
@@ -53,6 +56,15 @@ class BaseExecutor(metaclass=SingletonMeta):
     async def log(self, *args, **kwargs):
         """
         Get container logs.
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        raise NotImplementedError
+
+    async def close(self, *args, **kwargs):
+        """
+        Close connection
         :param args:
         :param kwargs:
         :return:

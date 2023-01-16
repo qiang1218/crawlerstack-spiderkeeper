@@ -1,14 +1,18 @@
 """Task detail"""
-from typing import Union, Dict, Any
+from typing import Any, Dict, Union
 
+from crawlerstack_spiderkeeper_server.models import TaskDetail
+from crawlerstack_spiderkeeper_server.repository.task import TaskRepository
+from crawlerstack_spiderkeeper_server.repository.task_detail import \
+    TaskDetailRepository
 from crawlerstack_spiderkeeper_server.schemas.job import JobSchema
 from crawlerstack_spiderkeeper_server.schemas.task import TaskSchema
+from crawlerstack_spiderkeeper_server.schemas.task_detail import (
+    TaskDetailCreate, TaskDetailSchema, TaskDetailUpdate)
 from crawlerstack_spiderkeeper_server.services.base import EntityService
-from crawlerstack_spiderkeeper_server.models import TaskDetail
-from crawlerstack_spiderkeeper_server.schemas.task_detail import (TaskDetailCreate, TaskDetailUpdate, TaskDetailSchema)
-from crawlerstack_spiderkeeper_server.repository.task_detail import TaskDetailRepository
-from crawlerstack_spiderkeeper_server.repository.task import TaskRepository
-from crawlerstack_spiderkeeper_server.utils.types import CreateSchemaType, ModelSchemaType, UpdateSchemaType
+from crawlerstack_spiderkeeper_server.utils.types import (CreateSchemaType,
+                                                          ModelSchemaType,
+                                                          UpdateSchemaType)
 
 
 class TaskDetailService(EntityService[TaskDetail, TaskDetailCreate, TaskDetailUpdate, TaskDetailSchema]):

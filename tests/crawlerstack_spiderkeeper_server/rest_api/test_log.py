@@ -1,6 +1,7 @@
 """test log"""
 from crawlerstack_spiderkeeper_server.services import LogService
-from tests.crawlerstack_spiderkeeper_server.rest_api.conftest import assert_status_code
+from tests.crawlerstack_spiderkeeper_server.rest_api.conftest import \
+    assert_status_code
 
 
 def test_get(client, api_url, mocker):

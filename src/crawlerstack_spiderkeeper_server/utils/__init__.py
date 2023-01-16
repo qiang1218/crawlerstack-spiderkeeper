@@ -5,7 +5,7 @@ import os
 from asyncio import Future
 from functools import partial
 from pathlib import Path
-from typing import AsyncIterable, Optional, Union, List, Callable, Any
+from typing import Any, AsyncIterable, Callable, List, Optional, Union
 
 import aiofiles
 from aiofiles.threadpool.binary import AsyncBufferedReader

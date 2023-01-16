@@ -5,13 +5,12 @@ import logging
 
 from fastapi import APIRouter, Depends
 
+from crawlerstack_spiderkeeper_server.messages.base import BaseMessage
+from crawlerstack_spiderkeeper_server.messages.project import (ProjectMessage,
+                                                               ProjectMessages)
 from crawlerstack_spiderkeeper_server.schemas.project import (ProjectCreate,
                                                               ProjectUpdate)
 from crawlerstack_spiderkeeper_server.services import ProjectService
-
-from crawlerstack_spiderkeeper_server.messages.base import BaseMessage
-from crawlerstack_spiderkeeper_server.messages.project import ProjectMessage, ProjectMessages
-
 from crawlerstack_spiderkeeper_server.utils.extractor import query_extractor
 
 router = APIRouter()

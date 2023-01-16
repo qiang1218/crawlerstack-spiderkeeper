@@ -1,8 +1,8 @@
 """task heartbeat"""
 
-from tests.crawlerstack_spiderkeeper_scheduler.rest_api.conftest import assert_status_code
-
 from crawlerstack_spiderkeeper_scheduler.utils.status import Status
+from tests.crawlerstack_spiderkeeper_scheduler.rest_api.conftest import \
+    assert_status_code
 
 
 def test_heartbeat(client, init_executor, api_url):

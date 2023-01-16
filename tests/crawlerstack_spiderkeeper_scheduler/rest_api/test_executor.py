@@ -1,9 +1,9 @@
 """Test executor"""
-from sqlalchemy import select, func
-
-from tests.crawlerstack_spiderkeeper_scheduler.rest_api.conftest import assert_status_code
+from sqlalchemy import func, select
 
 from crawlerstack_spiderkeeper_scheduler.models import Executor
+from tests.crawlerstack_spiderkeeper_scheduler.rest_api.conftest import \
+    assert_status_code
 
 
 def test_get_multi(client, init_executor, api_url):

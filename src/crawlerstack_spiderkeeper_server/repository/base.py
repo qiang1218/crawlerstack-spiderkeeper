@@ -4,16 +4,17 @@ base repository
 from typing import Any, Generic, Optional, Type, Union
 
 from fastapi.encoders import jsonable_encoder
+from fastapi_sa.database import db
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from sqlalchemy.sql import Select
 
-from fastapi_sa.database import db
-
-from crawlerstack_spiderkeeper_server.utils.exceptions import ObjectDoesNotExist
-from crawlerstack_spiderkeeper_server.utils.types import (ModelType, CreateSchemaType,
-                                                          UpdateSchemaType, ModelSchemaType)
+from crawlerstack_spiderkeeper_server.utils.exceptions import \
+    ObjectDoesNotExist
+from crawlerstack_spiderkeeper_server.utils.types import (CreateSchemaType,
+                                                          ModelSchemaType,
+                                                          ModelType,
+                                                          UpdateSchemaType)
 
 
 class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType, ModelSchemaType]):

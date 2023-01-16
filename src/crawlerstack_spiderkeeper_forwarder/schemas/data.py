@@ -3,7 +3,7 @@ Data schema
 """
 from typing import Any
 
-from pydantic import (BaseModel, constr)  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, constr  # pylint: disable=no-name-in-module
 
 
 class DataSchema(BaseModel):

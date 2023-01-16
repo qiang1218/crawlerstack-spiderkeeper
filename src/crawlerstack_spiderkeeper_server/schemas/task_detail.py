@@ -1,7 +1,7 @@
 """
 TaskDetail schema
 """
-from pydantic import (BaseModel, constr)  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, constr  # pylint: disable=no-name-in-module
 
 from crawlerstack_spiderkeeper_server.schemas.base import InDBMixin
 

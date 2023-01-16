@@ -1,13 +1,17 @@
 """Task"""
-from typing import Union, Dict, Any
+from typing import Any, Dict, Union
 
-from crawlerstack_spiderkeeper_server.repository.job import JobRepository
-from crawlerstack_spiderkeeper_server.schemas.job import JobSchema
-from crawlerstack_spiderkeeper_server.services.base import EntityService
 from crawlerstack_spiderkeeper_server.models import Task
-from crawlerstack_spiderkeeper_server.schemas.task import (TaskCreate, TaskUpdate, TaskSchema)
+from crawlerstack_spiderkeeper_server.repository.job import JobRepository
 from crawlerstack_spiderkeeper_server.repository.task import TaskRepository
-from crawlerstack_spiderkeeper_server.utils.types import CreateSchemaType, ModelSchemaType, UpdateSchemaType
+from crawlerstack_spiderkeeper_server.schemas.job import JobSchema
+from crawlerstack_spiderkeeper_server.schemas.task import (TaskCreate,
+                                                           TaskSchema,
+                                                           TaskUpdate)
+from crawlerstack_spiderkeeper_server.services.base import EntityService
+from crawlerstack_spiderkeeper_server.utils.types import (CreateSchemaType,
+                                                          ModelSchemaType,
+                                                          UpdateSchemaType)
 
 
 class TaskService(EntityService[Task, TaskCreate, TaskUpdate, TaskSchema]):

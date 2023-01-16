@@ -2,13 +2,16 @@
 import inspect
 
 import pytest
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.exc import InvalidRequestError
 
 from crawlerstack_spiderkeeper_server.models import Project
-from crawlerstack_spiderkeeper_server.repository.project import ProjectRepository
-from crawlerstack_spiderkeeper_server.schemas.project import ProjectUpdate, ProjectCreate
-from crawlerstack_spiderkeeper_server.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper_server.repository.project import \
+    ProjectRepository
+from crawlerstack_spiderkeeper_server.schemas.project import (ProjectCreate,
+                                                              ProjectUpdate)
+from crawlerstack_spiderkeeper_server.utils.exceptions import \
+    ObjectDoesNotExist
 
 
 @pytest.fixture()

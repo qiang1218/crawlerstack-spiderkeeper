@@ -6,8 +6,11 @@ from typing import Optional
 
 from fastapi import FastAPI
 from uvicorn import Config, Server
-from crawlerstack_spiderkeeper_executor.rest_api.handler import init_exception_handler
-from crawlerstack_spiderkeeper_executor.rest_api.middlewares import init_middleware
+
+from crawlerstack_spiderkeeper_executor.rest_api.handler import \
+    init_exception_handler
+from crawlerstack_spiderkeeper_executor.rest_api.middlewares import \
+    init_middleware
 from crawlerstack_spiderkeeper_executor.rest_api.routers import init_router
 
 

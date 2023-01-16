@@ -56,6 +56,7 @@ class RequestWithSession(BaseRequest):  # noqa
                     except JSONDecodeError:
                         logger.warning('Json decode error, response data is %s', response.text)
                 logger.warning('Got response from "%s", status code is %d', url, status_code)
-        except RequestException:
+        except RequestException as ex:
             logger.warning('Request exception, request url is %s', url)
+            logger.warning('%s', ex)
         return {}

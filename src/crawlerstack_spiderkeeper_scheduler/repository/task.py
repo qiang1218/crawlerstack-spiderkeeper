@@ -1,9 +1,10 @@
 """task"""
 
-from crawlerstack_spiderkeeper_scheduler.repository.base import BaseRepository
-
 from crawlerstack_spiderkeeper_scheduler.models import Task
-from crawlerstack_spiderkeeper_scheduler.schemas.task import (TaskCreate, TaskUpdate, TaskSchema)
+from crawlerstack_spiderkeeper_scheduler.repository.base import BaseRepository
+from crawlerstack_spiderkeeper_scheduler.schemas.task import (TaskCreate,
+                                                              TaskSchema,
+                                                              TaskUpdate)
 
 
 class TaskRepository(BaseRepository[Task, TaskCreate, TaskUpdate, TaskSchema]):

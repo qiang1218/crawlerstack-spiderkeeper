@@ -3,16 +3,18 @@
 import logging
 from typing import Any
 
-from crawlerstack_spiderkeeper_server.schemas.task_detail import TaskDetailCreate, TaskDetailUpdate
-from crawlerstack_spiderkeeper_server.services.base import ICRUD
-
-from crawlerstack_spiderkeeper_server.repository.job import JobRepository
-from crawlerstack_spiderkeeper_server.repository.storage_server import StorageServerRepository
-from crawlerstack_spiderkeeper_server.repository.task import TaskRepository
-from crawlerstack_spiderkeeper_server.repository.task_detail import TaskDetailRepository
-
 from crawlerstack_spiderkeeper_server.data_storage import StorageFactory
-from crawlerstack_spiderkeeper_server.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper_server.repository.job import JobRepository
+from crawlerstack_spiderkeeper_server.repository.storage_server import \
+    StorageServerRepository
+from crawlerstack_spiderkeeper_server.repository.task import TaskRepository
+from crawlerstack_spiderkeeper_server.repository.task_detail import \
+    TaskDetailRepository
+from crawlerstack_spiderkeeper_server.schemas.task_detail import (
+    TaskDetailCreate, TaskDetailUpdate)
+from crawlerstack_spiderkeeper_server.services.base import ICRUD
+from crawlerstack_spiderkeeper_server.utils.exceptions import \
+    ObjectDoesNotExist
 
 logger = logging.getLogger(__name__)
 

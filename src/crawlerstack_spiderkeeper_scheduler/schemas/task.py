@@ -3,7 +3,7 @@ Task schema
 """
 from datetime import datetime
 
-from pydantic import (BaseModel, constr)  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, constr  # pylint: disable=no-name-in-module
 
 from crawlerstack_spiderkeeper_scheduler.schemas.base import InDBMixin
 

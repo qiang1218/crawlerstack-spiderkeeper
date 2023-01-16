@@ -4,8 +4,9 @@ import asyncio
 
 import pytest
 
-from tests.crawlerstack_spiderkeeper_server.rest_api.conftest import assert_status_code
 from crawlerstack_spiderkeeper_server.services.metric import MetricService
+from tests.crawlerstack_spiderkeeper_server.rest_api.conftest import \
+    assert_status_code
 
 
 @pytest.fixture

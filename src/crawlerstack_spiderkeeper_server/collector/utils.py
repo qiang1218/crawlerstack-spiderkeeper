@@ -8,10 +8,11 @@ from itertools import count
 from time import sleep
 from typing import Any, Callable, List, Optional
 
-from kombu import (Connection, Consumer, Exchange, Queue, producers)
+from kombu import Connection, Consumer, Exchange, Queue, producers
 
 from crawlerstack_spiderkeeper_server.config import settings
-from crawlerstack_spiderkeeper_server.utils import run_in_executor, SingletonMeta
+from crawlerstack_spiderkeeper_server.utils import (SingletonMeta,
+                                                    run_in_executor)
 from crawlerstack_spiderkeeper_server.utils.exceptions import SpiderkeeperError
 
 logger = logging.getLogger(__name__)
@@ -203,12 +204,13 @@ class Kombu(metaclass=SingletonMeta):
         for callback in register_callbacks:
             consumer.register_callback(callback)
         consumer.consume()
-        await asyncio.to_thread(self._consuming(
+        await asyncio.to_thread(
+            self._consuming,
             limit=limit,
             timeout=timeout,
             safety_interval=safety_interval,
             should_stop=should_stop
-        ))
+        )
 
     def _consuming(
             self,

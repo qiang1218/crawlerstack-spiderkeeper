@@ -4,11 +4,11 @@ import logging
 import pytest
 from starlette.testclient import TestClient
 
+from crawlerstack_spiderkeeper_executor.config import \
+    settings as executor_settings
 from crawlerstack_spiderkeeper_executor.manage import SpiderKeeperExecutor
-from crawlerstack_spiderkeeper_scheduler.config import settings
 
 logger = logging.getLogger(__name__)
-
 
 API_VERSION = 'v1'
 
@@ -19,8 +19,17 @@ def api_url():
     return f'/api/{API_VERSION}'
 
 
+@pytest.fixture()
+def settings():
+    """settings fixture"""
+    executor_settings.HEARTBEAT_TIMEOUT = 5
+    executor_settings.HEARTBEAT_INTERVAL = 3
+    executor_settings.EXECUTOR_REMOTE_URL = 'tcp://192.168.9.9:2376'
+    return executor_settings
+
+
 @pytest.fixture(autouse=True)
-async def spiderkeeper_executor():
+async def spiderkeeper_executor(settings):
     logger.debug('Starting spiderkeeper!!!')
     _spiderkeeper_executor = SpiderKeeperExecutor(settings)
     await _spiderkeeper_executor.start()

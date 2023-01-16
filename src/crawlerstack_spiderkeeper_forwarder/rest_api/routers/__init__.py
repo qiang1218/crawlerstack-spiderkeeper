@@ -3,7 +3,8 @@ Router.
 """
 from fastapi import APIRouter, FastAPI
 
-from crawlerstack_spiderkeeper_forwarder.rest_api.routers import (data, log, metric)
+from crawlerstack_spiderkeeper_forwarder.rest_api.routers import (data, log,
+                                                                  metric)
 
 
 def router_v1():

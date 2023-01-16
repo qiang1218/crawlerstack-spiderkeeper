@@ -8,7 +8,7 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from crawlerstack_spiderkeeper_server.collectior.utils import Kombu
+from crawlerstack_spiderkeeper_server.collector.utils import Kombu
 from crawlerstack_spiderkeeper_server.rest_api import RestAPI
 from crawlerstack_spiderkeeper_server.signals import server_start, server_stop
 from crawlerstack_spiderkeeper_server.utils.exceptions import SpiderkeeperError

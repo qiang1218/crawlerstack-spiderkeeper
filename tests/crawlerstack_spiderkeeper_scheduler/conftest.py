@@ -4,23 +4,36 @@ import os
 from pathlib import Path
 
 import pytest
+from fastapi_sa.database import db
 from sqlalchemy.ext.asyncio import create_async_engine
 from starlette.testclient import TestClient
 
-from fastapi_sa.database import db
+from crawlerstack_spiderkeeper_scheduler.config import \
+    settings as server_settings
 from crawlerstack_spiderkeeper_scheduler.manage import SpiderKeeperScheduler
-from crawlerstack_spiderkeeper_scheduler.models import BaseModel
-from crawlerstack_spiderkeeper_scheduler.config import settings
-
-from crawlerstack_spiderkeeper_scheduler.models import Executor, ExecutorDetail, Task
+from crawlerstack_spiderkeeper_scheduler.models import (BaseModel, Executor,
+                                                        Task)
 
 logger = logging.getLogger(__name__)
+
+
+@pytest.fixture()
+def settings():
+    """settings fixtures"""
+    server_settings.HEARTBEAT_INTERVAL = 2
+    return server_settings
 
 
 @pytest.fixture()
 def db_url():
     """db url"""
     return "sqlite+aiosqlite:////tmp/test.db"
+
+
+@pytest.fixture()
+def apscheduler_store_url():
+    """apscheduler storage url"""
+    return "sqlite:////tmp/test.db"
 
 
 @pytest.fixture()
@@ -59,8 +72,9 @@ async def migrate(db_url):
 
 
 @pytest.fixture(autouse=True)
-async def spiderkeeper_server(migrate, db_url):
+async def spiderkeeper_server(migrate, settings, db_url, apscheduler_store_url):
     settings.DATABASE = db_url
+    settings.SCHEDULER_JOB_STORE_DEFAULT = apscheduler_store_url
     logger.debug('Starting spiderkeeper!!!')
     _spiderkeeper_server = SpiderKeeperScheduler(settings)
     await _spiderkeeper_server.start()
@@ -86,23 +100,11 @@ async def init_executor():
     async with db():
         executors = [
             Executor(name="docker_executor_1", selector="test", url="http://localhost:2375", type="docker", memory=32,
-                     cpu=50),
+                     cpu=50, task_count=1),
             Executor(name="docker_executor_2", selector="test", url="http://localhost:2376", type="docker", memory=32,
-                     cpu=50),
+                     cpu=50, task_count=0),
         ]
         db.session.add_all(executors)
-        await db.session.flush()
-
-
-@pytest.fixture()
-async def init_executor_detail(init_executor):
-    """Init executor detail fixture."""
-    async with db():
-        executor_details = [
-            ExecutorDetail(task_count=1, executor_id=1),
-            ExecutorDetail(task_count=2, executor_id=2),
-        ]
-        db.session.add_all(executor_details)
         await db.session.flush()
 
 

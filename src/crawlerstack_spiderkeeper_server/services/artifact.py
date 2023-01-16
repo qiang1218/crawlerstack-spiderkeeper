@@ -1,13 +1,19 @@
 """Artifact"""
-from typing import Union, Dict, Any
+from typing import Any, Dict, Union
 
+from crawlerstack_spiderkeeper_server.models import Artifact
+from crawlerstack_spiderkeeper_server.repository.artifact import \
+    ArtifactRepository
+from crawlerstack_spiderkeeper_server.repository.project import \
+    ProjectRepository
+from crawlerstack_spiderkeeper_server.schemas.artifact import (ArtifactCreate,
+                                                               ArtifactSchema,
+                                                               ArtifactUpdate)
 from crawlerstack_spiderkeeper_server.schemas.project import ProjectSchema
 from crawlerstack_spiderkeeper_server.services.base import EntityService
-from crawlerstack_spiderkeeper_server.models import Artifact
-from crawlerstack_spiderkeeper_server.schemas.artifact import (ArtifactCreate, ArtifactUpdate, ArtifactSchema)
-from crawlerstack_spiderkeeper_server.repository.artifact import ArtifactRepository
-from crawlerstack_spiderkeeper_server.repository.project import ProjectRepository
-from crawlerstack_spiderkeeper_server.utils.types import CreateSchemaType, ModelSchemaType, UpdateSchemaType
+from crawlerstack_spiderkeeper_server.utils.types import (CreateSchemaType,
+                                                          ModelSchemaType,
+                                                          UpdateSchemaType)
 
 
 class ArtifactService(EntityService[Artifact, ArtifactCreate, ArtifactUpdate, ArtifactSchema]):

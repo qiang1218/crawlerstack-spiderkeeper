@@ -9,15 +9,20 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from crawlerstack_spiderkeeper_scheduler.rest_api import RestAPI
-from crawlerstack_spiderkeeper_scheduler.signals import server_start, server_stop
-from crawlerstack_spiderkeeper_scheduler.utils.exceptions import SpiderkeeperError
+from crawlerstack_spiderkeeper_scheduler.services.scheduler import \
+    SchedulerServer
+from crawlerstack_spiderkeeper_scheduler.signals import (server_start,
+                                                         server_stop)
+from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
+    SpiderkeeperError
 from crawlerstack_spiderkeeper_scheduler.utils.log import configure_logging
-from crawlerstack_spiderkeeper_scheduler.services.scheduler import SchedulerServer
 
 HANDLED_SIGNALS = (
     system_signal.SIGINT,  # Unix signal 2. Sent by Ctrl+C.
     system_signal.SIGTERM,  # Unix signal 15. Sent by `kill <pid>`.
 )
+
+logger = logging.getLogger(__name__)
 
 
 class SpiderKeeperScheduler:
@@ -43,6 +48,7 @@ class SpiderKeeperScheduler:
         self.force_exit = True
 
         self.scheduler = SchedulerServer(self.settings)
+        self.executor_task_id = 'executor_task_id'
 
     @property
     def rest_api(self):
@@ -54,9 +60,13 @@ class SpiderKeeperScheduler:
         self.rest_api.init()
         await server_start.send()
 
-    def init_scheduler(self):
-        """init scheduler"""
+    async def start_background_task(self):
+        """Start background task"""
         self.scheduler.start()
+
+    async def stop_background_task(self):
+        """stop background task"""
+        self.scheduler.stop()
 
     async def run(self):
         """Run"""
@@ -64,21 +74,20 @@ class SpiderKeeperScheduler:
             await self.rest_api.start()
             self.install_signal_handlers()
             await self.start()
-            # 调度器初始化和历史任务恢复
-            # self.init_scheduler()
+            await self.start_background_task()
             while not self.should_exit:
                 # 暂时不做任何处理。
                 await asyncio.sleep(0.001)
         except SpiderkeeperError as ex:
             logging.exception(ex)
         finally:
+            await self.stop_background_task()
             await self.stop()
 
     async def stop(self):
         """Stop spiderkeeper"""
         await server_stop.send()
         await self.rest_api.stop()
-        # self.scheduler.stop()
 
     def install_signal_handlers(self) -> None:
         """

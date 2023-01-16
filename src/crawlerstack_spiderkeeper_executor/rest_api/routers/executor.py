@@ -6,10 +6,11 @@ import logging
 from fastapi import APIRouter, Depends
 
 from crawlerstack_spiderkeeper_executor.messages.base import BaseMessage
-from crawlerstack_spiderkeeper_executor.messages.executor import ExecutorMessage
+from crawlerstack_spiderkeeper_executor.messages.executor import \
+    ExecutorMessage
 from crawlerstack_spiderkeeper_executor.schemas.base import TaskSchema
-
-from crawlerstack_spiderkeeper_executor.services.executor import ExecutorService
+from crawlerstack_spiderkeeper_executor.services.executor import \
+    ExecutorService
 
 router = APIRouter()
 

@@ -2,11 +2,12 @@
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from crawlerstack_spiderkeeper_server.repository.base import BaseRepository
-
 from crawlerstack_spiderkeeper_server.models import Task, TaskDetail
-from crawlerstack_spiderkeeper_server.schemas.task_detail import (TaskDetailCreate, TaskDetailUpdate, TaskDetailSchema)
-from crawlerstack_spiderkeeper_server.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper_server.repository.base import BaseRepository
+from crawlerstack_spiderkeeper_server.schemas.task_detail import (
+    TaskDetailCreate, TaskDetailSchema, TaskDetailUpdate)
+from crawlerstack_spiderkeeper_server.utils.exceptions import \
+    ObjectDoesNotExist
 
 
 class TaskDetailRepository(BaseRepository[TaskDetail, TaskDetailCreate, TaskDetailUpdate, TaskDetailSchema]):

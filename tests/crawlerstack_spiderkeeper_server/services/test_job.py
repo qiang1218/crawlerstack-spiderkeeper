@@ -3,10 +3,11 @@ import inspect
 
 import pytest
 
-from crawlerstack_spiderkeeper_server.services.job import JobService
 from crawlerstack_spiderkeeper_server.schemas.job import JobCreate, JobUpdate
-from crawlerstack_spiderkeeper_server.utils.exceptions import ObjectDoesNotExist, JobRunError, JobStoppedError, \
-    JobPauseError, JobUnpauseError
+from crawlerstack_spiderkeeper_server.services.job import JobService
+from crawlerstack_spiderkeeper_server.utils.exceptions import (
+    JobPauseError, JobRunError, JobStoppedError, JobUnpauseError,
+    ObjectDoesNotExist)
 from crawlerstack_spiderkeeper_server.utils.request import RequestWithSession
 
 

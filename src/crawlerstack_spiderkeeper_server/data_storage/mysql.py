@@ -7,8 +7,10 @@ from typing import Any
 import pymysql
 
 from crawlerstack_spiderkeeper_server.config import settings
-from crawlerstack_spiderkeeper_server.data_storage.base import Storage, Connector
-from crawlerstack_spiderkeeper_server.data_storage.utils import transform_mysql_db_str
+from crawlerstack_spiderkeeper_server.data_storage.base import (Connector,
+                                                                Storage)
+from crawlerstack_spiderkeeper_server.data_storage.utils import \
+    transform_mysql_db_str
 
 logger = logging.getLogger(__name__)
 

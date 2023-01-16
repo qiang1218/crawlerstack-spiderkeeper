@@ -5,8 +5,10 @@ import logging
 from typing import Any, Dict, Generic, Optional, Type, Union
 
 from crawlerstack_spiderkeeper_server.repository.base import BaseRepository
-from crawlerstack_spiderkeeper_server.utils.types import (ModelType, CreateSchemaType,
-                                                          UpdateSchemaType, ModelSchemaType)
+from crawlerstack_spiderkeeper_server.utils.types import (CreateSchemaType,
+                                                          ModelSchemaType,
+                                                          ModelType,
+                                                          UpdateSchemaType)
 
 logger = logging.getLogger(__name__)
 

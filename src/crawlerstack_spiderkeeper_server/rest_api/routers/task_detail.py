@@ -4,13 +4,15 @@ Task detail route
 import logging
 
 from fastapi import APIRouter, Depends
-from crawlerstack_spiderkeeper_server.messages.job import JobMessage
-from crawlerstack_spiderkeeper_server.schemas.task_detail import TaskDetailCreate, TaskDetailUpdate
-from crawlerstack_spiderkeeper_server.services.task_detail import TaskDetailService
 
 from crawlerstack_spiderkeeper_server.messages.base import BaseMessage
-from crawlerstack_spiderkeeper_server.messages.task_detail import TaskDetailMessage, TaskDetailMessages
-
+from crawlerstack_spiderkeeper_server.messages.job import JobMessage
+from crawlerstack_spiderkeeper_server.messages.task_detail import (
+    TaskDetailMessage, TaskDetailMessages)
+from crawlerstack_spiderkeeper_server.schemas.task_detail import (
+    TaskDetailCreate, TaskDetailUpdate)
+from crawlerstack_spiderkeeper_server.services.task_detail import \
+    TaskDetailService
 from crawlerstack_spiderkeeper_server.utils.extractor import query_extractor
 
 router = APIRouter()

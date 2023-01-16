@@ -4,21 +4,24 @@ Manager.
 import asyncio
 import logging
 import signal as system_signal
-from typing import Optional
-
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from crawlerstack_spiderkeeper_executor.rest_api import RestAPI
-from crawlerstack_spiderkeeper_executor.signals import server_start, server_stop
-from crawlerstack_spiderkeeper_executor.utils import run_in_executor
-from crawlerstack_spiderkeeper_executor.utils.exceptions import SpiderkeeperError
+from crawlerstack_spiderkeeper_executor.services.register import \
+    RegisterService
+from crawlerstack_spiderkeeper_executor.signals import (server_start,
+                                                        server_stop)
+from crawlerstack_spiderkeeper_executor.utils.exceptions import \
+    SpiderkeeperError
 from crawlerstack_spiderkeeper_executor.utils.log import configure_logging
-from crawlerstack_spiderkeeper_executor.services.register import RegisterService
+
+logger = logging.getLogger(__name__)
 
 HANDLED_SIGNALS = (
     system_signal.SIGINT,  # Unix signal 2. Sent by Ctrl+C.
     system_signal.SIGTERM,  # Unix signal 15. Sent by `kill <pid>`.
 )
+
+EXIST = False
 
 
 class SpiderKeeperExecutor:
@@ -37,26 +40,34 @@ class SpiderKeeperExecutor:
         )
         self.should_exit = False
         self.force_exit = True
+        self.register = RegisterService(self.settings)
 
     @property
     def rest_api(self):
         """rest api"""
         return self._rest_api
 
-    @property
-    def register(self):
-        """registry"""
-        return RegisterService(self.settings)
-
     async def start(self):
         """Start api"""
+        logger.info('Starting spiderkeeper executor')
         self.rest_api.init()
+        self.register_event()
         await server_start.send()
 
     async def start_background_task(self):
         """Start background task"""
-        self.register.register()
-        await run_in_executor(self.register.heartbeat)
+
+        executor_id = self.register.register()
+        if executor_id:
+            await self.register.heartbeat(executor_id=executor_id)
+        else:
+            raise SpiderkeeperError('Init register failed!')
+
+    def register_event(self):
+        """register event"""
+        # 注册事件
+        server_start.connect(self.register.server_start)
+        server_stop.connect(self.register.server_stop)
 
     async def run(self):
         """Run"""
@@ -64,10 +75,12 @@ class SpiderKeeperExecutor:
             await self.rest_api.start()
             self.install_signal_handlers()
             await self.start()
-            # await self.start_background_task()
+            await self.start_background_task()
             while not self.should_exit:
                 # 暂时不做任何处理。
-                await asyncio.sleep(0.001)
+                if self.register.exist:
+                    break
+                await asyncio.sleep(2)
         except SpiderkeeperError as ex:
             logging.exception(ex)
         finally:
@@ -75,6 +88,7 @@ class SpiderKeeperExecutor:
 
     async def stop(self):
         """Stop spiderkeeper"""
+        logging.info('Stopping spiderkeeper executor')
         await server_stop.send()
         await self.rest_api.stop()
 

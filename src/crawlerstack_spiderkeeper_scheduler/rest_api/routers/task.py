@@ -5,13 +5,13 @@ import logging
 
 from fastapi import APIRouter, Depends
 
-from crawlerstack_spiderkeeper_scheduler.schemas.task import (TaskCreate, TaskUpdate)
-
+from crawlerstack_spiderkeeper_scheduler.messages.base import BaseMessage
+from crawlerstack_spiderkeeper_scheduler.messages.task import (TaskMessage,
+                                                               TaskMessages)
+from crawlerstack_spiderkeeper_scheduler.schemas.task import (TaskCreate,
+                                                              TaskUpdate)
 from crawlerstack_spiderkeeper_scheduler.services.task import TaskService
 from crawlerstack_spiderkeeper_scheduler.utils.extractor import query_extractor
-
-from crawlerstack_spiderkeeper_scheduler.messages.base import BaseMessage
-from crawlerstack_spiderkeeper_scheduler.messages.task import TaskMessages, TaskMessage
 
 router = APIRouter()
 

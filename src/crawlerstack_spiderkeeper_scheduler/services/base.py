@@ -5,8 +5,10 @@ import logging
 from typing import Any, Dict, Generic, Optional, Type, Union
 
 from crawlerstack_spiderkeeper_scheduler.repository.base import BaseRepository
-from crawlerstack_spiderkeeper_scheduler.utils.types import (ModelType, CreateSchemaType,
-                                                          UpdateSchemaType, ModelSchemaType)
+from crawlerstack_spiderkeeper_scheduler.utils.types import (CreateSchemaType,
+                                                             ModelSchemaType,
+                                                             ModelType,
+                                                             UpdateSchemaType)
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +154,7 @@ class EntityService(ICRUD, Generic[ModelType, CreateSchemaType, UpdateSchemaType
         """
         return await self.delete_by_id(pk=pk)
 
-    async def count(self, search_fields: dict[str, str]) -> int:
+    async def count(self, search_fields: dict[str, str] = None) -> int:
         """
         Count.
         :return:

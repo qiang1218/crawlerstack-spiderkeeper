@@ -1,23 +1,27 @@
 """task"""
+import asyncio
 import json
-import time
 from datetime import datetime
 
-from crawlerstack_spiderkeeper_scheduler.services.executor import ExecutorService
-from crawlerstack_spiderkeeper_scheduler.services.executor_detail import ExecutorDetailService
-from crawlerstack_spiderkeeper_scheduler.schemas.executor import ExecutorAndDetailSchema
-from crawlerstack_spiderkeeper_scheduler.schemas.executor_detail import ExecutorDetailSchema
-from crawlerstack_spiderkeeper_scheduler.schemas.task import TaskCreate, TaskUpdate
-
+from crawlerstack_spiderkeeper_scheduler.schemas.executor import (
+    ExecutorCreate, ExecutorSchema, ExecutorUpdate)
+from crawlerstack_spiderkeeper_scheduler.schemas.task import (TaskCreate,
+                                                              TaskSchema,
+                                                              TaskUpdate)
+from crawlerstack_spiderkeeper_scheduler.services.executor import \
+    ExecutorService
 from crawlerstack_spiderkeeper_scheduler.services.task import TaskService
-from crawlerstack_spiderkeeper_scheduler.utils.exceptions import RemoteTaskRunError
-
-from crawlerstack_spiderkeeper_scheduler.utils.request import RequestWithSession
+from crawlerstack_spiderkeeper_scheduler.utils import SingletonMeta
+from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
+    RemoteTaskRunError
+from crawlerstack_spiderkeeper_scheduler.utils.request import \
+    RequestWithSession
 from crawlerstack_spiderkeeper_scheduler.utils.status import Status
 
 
-class Task:
-    def __init__(self, settings, **kwargs):
+class Task(metaclass=SingletonMeta):
+    def __init__(self, settings):
+        """init"""
         self.settings = settings
         self.job_url = self.settings.SERVER_BASE_URL + self.settings.SERVER_JOB_SUFFIX
         self.artifact_url = self.settings.SERVER_BASE_URL + self.settings.SERVER_ARTIFACT_SUFFIX
@@ -38,11 +42,6 @@ class Task:
     def executor_server(self):
         """executor service"""
         return ExecutorService()
-
-    @property
-    def executor_detail_service(self):
-        """executor detail service"""
-        return ExecutorDetailService()
 
     @property
     def request_session(self):
@@ -79,7 +78,7 @@ class Task:
         container_id = self.run_task(executor.url, params)
 
         # 3.2 执行器计数+1
-        await self.update_task_count(executor.executor_detail, symbol=True)
+        await self.update_task_count(executor, symbol=True)
 
         # 3.2 创建schedule中task表
         task_id = await self.create_task_record(task_name=task_name, container_id=container_id, executor=executor)
@@ -89,9 +88,10 @@ class Task:
 
         # 4. 任务状态检测
         # status=(created	restarting running	paused	exited	dead)
-        # todo 任务状态的更新机制，根据容器的状态进行更新，默认created状态
+        # 任务状态的更新机制，根据容器的状态进行更新，默认created状态
         _status = 'created'
         while True:
+            # todo 添加逻辑，确保创建后的容器会退出，考虑时间延后问题，如果容器已经退出，则状态的完整性更新
             status = self.get_task_status(executor.url, container_id)
             if status != _status:
                 _status = status
@@ -103,10 +103,14 @@ class Task:
                 # 如果退出状态时，循环终止
                 if _status in ('exited', 'dead', 'paused'):
                     break
-            time.sleep(5)
+            await asyncio.sleep(5)
         # 5.3 调度器中detail表任务个数状态更新
-        await self.update_task_count(executor.executor_detail, symbol=False)
+        await self.update_task_count(executor, symbol=False)
         # 5.4 执行器的任务对应container_id任务清除
+        self.remove_container(executor, container_id=container_id)
+
+    def remove_container(self, executor, container_id: str):
+        """remove container from remote executor"""
         self.request_session.request('GET', executor.url + self.executor_rm_url_suffix % container_id)
 
     @staticmethod
@@ -125,15 +129,15 @@ class Task:
                        }
         return status_dict.get(status)
 
-    async def get_active_executors(self, executor_type: str, status: int) -> list[ExecutorAndDetailSchema]:
+    async def get_active_executors(self, executor_type: str, status: int) -> list[ExecutorSchema]:
         """
         get active executors
         :param executor_type:
         :param status:
         :return:
         """
-        return await self.executor_server.get_by_type_join_detail(executor_type=executor_type,
-                                                                  status=status)
+        return await self.executor_server.get(search_fields={'type': executor_type,
+                                                             'status': status})
 
     def run_task(self, url: str, params: dict):
         """
@@ -173,7 +177,7 @@ class Task:
         task = await self.task_service.create(obj_in=obj_in)
         return task.id
 
-    async def update_task_record(self, pk: int, **kwargs):
+    async def update_task_record(self, pk: int, **kwargs) -> TaskSchema:
         """
         update task record
         :param pk:
@@ -182,7 +186,7 @@ class Task:
         """
         # 主要字段为 status 和 task_end_time
         obj_in = TaskUpdate(status=kwargs.pop('status'), task_end_time=kwargs.pop('task_end_time'))
-        await self.task_service.update_by_id(pk=pk, obj_in=obj_in)
+        return await self.task_service.update_by_id(pk=pk, obj_in=obj_in)
 
     def create_server_task_record(self, task_name: str) -> int:
         """
@@ -196,7 +200,7 @@ class Task:
         task_id = task.get('id')
         return task_id
 
-    def update_server_task_record(self, pk: int, status: int):
+    def update_server_task_record(self, pk: int, status: int) -> dict:
         """
         update server task record
         :param pk:
@@ -204,26 +208,26 @@ class Task:
         :return:
         """
         task = {'status': status}
-        self.request_session.request('PATCH', self.task_update_url % pk, json=task)
+        return self.request_session.request('PATCH', self.task_update_url % pk, json=task)
 
-    async def update_task_count(self, executor_detail: ExecutorDetailSchema, symbol: bool):
+    async def update_task_count(self, executor: ExecutorSchema, symbol: bool):
         """
         update task count
-        :param executor_detail:
+        :param executor:
         :param symbol:
         :return:
         """
-        pk = executor_detail.id
+        pk = executor.id
         if symbol:
-            task_count = executor_detail.task_count + 1
+            task_count = executor.task_count + 1
         else:
-            task_count = executor_detail.task_count - 1
+            task_count = executor.task_count - 1
 
-        return self.executor_detail_service.update_by_id(pk=pk, obj_in=dict(task_count=task_count))
+        return await self.executor_server.update_by_id(pk=pk, obj_in=dict(task_count=task_count))
 
     @staticmethod
-    async def choose_executor(active_executors: list[ExecutorAndDetailSchema],
-                              selector: str) -> ExecutorAndDetailSchema:
+    async def choose_executor(active_executors: list[ExecutorSchema],
+                              selector: str) -> ExecutorSchema:
         """
         choose executor
         :param active_executors:

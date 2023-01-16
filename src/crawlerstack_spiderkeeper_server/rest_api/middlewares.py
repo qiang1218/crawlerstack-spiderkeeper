@@ -2,10 +2,9 @@
 Api middleware.
 """
 from fastapi import FastAPI
+from fastapi_sa.middleware import DBSessionMiddleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette_exporter import PrometheusMiddleware
-
-from fastapi_sa.middleware import DBSessionMiddleware
 
 from crawlerstack_spiderkeeper_server.config import settings
 

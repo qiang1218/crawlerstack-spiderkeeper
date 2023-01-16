@@ -1,11 +1,14 @@
 """project"""
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from crawlerstack_spiderkeeper_server.repository.base import BaseRepository
 
-from crawlerstack_spiderkeeper_server.models import Project, Artifact
-from crawlerstack_spiderkeeper_server.schemas.project import (ProjectCreate, ProjectUpdate, ProjectSchema)
-from crawlerstack_spiderkeeper_server.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper_server.models import Artifact, Project
+from crawlerstack_spiderkeeper_server.repository.base import BaseRepository
+from crawlerstack_spiderkeeper_server.schemas.project import (ProjectCreate,
+                                                              ProjectSchema,
+                                                              ProjectUpdate)
+from crawlerstack_spiderkeeper_server.utils.exceptions import \
+    ObjectDoesNotExist
 
 
 class ProjectRepository(BaseRepository[Project, ProjectCreate, ProjectUpdate, ProjectSchema]):

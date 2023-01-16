@@ -5,11 +5,13 @@ from asyncio import Task
 from typing import Optional
 
 from fastapi import FastAPI
+from fastapi_sa.database import db
 from uvicorn import Config, Server
 
-from fastapi_sa.database import db
-from crawlerstack_spiderkeeper_scheduler.rest_api.handler import init_exception_handler
-from crawlerstack_spiderkeeper_scheduler.rest_api.middlewares import init_middleware
+from crawlerstack_spiderkeeper_scheduler.rest_api.handler import \
+    init_exception_handler
+from crawlerstack_spiderkeeper_scheduler.rest_api.middlewares import \
+    init_middleware
 from crawlerstack_spiderkeeper_scheduler.rest_api.routers import init_router
 
 

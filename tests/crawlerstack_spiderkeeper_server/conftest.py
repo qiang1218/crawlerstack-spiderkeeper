@@ -5,15 +5,15 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from fastapi_sa.database import db
 from sqlalchemy.ext.asyncio import create_async_engine
 from starlette.testclient import TestClient
 
-from fastapi_sa.database import db
-from crawlerstack_spiderkeeper_server.manage import SpiderKeeperServer
-from crawlerstack_spiderkeeper_server.models import BaseModel
 from crawlerstack_spiderkeeper_server.config import settings as server_settings
-
-from crawlerstack_spiderkeeper_server.models import Project, Artifact, StorageServer, Job, Task, TaskDetail
+from crawlerstack_spiderkeeper_server.manage import SpiderKeeperServer
+from crawlerstack_spiderkeeper_server.models import (Artifact, BaseModel, Job,
+                                                     Project, StorageServer,
+                                                     Task, TaskDetail)
 
 logger = logging.getLogger(__name__)
 

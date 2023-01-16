@@ -1,7 +1,8 @@
 """
 Job schema
 """
-from pydantic import (BaseModel, constr, validator)  # pylint: disable=no-name-in-module
+from pydantic import (BaseModel, constr,  # pylint: disable=no-name-in-module
+                      validator)
 
 from crawlerstack_spiderkeeper_server.schemas.base import InDBMixin
 from crawlerstack_spiderkeeper_server.utils import transform_cron_expression

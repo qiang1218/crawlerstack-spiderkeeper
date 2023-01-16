@@ -7,8 +7,10 @@ import signal as system_signal
 
 from crawlerstack_spiderkeeper_forwarder.forwarder.utils import Kombu
 from crawlerstack_spiderkeeper_forwarder.rest_api import RestAPI
-from crawlerstack_spiderkeeper_forwarder.signals import server_start, server_stop
-from crawlerstack_spiderkeeper_forwarder.utils.exceptions import SpiderkeeperError
+from crawlerstack_spiderkeeper_forwarder.signals import (server_start,
+                                                         server_stop)
+from crawlerstack_spiderkeeper_forwarder.utils.exceptions import \
+    SpiderkeeperError
 from crawlerstack_spiderkeeper_forwarder.utils.log import configure_logging
 
 HANDLED_SIGNALS = (

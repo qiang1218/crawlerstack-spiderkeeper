@@ -2,7 +2,7 @@
 from datetime import datetime
 
 import inflection
-from sqlalchemy import (Column, DateTime, ForeignKey, Integer, String)
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 
@@ -37,30 +37,13 @@ class Executor(BaseModel):
     status = Column(Integer, default=Status.ONLINE.value, comment='在线或离线')
     memory = Column(Integer, nullable=False, comment='内存G')
     cpu = Column(Integer, nullable=False, comment='cpu占用%')
+    task_count = Column(Integer, nullable=False, comment='任务个数')
 
-    # Cascade delete artifacts when delete project.
-    executor_detail = relationship(
-        'ExecutorDetail',
-        backref='executor_detail',
-        passive_deletes=True  # 在删除父记录的时候检查子记录的约束。如果 ON DELETE 为 RESTRICT 则抛出异常。对于非数据库
-    )
     task = relationship(
         'Task',
         backref='task',
         passive_deletes=True
     )
-
-
-class ExecutorDetail(BaseModel):
-    """
-    Artifact model.
-    """
-    task_count = Column(Integer, nullable=False, comment='任务个数')
-    executor_id = Column(
-        Integer,
-        ForeignKey('executor.id', ondelete='CASCADE'),
-        nullable=False
-    )  # 级联删除
 
 
 class Task(BaseModel):

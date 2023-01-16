@@ -1,7 +1,7 @@
 """
 Log schema
 """
-from pydantic import (BaseModel, constr)  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, constr  # pylint: disable=no-name-in-module
 
 
 class LogSchema(BaseModel):

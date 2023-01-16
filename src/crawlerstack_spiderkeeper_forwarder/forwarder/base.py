@@ -1,7 +1,7 @@
 """base"""
 import asyncio
 import logging
-from typing import Optional, Any
+from typing import Any, Optional
 
 from crawlerstack_spiderkeeper_forwarder.forwarder.utils import Kombu
 

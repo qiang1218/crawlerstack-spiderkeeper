@@ -2,13 +2,16 @@
 import inspect
 
 import pytest
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.exc import InvalidRequestError
 
 from crawlerstack_spiderkeeper_scheduler.models import Executor
-from crawlerstack_spiderkeeper_scheduler.repository.executor import ExecutorRepository
-from crawlerstack_spiderkeeper_scheduler.schemas.executor import ExecutorCreate, ExecutorUpdate
-from crawlerstack_spiderkeeper_scheduler.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper_scheduler.repository.executor import \
+    ExecutorRepository
+from crawlerstack_spiderkeeper_scheduler.schemas.executor import (
+    ExecutorCreate, ExecutorUpdate)
+from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
+    ObjectDoesNotExist
 
 
 @pytest.fixture()

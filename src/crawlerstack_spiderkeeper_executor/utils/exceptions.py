@@ -105,3 +105,15 @@ class ContainerRmError(SpiderkeeperError):
             detail: Optional[str] = 'Container rm failed.'
     ):
         super().__init__(detail)
+
+
+class ContainerStopError(SpiderkeeperError):
+    """
+    ContainerStopError
+    """
+
+    def __init__(
+            self,
+            detail: Optional[str] = 'Container stop failed.'
+    ):
+        super().__init__(detail)

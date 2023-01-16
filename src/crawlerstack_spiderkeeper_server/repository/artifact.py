@@ -2,11 +2,14 @@
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from crawlerstack_spiderkeeper_server.repository.base import BaseRepository
 
 from crawlerstack_spiderkeeper_server.models import Artifact, Job
-from crawlerstack_spiderkeeper_server.schemas.artifact import (ArtifactCreate, ArtifactUpdate, ArtifactSchema)
-from crawlerstack_spiderkeeper_server.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper_server.repository.base import BaseRepository
+from crawlerstack_spiderkeeper_server.schemas.artifact import (ArtifactCreate,
+                                                               ArtifactSchema,
+                                                               ArtifactUpdate)
+from crawlerstack_spiderkeeper_server.utils.exceptions import \
+    ObjectDoesNotExist
 
 
 class ArtifactRepository(BaseRepository[Artifact, ArtifactCreate, ArtifactUpdate, ArtifactSchema]):

@@ -3,7 +3,8 @@ import logging
 from typing import Dict
 
 from kombu import Message
-from crawlerstack_spiderkeeper_server.collectior.base import BaseTask
+
+from crawlerstack_spiderkeeper_server.collector.base import BaseTask
 from crawlerstack_spiderkeeper_server.services.metric import MetricService
 
 logger = logging.getLogger(__name__)

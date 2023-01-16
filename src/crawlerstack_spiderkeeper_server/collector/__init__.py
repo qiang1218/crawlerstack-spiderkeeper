@@ -1,8 +1,9 @@
 """collector"""
-from crawlerstack_spiderkeeper_server.collectior.metric import MetricBackgroundTask
-from crawlerstack_spiderkeeper_server.collectior.log import LogBackgroundTask
-from crawlerstack_spiderkeeper_server.collectior.data import DataBackgroundTask
-from crawlerstack_spiderkeeper_server.collectior.utils import Kombu
+from crawlerstack_spiderkeeper_server.collector.data import DataBackgroundTask
+from crawlerstack_spiderkeeper_server.collector.log import LogBackgroundTask
+from crawlerstack_spiderkeeper_server.collector.metric import \
+    MetricBackgroundTask
+from crawlerstack_spiderkeeper_server.collector.utils import Kombu
 from crawlerstack_spiderkeeper_server.signals import server_start, server_stop
 
 # 注册事件

@@ -7,10 +7,10 @@ from typing import Any
 
 from aiodocker import Docker
 
-from crawlerstack_spiderkeeper_executor.config import settings
 from crawlerstack_spiderkeeper_executor.executor.base import BaseExecutor
-
-from crawlerstack_spiderkeeper_executor.schemas.base import TaskSchema, SpiderSchema, ExecutorSchema
+from crawlerstack_spiderkeeper_executor.schemas.base import (ExecutorSchema,
+                                                             SpiderSchema,
+                                                             TaskSchema)
 
 logger = logging.getLogger(__name__)
 
@@ -18,10 +18,9 @@ logger = logging.getLogger(__name__)
 class DockerExecutor(BaseExecutor):
     NAME = 'docker'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.client = Docker(url=settings.EXECUTOR_REMOTE_URL)
-        self.logger = logger
+    def __init__(self, settings):
+        super(DockerExecutor, self).__init__(settings)
+        self.client = Docker(url=self.settings.EXECUTOR_REMOTE_URL)
 
     async def run(self, obj_in: TaskSchema) -> str:
         """
@@ -38,7 +37,8 @@ class DockerExecutor(BaseExecutor):
 
         # 3 执行运行命令，包含镜像的 pull, create, start
         container = await self.client.containers.run(config=config, name=container_name)
-        return container.id
+        # 默认取12位值
+        return container.id[:12]
 
     def _merge_executor_params(self, executor_params: ExecutorSchema, spider_params: SpiderSchema) -> dict[str, Any]:
         """
@@ -49,9 +49,9 @@ class DockerExecutor(BaseExecutor):
         """
         image_name = executor_params.image
         cmd = executor_params.cmdline
-        environment = executor_params.environment
+        environment = executor_params.environment if executor_params.environment else []
         # 爬虫新加参数与页面传递的环境变量参数一起合并
-        environment.append(self._convert_env(spider_params.dict()))
+        environment.extend(self._convert_env(spider_params.dict()))
 
         config = {'Image': image_name,
                   'Cmd': self.format_command(cmd),
@@ -61,14 +61,14 @@ class DockerExecutor(BaseExecutor):
                   'AttachStderr': False,
                   'Tty': False,
                   'OpenStdin': False,
+                  "Detach": True,
+                  'NetworkDisabled': True,
                   'HostConfig': {
-                      'NetworkMode': settings.DOCKER_NETWORK,
+                      'NetworkMode': self.settings.DOCKER_NETWORK,
                       'Init': True,
                       'Binds': executor_params.volume,
-                      'AutoRemove': True
-                  },
-                  'NetworkingConfig': {settings.DOCKER_NETWORK: None},
-                  }
+                      'AutoRemove': False
+                  }}
         return config
 
     @staticmethod
@@ -89,9 +89,9 @@ class DockerExecutor(BaseExecutor):
         :param container_id:
         :return:
         """
-        self.logger.debug('Start stop a container: %s', container_id)
+        logger.debug('Start stop a container: %s', container_id)
         await self.client.containers.container(container_id=container_id).stop()
-        self.logger.debug('Stop a container: %s success.', container_id)
+        logger.debug('Stop a container: %s success.', container_id)
 
     async def delete(self, container_id: str):
         """
@@ -99,9 +99,9 @@ class DockerExecutor(BaseExecutor):
         :param container_id:
         :return:
         """
-        self.logger.debug('Start delete a container: %s', container_id)
+        logger.debug('Start delete a container: %s', container_id)
         await self.client.containers.container(container_id=container_id).delete()
-        self.logger.debug('Delete a container: %s success.', container_id)
+        logger.debug('Delete a container: %s success.', container_id)
 
     async def status(self, container_id: str):
         """
@@ -113,8 +113,8 @@ class DockerExecutor(BaseExecutor):
         :return:
         """
         data = await self.client.containers.container(container_id=container_id).show()
-        self.logger.debug('Inspect docker container: %s, response: %s', container_id, data)
-        return data['Status']
+        logger.debug('Inspect docker container: %s, response: %s', container_id, data)
+        return data.get('State', {}).get('Status')
 
     async def log(self, container_id: str, follow=False):
         """
@@ -140,3 +140,7 @@ class DockerExecutor(BaseExecutor):
         if isinstance(command, str) and command.strip().find("[") == 0:
             return ast.literal_eval(command)
         return command
+
+    async def close(self):
+        """close"""
+        await self.client.close()

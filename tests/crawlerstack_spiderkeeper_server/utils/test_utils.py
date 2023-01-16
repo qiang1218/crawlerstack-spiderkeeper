@@ -2,8 +2,8 @@ import time
 
 import pytest
 
-from crawlerstack_spiderkeeper_server.utils import File
 import crawlerstack_spiderkeeper_server
+from crawlerstack_spiderkeeper_server.utils import File
 
 
 @pytest.fixture()

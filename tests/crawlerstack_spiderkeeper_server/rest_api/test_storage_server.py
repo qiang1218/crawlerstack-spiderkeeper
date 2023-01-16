@@ -1,9 +1,10 @@
 """Test storage server"""
 
-from sqlalchemy import select, func
-from tests.crawlerstack_spiderkeeper_server.rest_api.conftest import assert_status_code
+from sqlalchemy import func, select
 
 from crawlerstack_spiderkeeper_server.models import StorageServer
+from tests.crawlerstack_spiderkeeper_server.rest_api.conftest import \
+    assert_status_code
 
 
 def test_get_multi(client, init_storage_server, api_url):

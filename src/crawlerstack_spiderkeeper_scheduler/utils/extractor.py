@@ -2,6 +2,7 @@
 from typing import Optional
 
 from fastapi import Query
+
 from crawlerstack_spiderkeeper_scheduler.config import settings
 
 

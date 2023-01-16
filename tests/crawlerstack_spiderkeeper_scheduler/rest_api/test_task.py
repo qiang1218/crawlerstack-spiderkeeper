@@ -1,10 +1,10 @@
 """Test task"""
-from sqlalchemy import select, func
-
-from tests.crawlerstack_spiderkeeper_scheduler.rest_api.conftest import assert_status_code
+from sqlalchemy import func, select
 
 from crawlerstack_spiderkeeper_scheduler.models import Task
 from crawlerstack_spiderkeeper_scheduler.utils.status import Status
+from tests.crawlerstack_spiderkeeper_scheduler.rest_api.conftest import \
+    assert_status_code
 
 
 def test_get_multi(client, init_task, api_url):

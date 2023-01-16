@@ -1,7 +1,6 @@
 """Data"""
-from crawlerstack_spiderkeeper_forwarder.services.base import EntityService
-
 from crawlerstack_spiderkeeper_forwarder.forwarder.data import DataPublishTask
+from crawlerstack_spiderkeeper_forwarder.services.base import EntityService
 
 
 class DataService(EntityService):

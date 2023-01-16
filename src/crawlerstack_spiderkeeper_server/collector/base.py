@@ -1,12 +1,11 @@
 """base"""
 import asyncio
-import functools
 import logging
 from typing import Dict, Optional
 
 from kombu import Message
 
-from crawlerstack_spiderkeeper_server.collectior.utils import Kombu
+from crawlerstack_spiderkeeper_server.collector.utils import Kombu
 
 # 提供消息队列的基本操作，用来进行日志，指标，数据的收集，由各子服务实现对应功能
 logger = logging.getLogger(__name__)

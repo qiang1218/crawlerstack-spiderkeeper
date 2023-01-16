@@ -5,9 +5,8 @@ import logging
 
 from fastapi import APIRouter, Depends
 
-from crawlerstack_spiderkeeper_scheduler.services.job import JobService
 from crawlerstack_spiderkeeper_scheduler.messages.base import BaseMessage
-
+from crawlerstack_spiderkeeper_scheduler.services.job import JobService
 
 router = APIRouter()
 

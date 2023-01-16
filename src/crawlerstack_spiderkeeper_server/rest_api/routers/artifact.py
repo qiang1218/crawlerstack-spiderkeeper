@@ -5,14 +5,13 @@ import logging
 
 from fastapi import APIRouter, Depends
 
+from crawlerstack_spiderkeeper_server.messages.artifact import (
+    ArtifactMessage, ArtifactMessages)
+from crawlerstack_spiderkeeper_server.messages.base import BaseMessage
 from crawlerstack_spiderkeeper_server.messages.project import ProjectMessage
 from crawlerstack_spiderkeeper_server.schemas.artifact import (ArtifactCreate,
                                                                ArtifactUpdate)
 from crawlerstack_spiderkeeper_server.services.artifact import ArtifactService
-
-from crawlerstack_spiderkeeper_server.messages.base import BaseMessage
-from crawlerstack_spiderkeeper_server.messages.artifact import ArtifactMessage, ArtifactMessages
-
 from crawlerstack_spiderkeeper_server.utils.extractor import query_extractor
 
 router = APIRouter()

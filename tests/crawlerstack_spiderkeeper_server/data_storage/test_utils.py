@@ -1,7 +1,8 @@
 """test utils"""
 import pytest
 
-from crawlerstack_spiderkeeper_server.data_storage.utils import transform_mysql_db_str
+from crawlerstack_spiderkeeper_server.data_storage.utils import \
+    transform_mysql_db_str
 
 key_list = ['user', 'password', 'host', 'port', 'database', 'charset']
 

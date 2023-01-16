@@ -3,7 +3,8 @@
 import pytest
 
 from crawlerstack_spiderkeeper_server.data_storage import MysqlStorage
-from crawlerstack_spiderkeeper_server.services import DataService, TaskDetailService
+from crawlerstack_spiderkeeper_server.services import (DataService,
+                                                       TaskDetailService)
 
 
 @pytest.fixture()

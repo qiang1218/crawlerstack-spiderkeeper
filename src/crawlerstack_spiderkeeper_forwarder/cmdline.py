@@ -6,9 +6,9 @@ import asyncio
 
 import click
 
-from crawlerstack_spiderkeeper_forwarder.manage import SpiderKeeperForwarder
 from crawlerstack_spiderkeeper_forwarder import __version__
 from crawlerstack_spiderkeeper_forwarder.config import settings
+from crawlerstack_spiderkeeper_forwarder.manage import SpiderKeeperForwarder
 
 
 @click.group(invoke_without_command=True)

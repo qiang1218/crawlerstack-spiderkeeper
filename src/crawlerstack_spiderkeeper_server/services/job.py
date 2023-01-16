@@ -1,20 +1,27 @@
 """Job"""
-from typing import Union, Dict, Any
+from typing import Any, Dict, Union
 
-from crawlerstack_spiderkeeper_server.repository.artifact import ArtifactRepository
-from crawlerstack_spiderkeeper_server.repository.storage_server import StorageServerRepository
-from crawlerstack_spiderkeeper_server.schemas.artifact import ArtifactSchema
-from crawlerstack_spiderkeeper_server.schemas.storage_server import StorageServerSchema
-from crawlerstack_spiderkeeper_server.services.base import EntityService
-from crawlerstack_spiderkeeper_server.models import Job
-from crawlerstack_spiderkeeper_server.schemas.job import (JobCreate, JobUpdate, JobSchema)
-from crawlerstack_spiderkeeper_server.repository.job import JobRepository
-from crawlerstack_spiderkeeper_server.utils.exceptions import JobStoppedError, JobRunError, JobPauseError, \
-    JobUnpauseError
-from crawlerstack_spiderkeeper_server.utils.types import CreateSchemaType, ModelSchemaType, UpdateSchemaType
-
-from crawlerstack_spiderkeeper_server.utils.request import RequestWithSession
 from crawlerstack_spiderkeeper_server.config import settings
+from crawlerstack_spiderkeeper_server.models import Job
+from crawlerstack_spiderkeeper_server.repository.artifact import \
+    ArtifactRepository
+from crawlerstack_spiderkeeper_server.repository.job import JobRepository
+from crawlerstack_spiderkeeper_server.repository.storage_server import \
+    StorageServerRepository
+from crawlerstack_spiderkeeper_server.schemas.artifact import ArtifactSchema
+from crawlerstack_spiderkeeper_server.schemas.job import (JobCreate, JobSchema,
+                                                          JobUpdate)
+from crawlerstack_spiderkeeper_server.schemas.storage_server import \
+    StorageServerSchema
+from crawlerstack_spiderkeeper_server.services.base import EntityService
+from crawlerstack_spiderkeeper_server.utils.exceptions import (JobPauseError,
+                                                               JobRunError,
+                                                               JobStoppedError,
+                                                               JobUnpauseError)
+from crawlerstack_spiderkeeper_server.utils.request import RequestWithSession
+from crawlerstack_spiderkeeper_server.utils.types import (CreateSchemaType,
+                                                          ModelSchemaType,
+                                                          UpdateSchemaType)
 
 
 class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):

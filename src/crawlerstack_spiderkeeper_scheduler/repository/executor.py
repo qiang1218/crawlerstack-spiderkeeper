@@ -1,15 +1,14 @@
 """Executor"""
-from typing import List
+
 
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-
-from crawlerstack_spiderkeeper_scheduler.repository.base import BaseRepository
 
 from crawlerstack_spiderkeeper_scheduler.models import Executor
-from crawlerstack_spiderkeeper_scheduler.schemas.executor import (ExecutorCreate, ExecutorUpdate, ExecutorSchema,
-                                                                  ExecutorAndDetailSchema)
-from crawlerstack_spiderkeeper_scheduler.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper_scheduler.repository.base import BaseRepository
+from crawlerstack_spiderkeeper_scheduler.schemas.executor import (
+    ExecutorCreate, ExecutorSchema, ExecutorUpdate)
+from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
+    ObjectDoesNotExist
 
 
 class ExecutorRepository(BaseRepository[Executor, ExecutorCreate, ExecutorUpdate, ExecutorSchema]):
@@ -30,18 +29,4 @@ class ExecutorRepository(BaseRepository[Executor, ExecutorCreate, ExecutorUpdate
             return self.model_schema.from_orm(obj)
         raise ObjectDoesNotExist()
 
-    async def get_by_type_join_detail(self, executor_type: str, status: int) -> List[ExecutorAndDetailSchema]:
-        """
-        get by executor type join detail
-        :param executor_type:
-        :param status:
-        :return:
-        """
-        stmt = select(self.model).filter(self.model.type == executor_type, self.model.status == status).options(
-            selectinload(self.model.executor_detail))
-        objs = await self.session.scalars(stmt)
-        results = objs.all()
-        if not results:
-            raise ObjectDoesNotExist()
-        return [ExecutorAndDetailSchema.from_orm(obj) for obj in results]
 

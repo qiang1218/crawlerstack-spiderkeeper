@@ -3,7 +3,7 @@ from typing import Dict
 
 from kombu import Message
 
-from crawlerstack_spiderkeeper_server.collectior.base import BaseTask
+from crawlerstack_spiderkeeper_server.collector.base import BaseTask
 from crawlerstack_spiderkeeper_server.services.data import DataService
 
 
