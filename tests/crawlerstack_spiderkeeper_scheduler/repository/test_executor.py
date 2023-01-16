@@ -1,14 +1,12 @@
 """test executor"""
 import pytest
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
 from crawlerstack_spiderkeeper_scheduler.models import Executor
 from crawlerstack_spiderkeeper_scheduler.repository.executor import \
     ExecutorRepository
 from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
     ObjectDoesNotExist
-from crawlerstack_spiderkeeper_scheduler.utils.status import Status
 
 
 @pytest.fixture()

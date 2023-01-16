@@ -68,7 +68,7 @@ async def test_check_by_id(executor_service, mocker, container_id, expect_value)
         ('test_1',),
     ]
 )
-async def test_check_by_id(executor_service, mocker, container_id):
+async def test_rm_by_id(executor_service, mocker, container_id):
     """test check by id"""
     delete = mocker.patch.object(DockerExecutor, 'delete')
     await executor_service.rm_by_id(container_id)

@@ -25,7 +25,11 @@ def service():
 )
 async def test_create(init_executor, session, service, executor_id, exist):
     """test create"""
-    obj_in = TaskCreate(name="1_scheduler_", url="http://localhost:2375", type="docker", executor_id=executor_id, status=1,
+    obj_in = TaskCreate(name="1_scheduler_",
+                        url="http://localhost:2375",
+                        type="docker",
+                        executor_id=executor_id,
+                        status=1,
                         container_id='d343j4er')
     if exist:
         await service.create(obj_in=obj_in)

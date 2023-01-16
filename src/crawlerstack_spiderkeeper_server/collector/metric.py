@@ -23,4 +23,3 @@ class MetricBackgroundTask(BaseTask):
         """
         await MetricService().create(body)
         message.ack()
-

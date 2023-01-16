@@ -1,8 +1,9 @@
 """k8s"""
-from crawlerstack_spiderkeeper_executor.executor import BaseExecutor
+from crawlerstack_spiderkeeper_executor.executor.base import BaseExecutor
 
 
 class K8SExecutor(BaseExecutor):
+    """K8S executor"""
     NAME = 'k8s'
 
     async def stop(self, *args, **kwargs):

@@ -24,6 +24,7 @@ class ArtifactService(EntityService[Artifact, ArtifactCreate, ArtifactUpdate, Ar
 
     @property
     def project_repository(self):
+        """Project repository"""
         return ProjectRepository()
 
     async def create(
@@ -58,7 +59,7 @@ class ArtifactService(EntityService[Artifact, ArtifactCreate, ArtifactUpdate, Ar
 
     async def get_project_from_artifact_id(self, pk: int) -> ProjectSchema:
         """
-        get a project from artifact id
+        Get a project from artifact id
         :param pk:
         :return:
         """

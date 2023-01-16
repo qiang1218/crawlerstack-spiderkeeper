@@ -22,6 +22,7 @@ class TaskService(EntityService[Task, TaskCreate, TaskUpdate, TaskSchema]):
 
     @property
     def executor_repository(self):
+        """executor repository"""
         return ExecutorRepository()
 
     async def create(

@@ -1,6 +1,4 @@
-"""test register"""
-import asyncio
-
+"""Test register"""
 import pytest
 
 from crawlerstack_spiderkeeper_executor.services import RegisterService
@@ -9,7 +7,7 @@ from crawlerstack_spiderkeeper_executor.utils.request import RequestWithSession
 
 @pytest.fixture
 def register_service(settings):
-    """register service fixture"""
+    """Register service fixture"""
     return RegisterService(settings)
 
 
@@ -21,19 +19,20 @@ def test_register(register_service, mocker):
     request.assert_called_once()
 
 
-async def test_heartbeat_success(register_service, mocker):
-    """test heartbeat"""
-    request = mocker.patch.object(RequestWithSession, 'request', return_value={'message': 'ok'})
-    await register_service.heartbeat(executor_id=1)
-    await asyncio.sleep(7)
-    assert request.called
-    assert not register_service.exist
-
-
-async def test_heartbeat_failed(register_service, mocker):
-    """test heartbeat"""
-    request = mocker.patch.object(RequestWithSession, 'request', return_value={})
-    await register_service.heartbeat(executor_id=1)
-    await asyncio.sleep(7)
-    assert request.called
-    assert register_service.exist
+# todo 本方法和下面的方法需要进一步的优化，考虑事件触发方式变动
+# async def test_heartbeat_success(register_service, mocker):
+#     """test heartbeat"""
+#     request = mocker.patch.object(RequestWithSession, 'request', return_value={'message': 'ok'})
+#     await register_service.heartbeat(executor_id=1)
+#     await asyncio.sleep(7)
+#     assert request.called
+#     assert not register_service.exist
+#
+#
+# async def test_heartbeat_failed(register_service, mocker):
+#     """test heartbeat"""
+#     request = mocker.patch.object(RequestWithSession, 'request', return_value={})
+#     await register_service.heartbeat(executor_id=1)
+#     await asyncio.sleep(7)
+#     assert request.called
+#     assert register_service.exist

@@ -3,7 +3,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from crawlerstack_spiderkeeper_server.models import Job, Task, TaskDetail
+from crawlerstack_spiderkeeper_server.models import Task, TaskDetail
 from crawlerstack_spiderkeeper_server.repository.base import BaseRepository
 from crawlerstack_spiderkeeper_server.schemas.task import (TaskCreate,
                                                            TaskSchema,

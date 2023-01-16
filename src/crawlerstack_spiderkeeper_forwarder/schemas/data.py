@@ -12,4 +12,3 @@ class DataSchema(BaseModel):
     fields: list
     title: constr(max_length=200)
     data: list[tuple[Any]]
-

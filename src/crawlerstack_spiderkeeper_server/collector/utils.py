@@ -53,14 +53,14 @@ class Kombu(metaclass=SingletonMeta):
                     'Server not started. You should start server or '
                     'call `Kombu.server_start` first.'
                 )
-        logger.info(f'Server status {self._server_running}')
+        logger.info('Server status %s', self._server_running)
         return self._server_running
 
     @property
     def connect(self) -> Connection:
         """延迟加载单例连接"""
         if self.__connect is None:
-            logger.debug(f'Kube connect to {settings.MQ}')
+            logger.debug('Kube connect to %s', settings.MQ)
             self.__connect = Connection(settings.MQ)
         return self.__connect
 

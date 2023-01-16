@@ -17,6 +17,7 @@ class BaseRequest(metaclass=SingletonMeta):
     MAX_RETRY = 3
 
     def request(self, *args, **kwargs):
+        """request"""
         raise NotImplementedError
 
 
@@ -25,7 +26,7 @@ class RequestWithSession(BaseRequest):  # noqa
     NAME = 'session'
 
     def __init__(self, *args, **kwargs):
-        super(RequestWithSession, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.session = Session()
         self.session.headers.update({
             'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
@@ -37,14 +38,14 @@ class RequestWithSession(BaseRequest):  # noqa
 
     def request(self, method, url, **kwargs) -> dict:
         """
-        request
+        Request with request.Session
         :param method:
         :param url:
         :param kwargs:
         :return:
         """
         try:
-            for i in range(self.MAX_RETRY):
+            for _ in range(self.MAX_RETRY):
                 time.sleep(self.DELAY)
                 response = self.session.request(method, url, **kwargs)
                 status_code = response.status_code

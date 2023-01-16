@@ -15,6 +15,7 @@ class StorageFactory:
     storage_mapping = {i.name: i for i in storage_classes}
 
     def get_storage(self, storage_class: str, name: str, url: str) -> Storage:
+        """get storage"""
         storage_kls = self.storage_mapping.get(storage_class)
         return storage_kls().start(name=name, url=url)
 

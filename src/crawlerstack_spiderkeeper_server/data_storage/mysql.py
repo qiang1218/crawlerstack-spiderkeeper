@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class MysqlStorage(Storage):
+    """mysql storage"""
     name: str = 'mysql'
     _connectors = {}
     default_connector: Connector = None
@@ -49,7 +50,6 @@ class MysqlStorage(Storage):
         if not conn.ping():
             # 重新链接
             logger.debug("Reconnecting with name %s", self.default_connector.name)
-            pass
 
         # 数据存储
         cursor = conn.cursor()
@@ -90,7 +90,7 @@ class MysqlStorage(Storage):
 
     async def _expiring(self):
         while True:
-            logger.debug(f'Server status {self.server_running}')
+            logger.debug('Server status %s', self.server_running)
             if not self.server_running:
                 break
             # 遍历获取_connector中过期的对象,进行删除对象操作
@@ -103,11 +103,11 @@ class MysqlStorage(Storage):
                 for name in should_remove_names:
                     self.clear(name)
             await asyncio.sleep(self.expire_interval)
-        logger.debug(f'Stopped {self.__class__.name} expired background task.')
+        logger.debug('Stopped %s expired background task.', self.__class__.name)
 
-    async def stop(self, **kwargs) -> Any:
+    def stop(self, **kwargs) -> Any:
         """stop"""
-        for key, value in self._connectors.items():
+        for _, value in self._connectors.items():
             value.conn.close()
 
     async def server_stop(self, **kwargs):

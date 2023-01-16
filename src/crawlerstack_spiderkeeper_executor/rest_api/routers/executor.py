@@ -50,7 +50,7 @@ async def check(
 
 
 @router.get('/_rm/{pk}', response_model=BaseMessage)
-async def rm(
+async def remove(
         *,
         pk: str,
         service: ExecutorService = Depends(),
@@ -61,4 +61,4 @@ async def rm(
     :param service:
     :return:
     """
-    await service.rm_by_id(container_id=pk)
+    return await service.rm_by_id(container_id=pk)

@@ -12,8 +12,6 @@ from crawlerstack_spiderkeeper_server.messages.job import (JobMessage,
 from crawlerstack_spiderkeeper_server.messages.storage_server import \
     StorageServerMessage
 from crawlerstack_spiderkeeper_server.schemas.job import JobCreate, JobUpdate
-from crawlerstack_spiderkeeper_server.schemas.storage_server import \
-    StorageServerSchema
 from crawlerstack_spiderkeeper_server.services.job import JobService
 from crawlerstack_spiderkeeper_server.utils.extractor import query_extractor
 

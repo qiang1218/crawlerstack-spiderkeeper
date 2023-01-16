@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture()
 def settings():
+    """settings fixture"""
     server_settings.EXPIRE_INTERVAL = 0.5
     return server_settings
 
@@ -127,6 +128,7 @@ async def migrate(db_url):
 
 @pytest.fixture(autouse=True)
 async def spiderkeeper_server(migrate, db_url, settings):
+    """spider keeper server fixture"""
     settings.DATABASE = db_url
     logger.debug('Starting spiderkeeper!!!')
     _spiderkeeper_server = SpiderKeeperServer(settings)

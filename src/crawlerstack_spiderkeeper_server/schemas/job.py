@@ -31,7 +31,7 @@ class JobBase(BaseModel):
             trans_value = transform_cron_expression(value)
             values = trans_value.split()
             if len(values) != 5:
-                raise ValueError('Wrong number of fields; got {}, expected 5'.format(len(values)))
+                raise ValueError(f'Wrong number of fields; got {len(values)}, expected 5')
             return trans_value
         raise ValueError('url must be URL object or URL string')
 

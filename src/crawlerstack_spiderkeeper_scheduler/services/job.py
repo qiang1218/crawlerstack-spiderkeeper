@@ -20,30 +20,37 @@ class JobService:
 
     @property
     def job_url(self):
+        """job url"""
         return settings.SERVER_BASE_URL + settings.SERVER_JOB_SUFFIX
 
     @property
     def artifact_url(self):
+        """artifact url"""
         return settings.SERVER_BASE_URL + settings.SERVER_ARTIFACT_SUFFIX
 
     @property
     def data_url(self):
+        """data url"""
         return settings.COLLECTOR_BASE_URL + settings.COLLECTOR_DATA_SUFFIX
 
     @property
     def log_url(self):
+        """log url"""
         return settings.COLLECTOR_BASE_URL + settings.COLLECTOR_LOG_SUFFIX
 
     @property
     def metric_url(self):
+        """metric url"""
         return settings.COLLECTOR_BASE_URL + settings.COLLECTOR_METRIC_SUFFIX
 
     @property
     def scheduler(self):
+        """scheduler"""
         return SchedulerServer(settings)
 
     @property
     def request_session(self):
+        """request session"""
         return RequestWithSession()
 
     def start_by_id(self, job_id: str) -> None:

@@ -22,6 +22,7 @@ class TaskService(EntityService[Task, TaskCreate, TaskUpdate, TaskSchema]):
 
     @property
     def job_repository(self):
+        """Job repository"""
         return JobRepository()
 
     async def create(
@@ -55,7 +56,7 @@ class TaskService(EntityService[Task, TaskCreate, TaskUpdate, TaskSchema]):
 
     async def get_job_from_task_id(self, pk: int) -> JobSchema:
         """
-        get a job from task id
+        Get a job from task id
         :param pk:
         :return:
         """

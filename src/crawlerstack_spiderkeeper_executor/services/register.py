@@ -38,14 +38,17 @@ class RegisterService(metaclass=SingletonMeta):
 
     @property
     def server_running(self) -> bool:
+        """server running"""
         return self._server_running
 
     async def server_start(self, **_):
+        """server start"""
         if self._server_running is None:
             self._server_running = True
 
     @property
     def request_session(self):
+        """request session"""
         return RequestWithSession()
 
     def register(self) -> int:

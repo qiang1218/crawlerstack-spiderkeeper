@@ -1,6 +1,6 @@
 """tasks"""
-from crawlerstack_spiderkeeper_scheduler.signals import server_start, server_stop
-
+from crawlerstack_spiderkeeper_scheduler.signals import (server_start,
+                                                         server_stop)
 from crawlerstack_spiderkeeper_scheduler.tasks.executor import ExecutorTask
 
 server_start.connect(ExecutorTask().server_start)

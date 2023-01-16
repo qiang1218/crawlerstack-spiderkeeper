@@ -30,6 +30,7 @@ def settings():
 
 @pytest.fixture(autouse=True)
 async def spiderkeeper_executor(settings):
+    """spiderkeeper executor fixture"""
     logger.debug('Starting spiderkeeper!!!')
     _spiderkeeper_executor = SpiderKeeperExecutor(settings)
     await _spiderkeeper_executor.start()

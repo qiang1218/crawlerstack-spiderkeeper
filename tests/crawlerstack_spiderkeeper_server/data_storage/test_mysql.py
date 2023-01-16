@@ -8,6 +8,7 @@ from crawlerstack_spiderkeeper_server.data_storage.base import Connector
 
 
 class TestMysqlStorage:
+    """test mysql storage"""
 
     @pytest.fixture
     def storage(self):
@@ -28,7 +29,7 @@ class TestMysqlStorage:
         assert storage_obj.default_connector.name == expect_value
         create_db_conn.assert_called_once()
         storage_obj.default_connector = None
-        storage_obj._connectors = {}
+        storage_obj._connectors = {}  # pylint: disable=protected-access
 
     @pytest.mark.parametrize(
         'url, name, data, insert_sql, table_sql, drop_sql, select_sql, expect_value',

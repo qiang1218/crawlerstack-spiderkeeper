@@ -28,11 +28,13 @@ class ExecutorTask(metaclass=SingletonMeta):
 
     @property
     def server_running(self) -> bool:
+        """server running"""
         return self._server_running
 
     async def server_start(self, **_):
+        """server start"""
         if self._server_running is None:
-            logger.debug(f'Change {self.__class__.name}.server_running to "True"')
+            logger.debug('Change %s.server_running to "True"', self.__class__.name)
             self._server_running = True
 
     @property
@@ -73,7 +75,8 @@ class ExecutorTask(metaclass=SingletonMeta):
         self.task = asyncio.create_task(self.run())
 
     async def server_stop(self, **_):
-        logger.debug(f'Change {self.__class__.name}.server_running to "False"')
+        """server stop"""
+        logger.debug('Change %s.server_running to "False"', self.__class__.name)
         self._server_running = False
         if self.task and not self.task.done():
             self.task.cancel('server stop!')

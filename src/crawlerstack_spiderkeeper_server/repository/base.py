@@ -95,7 +95,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Mode
         return stmt.order_by(*order_by_fields)
 
     @staticmethod
-    def _search(stmt: Select, search_fields: dict[str, str]) -> Select:  # pylint: disable=no-self-use
+    def _search(stmt: Select, search_fields: dict[str, str]) -> Select:
         """
         构造搜索逻辑.
         :param stmt:
@@ -105,7 +105,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Mode
         return stmt.filter_by(**search_fields)
 
     @staticmethod
-    def _paginate_by_limit_offset(stmt: Select, limit: int, offset: int) -> Select:  # pylint: disable=no-self-use
+    def _paginate_by_limit_offset(stmt: Select, limit: int, offset: int) -> Select:
         """Page result by limit and offset"""
         return stmt.limit(limit).offset(offset)
 

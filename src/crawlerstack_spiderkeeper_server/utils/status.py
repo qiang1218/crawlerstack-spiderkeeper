@@ -1,4 +1,4 @@
-"""status"""
+"""Status"""
 from enum import IntEnum
 
 
@@ -21,5 +21,3 @@ class Status(IntEnum):
 
     STOPPED = -1
     FAILURE = -2
-
-

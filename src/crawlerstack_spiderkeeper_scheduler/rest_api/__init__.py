@@ -39,7 +39,7 @@ class RestAPI:
 
         self._app = FastAPI(
             title="SpiderKeeperScheduler",
-            version="2.0",
+            version="3.0",
         )
 
         uvicorn_config = Config(self.app, host=self.host, port=self.port)
@@ -48,9 +48,11 @@ class RestAPI:
 
     @property
     def app(self) -> FastAPI:
+        """app"""
         return self._app
 
     def init_db(self):
+        """init db"""
         db.init(url=self.db_url)
 
     def init(self):
@@ -72,11 +74,11 @@ class RestAPI:
         await self._uvicorn_server.startup()
 
     async def start(self) -> None:
-        """"""
+        """start"""
         await self._uvicorn_server_setup()
 
     async def stop(self) -> None:
-        """"""
+        """stop"""
         # 由于 _uvicorn_server 是在 startup 是初始化 servers 属性的，
         # 所以在测试时，如果不运行 self.start 逻辑， _uvicorn_server.shutdown
         # 会报错
@@ -84,4 +86,4 @@ class RestAPI:
             await self._uvicorn_server.shutdown()
 
     async def restart(self) -> None:
-        """"""
+        """restart"""

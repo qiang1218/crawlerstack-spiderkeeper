@@ -26,23 +26,21 @@ metrics = {name: Histogram(name, name, labels) for name in metric_name}
 
 
 class MetricService(ICRUD):
+    """Metric service"""
 
     async def get(self, task_name):
-        """get metric from prometheus with task_name"""
-        pass
+        """Get metric from prometheus with task_name"""
 
     async def create(self, data: dict) -> None:
-        """create metric by task name"""
+        """Create metric by task name"""
         task_name = data.get('task_name')
         self.set_metric(task_name=task_name, data=data.get('data'))
 
     async def update(self, *args, **kwargs) -> Any:
-        """update"""
-        pass
+        """Update"""
 
     async def delete(self, *args, **kwargs) -> Any:
-        """delete"""
-        pass
+        """Delete"""
 
     @staticmethod
     def set_metric(task_name: str, data: dict[str, Any]):

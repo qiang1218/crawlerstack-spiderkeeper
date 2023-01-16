@@ -6,6 +6,7 @@ from crawlerstack_spiderkeeper_scheduler.services.job import JobService
 
 
 class TestJobService:
+    """Test job service"""
 
     @pytest.fixture()
     def service(self):
@@ -14,6 +15,7 @@ class TestJobService:
 
     @pytest.fixture()
     def job_data(self):
+        """job data fixture"""
         return {
             "id": 0,
             "update_time": "2023-01-09T06:27:05.244Z",
@@ -34,6 +36,7 @@ class TestJobService:
 
     @pytest.fixture()
     def artifact_data(self):
+        """artifact data fixture"""
         return {
             "id": 0,
             "update_time": "2023-01-09T06:25:03.225Z",

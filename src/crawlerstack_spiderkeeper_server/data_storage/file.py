@@ -6,17 +6,18 @@ from crawlerstack_spiderkeeper_server.data_storage.base import Storage
 
 
 class FileStorage(Storage):
+    """file storage"""
     name: str = 'file'
 
-    async def save(self, *args, **kwargs) -> Any:
+    def save(self, *args, **kwargs) -> Any:
         """save"""
-        pass
+        raise NotImplementedError
 
-    async def start(self, *args, **kwargs) -> Any:
-        """conn"""
-        pass
+    def start(self, *args, **kwargs) -> Any:
+        """start"""
+        raise NotImplementedError
 
-    async def clear(self, *args, **kwargs) -> Any:
+    def clear(self, *args, **kwargs) -> Any:
         """close"""
         raise NotImplementedError
 

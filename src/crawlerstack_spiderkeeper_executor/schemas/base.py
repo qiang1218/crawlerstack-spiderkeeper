@@ -1,8 +1,6 @@
 """
 Base schema.
 """
-from typing import Any
-
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
 

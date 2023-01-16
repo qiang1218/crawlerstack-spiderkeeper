@@ -14,6 +14,7 @@ from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
 
 
 class TestEntityService:
+    """Test entity service"""
 
     @pytest.fixture()
     def service(self):

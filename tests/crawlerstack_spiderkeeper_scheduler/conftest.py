@@ -73,6 +73,7 @@ async def migrate(db_url):
 
 @pytest.fixture(autouse=True)
 async def spiderkeeper_server(migrate, settings, db_url, apscheduler_store_url):
+    """spiderkeeper server fixture"""
     settings.DATABASE = db_url
     settings.SCHEDULER_JOB_STORE_DEFAULT = apscheduler_store_url
     logger.debug('Starting spiderkeeper!!!')

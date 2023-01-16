@@ -8,8 +8,7 @@ from sqlalchemy.exc import InvalidRequestError
 from crawlerstack_spiderkeeper_server.models import Project
 from crawlerstack_spiderkeeper_server.repository.project import \
     ProjectRepository
-from crawlerstack_spiderkeeper_server.schemas.project import (ProjectCreate,
-                                                              ProjectUpdate)
+from crawlerstack_spiderkeeper_server.schemas.project import ProjectUpdate
 from crawlerstack_spiderkeeper_server.utils.exceptions import \
     ObjectDoesNotExist
 

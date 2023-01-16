@@ -32,37 +32,37 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
 
     @property
     def artifact_repository(self):
-        """artifact repository"""
+        """Artifact repository"""
         return ArtifactRepository()
 
     @property
     def storage_server_repository(self):
-        """storage server repository"""
+        """Storage server repository"""
         return StorageServerRepository()
 
     @property
     def request_session(self):
-        """request"""
+        """Request"""
         return RequestWithSession()
 
     @property
     def start_url(self):
-        """start url"""
+        """Start url"""
         return settings.SCHEDULER_URL + settings.SCHEDULER_START_SUFFIX
 
     @property
     def stop_url(self):
-        """stop url"""
+        """Stop url"""
         return settings.SCHEDULER_URL + settings.SCHEDULER_STOP_SUFFIX
 
     @property
     def pause_url(self):
-        """pause url"""
+        """Pause url"""
         return settings.SCHEDULER_URL + settings.SCHEDULER_PAUSE_SUFFIX
 
     @property
     def unpause_url(self):
-        """unpause url"""
+        """Unpause url"""
         return settings.SCHEDULER_URL + settings.SCHEDULER_UNPAUSE_SUFFIX
 
     async def create(
@@ -119,7 +119,7 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
             if resp.get('message') == 'ok':
                 # 4. 数据库状态修改
                 return await self.repository.update_by_id(pk=pk, obj_in=dict(enabled=True, pause=False))
-            return {'message': 'Job start Scheduler failed, job id: %s, exception info: %s' % (pk, resp.get('message'))}
+            return {'message': f"Job start Scheduler failed, job id: {pk}, exception info: {resp.get('message')}"}
 
         raise JobRunError()
 
@@ -138,13 +138,13 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
             if resp.get('message') == 'ok':
                 # 数据库状态修改
                 return await self.repository.update_by_id(pk=pk, obj_in=dict(enabled=False, pause=False))
-            return {'message': 'Job stop failed, job id: %s, exception info: %s' % (pk, resp.get('message'))}
+            return {'message': f"Job stop failed, job id: {pk}, exception info: {resp.get('message')}"}
 
         raise JobStoppedError()
 
     async def pause_by_id(self, pk: int):
         """
-        pause by id
+        Pause by id
         :param pk:
         :return:
         """
@@ -157,13 +157,13 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
             if resp.get('message') == 'ok':
                 # 数据库状态修改
                 return await self.repository.update_by_id(pk=pk, obj_in=dict(pause=True))
-            return {'message': 'Job pause failed, job id: %s, exception info: %s' % (pk, resp.get('message'))}
+            return {'message': f"Job pause failed, job id: {pk}, exception info: {resp.get('message')}"}
 
         raise JobPauseError()
 
     async def unpause_by_id(self, pk: int):
         """
-        unpause by id
+        Unpause by id
         :param pk:
         :return:
         """
@@ -176,13 +176,13 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
             if resp.get('message') == 'ok':
                 # 数据库状态修改
                 return await self.repository.update_by_id(pk=pk, obj_in=dict(pause=False))
-            return {'message': 'Job unpause failed, job id: %s, exception info: %s' % (pk, resp.get('message'))}
+            return {'message': f"Job unpause failed, job id: {pk}, exception info: {resp.get('message')}"}
 
         raise JobUnpauseError()
 
     async def get_artifact_from_job_id(self, pk: int) -> ArtifactSchema:
         """
-        get a artifact from job id
+        Get a artifact from job id
         :param pk:
         :return:
         """
@@ -190,7 +190,7 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
 
     async def get_storage_server_from_job_id(self, pk: int) -> StorageServerSchema:
         """
-        get a storage server from job id
+        Get a storage server from job id
         :param pk:
         :return:
         """

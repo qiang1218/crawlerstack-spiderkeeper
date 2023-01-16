@@ -30,9 +30,9 @@ class EntityService(ICRUD):
         """forwarder"""
         return self.FORWARDER_CLASS()
 
-    async def create(self, obj_in: Any):
+    async def create(self, obj_in: Any, **_):
         """
-        create
+        Create
         :param obj_in:
         :return:
         """

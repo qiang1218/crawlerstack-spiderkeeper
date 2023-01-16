@@ -2,9 +2,9 @@
 import asyncio
 import json
 from datetime import datetime
+from typing import Any
 
-from crawlerstack_spiderkeeper_scheduler.schemas.executor import (
-    ExecutorCreate, ExecutorSchema, ExecutorUpdate)
+from crawlerstack_spiderkeeper_scheduler.schemas.executor import ExecutorSchema
 from crawlerstack_spiderkeeper_scheduler.schemas.task import (TaskCreate,
                                                               TaskSchema,
                                                               TaskUpdate)
@@ -20,6 +20,8 @@ from crawlerstack_spiderkeeper_scheduler.utils.status import Status
 
 
 class Task(metaclass=SingletonMeta):
+    """task"""
+
     def __init__(self, settings):
         """init"""
         self.settings = settings
@@ -55,24 +57,15 @@ class Task(metaclass=SingletonMeta):
         :return:
         """
         # 执行任务,同时完成任务状态回溯,作为任务调用的方法存在，具体由scheduler进行触发
-        # 爬虫参数
-        spider_params = kwargs.pop('spider_params')
-        # 执行器参数
-        executor_params = kwargs.pop('executor_params')
-        # 1. 创建对应的task，生成task_name
-        job_id = kwargs.pop('job_id')
-        task_name = self.gen_task_name(job_id)
-        spider_params['TASK_NAME'] = task_name
-        # 2. 执行器的选择
-        executor_type = executor_params.pop('executor_type')
-        executor_selector = executor_params.pop('executor_selector')
+
+        # 1. 爬虫参数
+        params = self.gen_task_params(**kwargs)
+        task_name = params.pop('task_name')
 
         # 2. 获取执行器的相关信息，根据策略确定需要调度的位置，并在执行器的计数中加1
-        active_executors = await self.get_active_executors(executor_type, Status.ONLINE.value)  # noqa
-        executor = await self.choose_executor(active_executors, executor_selector)
+        executor = await self.choose_executor(params.pop('executor_type'), params.pop('executor_selector'))
 
-        # 3. server中task表和schedule中task表的创建
-        params = {'spider_params': spider_params, 'executor_params': executor_params}
+        # 3. server中task表和schedule中task表
 
         # 3.1 任务执行
         container_id = self.run_task(executor.url, params)
@@ -91,7 +84,7 @@ class Task(metaclass=SingletonMeta):
         # 任务状态的更新机制，根据容器的状态进行更新，默认created状态
         _status = 'created'
         while True:
-            # todo 添加逻辑，确保创建后的容器会退出，考虑时间延后问题，如果容器已经退出，则状态的完整性更新
+            # 确保创建后的容器会退出，考虑时间延后问题，如果容器已经退出，则状态的完整性更新
             status = self.get_task_status(executor.url, container_id)
             if status != _status:
                 _status = status
@@ -108,6 +101,30 @@ class Task(metaclass=SingletonMeta):
         await self.update_task_count(executor, symbol=False)
         # 5.4 执行器的任务对应container_id任务清除
         self.remove_container(executor, container_id=container_id)
+
+    def gen_task_params(self, **kwargs) -> dict[str, Any]:
+        """
+        Generate task params
+        :param kwargs:
+        :return:
+        """
+        # 执行任务,同时完成任务状态回溯,作为任务调用的方法存在，具体由scheduler进行触发
+        # 爬虫参数
+        spider_params = kwargs.get('spider_params')
+        # 执行器参数
+        executor_params = kwargs.get('executor_params')
+        # 1. 创建对应的task，生成task_name
+        job_id = kwargs.get('job_id')
+        task_name = self.gen_task_name(job_id)
+        spider_params['TASK_NAME'] = task_name
+
+        executor_type = executor_params.pop('executor_type')
+        executor_selector = executor_params.pop('executor_selector')
+        return {'spider_params': spider_params,
+                'executor_params': executor_params,
+                'task_name': task_name,
+                'executor_selector': executor_selector,
+                'executor_type': executor_type}
 
     def remove_container(self, executor, container_id: str):
         """remove container from remote executor"""
@@ -225,21 +242,21 @@ class Task(metaclass=SingletonMeta):
 
         return await self.executor_server.update_by_id(pk=pk, obj_in=dict(task_count=task_count))
 
-    @staticmethod
-    async def choose_executor(active_executors: list[ExecutorSchema],
-                              selector: str) -> ExecutorSchema:
+    async def choose_executor(self, executor_type: str, selector: str) -> ExecutorSchema:
         """
         choose executor
-        :param active_executors:
+        :param executor_type:
         :param selector:
         :return:
         """
         # todo 后续完善
-        # 1. 以选择参数为主，获取对应的executor
+        # 1. 获取活跃的执行器
+        active_executors = await self.get_active_executors(executor_type, Status.ONLINE.value)  # noqa
+        # 2. 以选择参数为主，获取对应的executor
 
-        # 2. 如果没有对应执行器的，则获取全部执行器任务调度个数最少的一个
+        # 3. 如果没有对应执行器的，则获取全部执行器任务调度个数最少的一个
 
-        # 3. 如果有对应的执行器，则获取对应执行器中任务调度个数最少的一个
+        # 4. 如果有对应的执行器，则获取对应执行器中任务调度个数最少的一个
         return active_executors[0]
 
     @staticmethod

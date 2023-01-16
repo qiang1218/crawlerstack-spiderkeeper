@@ -1,4 +1,4 @@
-"""utils"""
+"""Utils"""
 import asyncio
 import logging
 import os
@@ -39,7 +39,7 @@ class SingletonMeta(type):
 
 def transform_cron_expression(expression: str):
     """
-    transform cron expression
+    Transform cron expression
     :param expression:
     :return:
     """
@@ -72,7 +72,7 @@ class File:
 
     async def write(self, datas: Union[List[str], tuple[str]]) -> None:
         """
-        write data to the file
+        Write data to the file
         :param datas:
         :return:
         """

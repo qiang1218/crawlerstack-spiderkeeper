@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class SchedulerServer(metaclass=SingletonMeta):
+    """Scheduler server"""
 
     def __init__(self, settings):
         self.settings = settings

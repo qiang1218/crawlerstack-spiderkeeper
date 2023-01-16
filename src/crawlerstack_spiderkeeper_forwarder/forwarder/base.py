@@ -28,6 +28,7 @@ class BaseTask:
 
     @classmethod
     async def class_object(cls):
+        """class object"""
         return cls()
 
     @property

@@ -13,6 +13,7 @@ from crawlerstack_spiderkeeper_scheduler.utils.status import Status
 
 
 class TestTask:
+    """test task"""
     @pytest.fixture
     def task(self, settings):
         """task fixture"""
@@ -62,6 +63,7 @@ class TestTask:
         request.assert_called_once()
 
     def test_get_task_status(self, task, mocker):
+        """test get task status"""
         request = mocker.patch.object(RequestWithSession, 'request',
                                       return_value={'message': 'ok', 'data': {'container_id': 'task_1', 'status': 1}})
         result = task.get_task_status(url='http://localhost:2375', container_id='task_1')
@@ -109,11 +111,11 @@ class TestTask:
 
     async def test_run(self, init_executor, task, session, mocker):
         """test run"""
-        kwargs = {
-            'spider_params': {},
-            'executor_params': {},
-            'job_id': ''
-        }
+        # kwargs = {
+        #     'spider_params': {},
+        #     'executor_params': {},
+        #     'job_id': ''
+        # }
 
         # spider_params = SpiderSchema(
         #     DATA_URL='data_url',
@@ -124,7 +126,8 @@ class TestTask:
         # ),
         # executor_params = ExecutorSchema(
         #     image='python:3.10',
-        #     cmdline="['python','-c', 'for i in range(100):import logging;logging.error(i);import time;time.sleep(0.1)']",
+        #     cmdline="['python','-c', 'for i in range(100):import logging;logging.error(i);"
+        #     "import time;time.sleep(0.1)']",
         #     volume=None,
         #     environment=None
         # ))

@@ -8,11 +8,12 @@ from crawlerstack_spiderkeeper_scheduler.services import SchedulerServer
 
 async def task(**_):
     """task"""
-    for i in range(10):
+    for _ in range(10):
         await asyncio.sleep(0)
 
 
 class TestJobService:
+    """test job service"""
 
     @pytest.fixture()
     def service(self, settings):

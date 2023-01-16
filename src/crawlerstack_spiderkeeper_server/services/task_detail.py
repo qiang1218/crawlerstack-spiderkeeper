@@ -5,7 +5,6 @@ from crawlerstack_spiderkeeper_server.models import TaskDetail
 from crawlerstack_spiderkeeper_server.repository.task import TaskRepository
 from crawlerstack_spiderkeeper_server.repository.task_detail import \
     TaskDetailRepository
-from crawlerstack_spiderkeeper_server.schemas.job import JobSchema
 from crawlerstack_spiderkeeper_server.schemas.task import TaskSchema
 from crawlerstack_spiderkeeper_server.schemas.task_detail import (
     TaskDetailCreate, TaskDetailSchema, TaskDetailUpdate)
@@ -23,6 +22,7 @@ class TaskDetailService(EntityService[TaskDetail, TaskDetailCreate, TaskDetailUp
 
     @property
     def task_repository(self):
+        """Task repository"""
         return TaskRepository()
 
     async def create(
@@ -56,7 +56,7 @@ class TaskDetailService(EntityService[TaskDetail, TaskDetailCreate, TaskDetailUp
 
     async def get_task_from_task_detail_id(self, pk: int) -> TaskSchema:
         """
-        get a job from task id
+        Get a job from task id
         :param pk:
         :return:
         """

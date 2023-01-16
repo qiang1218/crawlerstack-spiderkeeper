@@ -20,28 +20,33 @@ logger = logging.getLogger(__name__)
 
 
 class DataService(ICRUD):
+    """Data service"""
     async def get(self, query):
-        """get"""
-        pass
+        """Get"""
+        # 暂时不提供get数据接口
 
     @property
     def job_repository(self):
+        """Job repository"""
         return JobRepository()
 
     @property
     def storage_server_repository(self):
+        """Storage server repository"""
         return StorageServerRepository()
 
     @property
     def task_repository(self):
+        """Task repository"""
         return TaskRepository()
 
     @property
     def task_detail_repository(self):
+        """Task detail repository"""
         return TaskDetailRepository()
 
     async def create(self, task_name: str, data: dict) -> None:
-        """create data"""
+        """Create data"""
         # 1.根据task_name获取对应的task_id
         job = await self.job_repository.get_job_from_task_name(task_name)
 
@@ -66,7 +71,7 @@ class DataService(ICRUD):
 
     async def create_or_update_task_detail(self, task_name: str, data_count: int, status: bool):
         """
-        create or update task detail
+        Create or update task detail
         :param task_name:
         :param data_count:
         :param status:
@@ -92,9 +97,7 @@ class DataService(ICRUD):
             await self.task_detail_repository.create(obj_in=task_detail)
 
     async def update(self, *args, **kwargs) -> Any:
-        """update"""
-        pass
+        """Update"""
 
     async def delete(self, *args, **kwargs) -> Any:
-        """delete"""
-        pass
+        """Delete"""

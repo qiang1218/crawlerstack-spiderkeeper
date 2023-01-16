@@ -1,6 +1,5 @@
 """Executor"""
 
-
 from sqlalchemy import select
 
 from crawlerstack_spiderkeeper_scheduler.models import Executor
@@ -28,5 +27,3 @@ class ExecutorRepository(BaseRepository[Executor, ExecutorCreate, ExecutorUpdate
         if obj:
             return self.model_schema.from_orm(obj)
         raise ObjectDoesNotExist()
-
-

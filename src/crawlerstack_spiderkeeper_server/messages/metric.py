@@ -1,5 +1,5 @@
 """metric"""
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from crawlerstack_spiderkeeper_server.messages.base import Message
 

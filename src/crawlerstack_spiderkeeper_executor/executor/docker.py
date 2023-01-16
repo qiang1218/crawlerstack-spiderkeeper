@@ -16,15 +16,16 @@ logger = logging.getLogger(__name__)
 
 
 class DockerExecutor(BaseExecutor):
+    """Docker executor"""
     NAME = 'docker'
 
     def __init__(self, settings):
-        super(DockerExecutor, self).__init__(settings)
+        super().__init__(settings)
         self.client = Docker(url=self.settings.EXECUTOR_REMOTE_URL)
 
-    async def run(self, obj_in: TaskSchema) -> str:
+    async def run(self, obj_in: TaskSchema, **_) -> str:
         """
-        run
+        Run
         :param obj_in:
         :return:
         """
@@ -42,7 +43,7 @@ class DockerExecutor(BaseExecutor):
 
     def _merge_executor_params(self, executor_params: ExecutorSchema, spider_params: SpiderSchema) -> dict[str, Any]:
         """
-        merge executor params
+        Merge executor params
         :param executor_params:
         :param spider_params:
         :return:
@@ -83,29 +84,31 @@ class DockerExecutor(BaseExecutor):
             envs.append(f'{key}={value}')
         return envs
 
-    async def stop(self, container_id: str):
+    async def stop(self, container_id: str, **_) -> str:
         """
-        stop
+        Stop
         :param container_id:
         :return:
         """
         logger.debug('Start stop a container: %s', container_id)
         await self.client.containers.container(container_id=container_id).stop()
         logger.debug('Stop a container: %s success.', container_id)
+        return 'stop successful'
 
-    async def delete(self, container_id: str):
+    async def delete(self, container_id: str, **_) -> str:
         """
-        delete
+        Delete
         :param container_id:
         :return:
         """
         logger.debug('Start delete a container: %s', container_id)
         await self.client.containers.container(container_id=container_id).delete()
         logger.debug('Delete a container: %s success.', container_id)
+        return 'delete successful'
 
-    async def status(self, container_id: str):
+    async def status(self, container_id: str, **_) -> str:
         """
-        status
+        Status
         已知的 status:
         - running
         - exited
@@ -116,9 +119,9 @@ class DockerExecutor(BaseExecutor):
         logger.debug('Inspect docker container: %s, response: %s', container_id, data)
         return data.get('State', {}).get('Status')
 
-    async def log(self, container_id: str, follow=False):
+    async def log(self, container_id: str, follow=False, **_):
         """
-        log
+        Log
         :param container_id:
         :param follow:
         :return:
@@ -142,5 +145,5 @@ class DockerExecutor(BaseExecutor):
         return command
 
     async def close(self):
-        """close"""
+        """Close"""
         await self.client.close()

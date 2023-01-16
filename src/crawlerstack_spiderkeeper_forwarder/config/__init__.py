@@ -25,6 +25,5 @@ settings = Dynaconf(
     localpath=local_path
 )
 
-
 if not os.path.isabs(settings.LOGPATH):
     settings.set('LOGPATH', local_path / settings.LOGPATH)

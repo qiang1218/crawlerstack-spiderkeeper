@@ -8,6 +8,7 @@ from crawlerstack_spiderkeeper_server.utils.request import RequestWithSession
 
 
 class TestRequestWithSession:
+    """Test request with session"""
     @pytest.fixture()
     def request_session(self):
         """session fixture"""
@@ -18,10 +19,11 @@ class TestRequestWithSession:
 
     @staticmethod
     def gen_response(return_status, return_value):
+        """get response"""
         response = Response()
         response.status_code = return_status
         response.encoding = 'utf8'
-        response._content = json.dumps(return_value).encode('utf-8')
+        response._content = json.dumps(return_value).encode('utf-8')  # pylint: disable=protected-access
         return response
 
     @pytest.mark.parametrize(
