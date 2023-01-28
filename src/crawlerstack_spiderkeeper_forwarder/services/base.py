@@ -30,12 +30,12 @@ class EntityService(ICRUD):
         """forwarder"""
         return self.FORWARDER_CLASS()
 
-    async def create(self, obj_in: Any, **_):
+    async def create(self, obj_in: Any, **_) -> dict:
         """
         Create
         :param obj_in:
         :return:
         """
-        # todo 字典数据序列化
-
-        await self.forwarder.publish(body=obj_in)
+        body = obj_in.json()
+        await self.forwarder.publish(body=body)
+        return {}

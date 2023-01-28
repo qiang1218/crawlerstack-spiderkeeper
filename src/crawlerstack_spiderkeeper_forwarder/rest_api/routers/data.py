@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.post('/datas', response_model=BaseMessage)
-def create(
+async def create(
         *,
         obj_in: DataSchema,
         service: DataService = Depends(),
@@ -26,4 +26,4 @@ def create(
     :param service:
     :return:
     """
-    return service.create(obj_in=obj_in)
+    return await service.create(obj_in=obj_in)

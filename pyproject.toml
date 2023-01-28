@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "crawlerstack-spiderkeeper"
-version = "0.1.0"
+version = "3.0.0"
 description = "spider keeper"
 authors = ["whg517 <huagang517@126.com>"]
 readme = "README.md"
