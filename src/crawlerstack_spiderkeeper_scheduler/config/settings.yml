@@ -54,8 +54,8 @@ EXECUTOR_RM_SUFFIX: /_rm/%s
 HEARTBEAT_INTERVAL: 5
 
 ##########################################################
-# collector
-COLLECTOR_BASE_URL: http://localhost:8081/api/v1
-COLLECTOR_DATA_SUFFIX: /datas
-COLLECTOR_LOG_SUFFIX: /logs
-COLLECTOR_METRIC_SUFFIX: /metrics
+# forwarder
+FORWARDER_BASE_URL: http://localhost:8081/api/v1
+FORWARDER_DATA_SUFFIX: /datas
+FORWARDER_LOG_SUFFIX: /logs
+FORWARDER_METRIC_SUFFIX: /metrics

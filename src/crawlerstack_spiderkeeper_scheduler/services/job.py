@@ -31,17 +31,17 @@ class JobService:
     @property
     def data_url(self):
         """data url"""
-        return settings.COLLECTOR_BASE_URL + settings.COLLECTOR_DATA_SUFFIX
+        return settings.FORWARDER_BASE_URL + settings.FORWARDER_DATA_SUFFIX
 
     @property
     def log_url(self):
         """log url"""
-        return settings.COLLECTOR_BASE_URL + settings.COLLECTOR_LOG_SUFFIX
+        return settings.FORWARDER_BASE_URL + settings.FORWARDER_LOG_SUFFIX
 
     @property
     def metric_url(self):
         """metric url"""
-        return settings.COLLECTOR_BASE_URL + settings.COLLECTOR_METRIC_SUFFIX
+        return settings.FORWARDER_BASE_URL + settings.FORWARDER_METRIC_SUFFIX
 
     @property
     def scheduler(self):
