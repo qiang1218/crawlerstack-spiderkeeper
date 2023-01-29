@@ -1,5 +1,7 @@
 """test utils"""
+import tempfile
 import time
+from pathlib import Path
 
 import pytest
 
@@ -31,6 +33,21 @@ async def test_head(tail):
     async for _ in tail.head(10):
         count += 1
     assert count == 10
+
+
+async def test_write(temp_dir):
+    """Test write"""
+    data = ['line1', 'line2', 'line3']
+    with tempfile.TemporaryFile(dir=temp_dir) as file:
+        file.close()
+        file_name = Path(file.name)
+        tail = File(file_name)
+        await tail.write(data)
+        await tail.write(data)
+
+        with open(file_name, 'r') as f:
+            file_data = f.readlines()
+            assert len(file_data) == len(data) * 2
 
 
 @pytest.mark.parametrize(

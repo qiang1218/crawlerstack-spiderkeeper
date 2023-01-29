@@ -77,9 +77,9 @@ class File:
         :return:
         """
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
-        async with aiofiles.open(self.filename, 'wb+') as f_obj:
-            for line in datas:
-                await f_obj.write((line + '\n').encode('utf-8'))
+        async with aiofiles.open(self.filename, 'a', encoding='utf-8') as f_obj:
+            for i in datas:
+                await f_obj.write(f'{i}\n')
 
     async def head(self, line_number: int = 50) -> AsyncIterable[str]:
         """
