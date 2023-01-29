@@ -91,7 +91,8 @@ def init_logging_config() -> Dict:
             #     'level': level,
             #     'propagate': False
             # },
-            # 'amqp.connection.Connection.heartbeat_tick': {'level': 'INFO'}
+            'amqp': {'level': 'INFO'},
+            'crawlerstack_spiderkeeper_server.collector.utils': {'level': 'INFO'},
             'aiosqlite': {'level': 'INFO'}
         }
     }

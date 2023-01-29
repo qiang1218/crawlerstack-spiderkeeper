@@ -1,7 +1,9 @@
 """base"""
 import asyncio
+import functools
 import logging
-from typing import Dict, Optional
+from asyncio import AbstractEventLoop
+from typing import Optional
 
 from kombu import Message
 
@@ -50,7 +52,7 @@ class BaseTask:
             queue_name=self.queue_name,
             routing_key=self.routing_key,
             exchange_name=self.exchange_name,
-            register_callbacks=[self.consume_on_response],
+            register_callbacks=[functools.partial(self.consuming, loop=self.consuming)],
             should_stop=self._should_stop
         ))
         logger.debug('Start consuming data from kombu.')
@@ -69,6 +71,20 @@ class BaseTask:
                 logger.debug('Cancel metric task.')
         logger.info('Stopped metric task, name: %s', self.NAME)
 
-    async def consume_on_response(self, body: Dict, message: Message):
-        """consume on response"""
+    async def callback(self, data: dict):
         raise NotImplementedError
+
+    def consuming(self, body: dict, message: Message, loop: AbstractEventLoop):
+        """consume on response"""
+        # todo 进行异步处理，待完善
+        future = asyncio.run_coroutine_threadsafe(self.callback(body), loop=loop)
+        # # task.add_done_callback(message.ack())
+        future.result(2)  # 同步阻塞等待该任务完成
+        # # try:
+        # #     future.result(2)  # 同步阻塞等待该任务完成
+        # # except asyncio.TimeoutError:
+        # #     future.cancel()
+        # #     raise
+        logger.debug('consuming data %s', body)
+
+        message.ack()  # 手动 ack

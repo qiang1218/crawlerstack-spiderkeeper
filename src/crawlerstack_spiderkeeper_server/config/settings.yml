@@ -6,10 +6,8 @@ HOST: localhost
 PORT: 8080
 
 cors_origins:
-  - http://localhost:3001
-  - http://127.0.0.1:3001
-  - http://192.168.6.18:3001
-
+  - http://localhost:8080
+  - http://127.0.0.1:8080
 ##########################################################
 # Log
 # default log path is `/home/<user>/.local/spiderkeeper/log`

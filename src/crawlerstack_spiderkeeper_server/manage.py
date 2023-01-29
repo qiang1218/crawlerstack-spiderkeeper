@@ -8,6 +8,7 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from crawlerstack_spiderkeeper_server.collector import Kombu
 from crawlerstack_spiderkeeper_server.rest_api import RestAPI
 from crawlerstack_spiderkeeper_server.signals import server_start, server_stop
 from crawlerstack_spiderkeeper_server.utils.exceptions import SpiderkeeperError
@@ -51,6 +52,7 @@ class SpiderKeeperServer:
     async def start(self):
         """Start api"""
         self.rest_api.init()
+        await Kombu().server_start()
         await server_start.send()
         logger.debug('Spiderkeeper server started')
 

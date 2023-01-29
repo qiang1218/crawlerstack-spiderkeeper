@@ -31,6 +31,7 @@ class Kombu(metaclass=SingletonMeta):
     async def server_start(self, **_):
         """server start"""
         self._server_running = True
+        logger.info("Kombu server started")
 
     async def server_stop(self, **_):
         """Call to stop when server stop signal fire."""
@@ -53,14 +54,14 @@ class Kombu(metaclass=SingletonMeta):
                     'Server not started. You should start server or '
                     'call `Kombu.server_start` first.'
                 )
-        logger.info('Server status %s', self._server_running)
+        logger.debug('Server status %s', self._server_running)
         return self._server_running
 
     @property
     def connect(self) -> Connection:
         """延迟加载单例连接"""
-        if self.__connect is None:
-            logger.debug('Kube connect to %s', settings.MQ)
+        if self.__connect is None and self._server_running:
+            logger.debug('Server is running, kube connect to %s', settings.MQ)
             self.__connect = Connection(settings.MQ)
         return self.__connect
 
@@ -238,7 +239,7 @@ class Kombu(metaclass=SingletonMeta):
                 logger.debug('%s should stop, so stop consuming message.', self)
                 break
             try:
-                logger.debug('Kumbu draining event 1 seconds.')
+                logger.debug('Kombu draining event 1 seconds.')
                 self.connect.drain_events(timeout=1)
             except socket.timeout:
                 self.connect.heartbeat_check()

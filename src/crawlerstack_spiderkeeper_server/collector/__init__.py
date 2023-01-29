@@ -6,15 +6,18 @@ from crawlerstack_spiderkeeper_server.collector.metric import \
 from crawlerstack_spiderkeeper_server.collector.utils import Kombu
 from crawlerstack_spiderkeeper_server.signals import server_start, server_stop
 
+__metric_bg_task = MetricBackgroundTask()
+__log_bg_task = LogBackgroundTask()
+__data_bg_task = DataBackgroundTask()
+
 # 注册事件
-server_start.connect(MetricBackgroundTask().start)
-server_stop.connect(MetricBackgroundTask().stop)
-
-server_start.connect(LogBackgroundTask().start)
-server_stop.connect(LogBackgroundTask().stop)
-
-server_start.connect(DataBackgroundTask().start)
-server_stop.connect(DataBackgroundTask().stop)
-
-server_start.connect(Kombu().server_start)
 server_stop.connect(Kombu().server_stop)
+
+server_start.connect(__metric_bg_task.start)
+server_stop.connect(__metric_bg_task.stop)
+
+server_start.connect(__log_bg_task.start)
+server_stop.connect(__log_bg_task.stop)
+
+server_start.connect(__data_bg_task.start)
+server_stop.connect(__data_bg_task.stop)
