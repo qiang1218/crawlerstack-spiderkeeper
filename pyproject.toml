@@ -4,6 +4,12 @@ version = "3.0.0"
 description = "spider keeper"
 authors = ["whg517 <huagang517@126.com>"]
 readme = "README.md"
+packages = [
+    { include = "crawlerstack_spiderkeeper_executor", from = "src" },
+    { include = "crawlerstack_spiderkeeper_forwarder", from = "src" },
+    { include = "crawlerstack_spiderkeeper_scheduler", from = "src" },
+    { include = "crawlerstack_spiderkeeper_server", from = "src" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -58,10 +64,10 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.poetry.scripts]
-crawlerstack_spiderkeeper_server = 'crawlerstack_spiderkeeper_server.cmdline:main'
-crawlerstack_spiderkeeper_scheduler = 'crawlerstack_spiderkeeper_scheduler.cmdline:main'
-crawlerstack_spiderkeeper_forwarder = 'crawlerstack_spiderkeeper_forwarder.cmdline:main'
-crawlerstack_spiderkeeper_executor = 'crawlerstack_spiderkeeper_executor.cmdline:main'
+crawlerstack_spiderkeeper_server = "crawlerstack_spiderkeeper_server.cmdline:main"
+crawlerstack_spiderkeeper_scheduler = "crawlerstack_spiderkeeper_scheduler.cmdline:main"
+crawlerstack_spiderkeeper_forwarder = "crawlerstack_spiderkeeper_forwarder.cmdline:main"
+crawlerstack_spiderkeeper_executor = '"crawlerstack_spiderkeeper_executor.cmdline:main'"
 
 
 [tool.pytest.ini_options]
