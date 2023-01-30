@@ -48,15 +48,15 @@ async def test_run(executor_service, task_params, mocker, expect_value):
 
 
 @pytest.mark.parametrize(
-    'container_id, expect_value',
+    'container_id, real_value, expect_value',
     [
-        ('test_1', 'running'),
-        ('test_1', 'paused'),
+        ('test_1', 'running', 'RUNNING'),
+        ('test_1', 'paused', 'PAUSED'),
     ]
 )
-async def test_check_by_id(executor_service, mocker, container_id, expect_value):
+async def test_check_by_id(executor_service, mocker, container_id, real_value, expect_value):
     """test check by id"""
-    status = mocker.patch.object(DockerExecutor, 'status', return_value=expect_value)
+    status = mocker.patch.object(DockerExecutor, 'status', return_value=real_value)
     result = await executor_service.check_by_id(container_id)
     assert result == expect_value
     status.assert_called_once()

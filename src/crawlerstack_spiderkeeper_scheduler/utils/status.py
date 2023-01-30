@@ -21,3 +21,18 @@ class Status(IntEnum):
 
     STOPPED = -1
     FAILURE = -2
+
+
+# noinspection PyArgumentList
+class ExceptStatus(IntEnum):
+    """
+    Except status enum
+    """
+    PAUSED = 4
+    EXITED = 5
+    DEAD = 6
+
+    @classmethod
+    def list(cls):
+        """List"""
+        return list(map(lambda c: c.name, cls))

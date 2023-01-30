@@ -4,7 +4,7 @@ import logging
 from crawlerstack_spiderkeeper_scheduler.config import settings
 from crawlerstack_spiderkeeper_scheduler.services.scheduler import \
     SchedulerServer
-from crawlerstack_spiderkeeper_scheduler.tasks.task import Task
+from crawlerstack_spiderkeeper_scheduler.tasks.task import task_run
 from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
     ObjectDoesNotExist
 from crawlerstack_spiderkeeper_scheduler.utils.request import \
@@ -53,7 +53,7 @@ class JobService:
         """request session"""
         return RequestWithSession()
 
-    def start_by_id(self, job_id: str) -> None:
+    def start_by_id(self, job_id: str) -> dict:
         """Start job_id"""
         # 任务的单次触发
         # 获取任务需要的参数，即调用接口，获取对应调度参数
@@ -69,8 +69,12 @@ class JobService:
         executor_params = self.executor_params(job, artifact)
 
         # 任务调用
-        self.scheduler.add_job(Task(settings).run, trigger_expression=trigger_expression, spider_params=spider_params,
-                               executor_params=executor_params, job_id=job_id)
+        self.scheduler.add_job(task_run,
+                               trigger_expression=trigger_expression,
+                               spider_params=spider_params,
+                               executor_params=executor_params,
+                               job_id=job_id)
+        return {'message': 'success'}
 
     def get_job(self, job_id: str):
         """get job data"""
@@ -113,17 +117,20 @@ class JobService:
         return {'image_name': images, 'cmdline': cmdline, 'executor_selector': executor_selector,
                 'executor_type': executor_type, 'volume': volume, 'environment': environment}
 
-    def stop_by_id(self, job_id: str):
+    def stop_by_id(self, job_id: str) -> dict:
         """Stop job_id"""
         # 结束id对应的所有任务
         self.scheduler.remove_job(job_id)
+        return {'message': 'success'}
 
-    def pause_by_id(self, job_id: str):
+    def pause_by_id(self, job_id: str) -> dict:
         """Pause job_id"""
         # 暂停id对应任务，需保证job已经开启
         self.scheduler.pause_job(job_id)
+        return {'message': 'success'}
 
-    def unpause_by_id(self, job_id: str):
+    def unpause_by_id(self, job_id: str) -> dict:
         """unpause job_id"""
         # 恢复被暂停的任务，需保证job已经开启
         self.scheduler.unpause_job(job_id)
+        return {'message': 'success'}

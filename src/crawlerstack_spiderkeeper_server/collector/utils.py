@@ -38,7 +38,7 @@ class Kombu(metaclass=SingletonMeta):
         self._server_running = False
         if self.connect:
             logger.debug('Stop kombu connection.')
-            self.connect.close()
+            await asyncio.to_thread(self.connect.close)
 
     def check_server(self) -> bool:
         """

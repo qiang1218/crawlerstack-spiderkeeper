@@ -43,8 +43,8 @@ SCHEDULER_TIMEZONE: Asia/Shanghai
 SERVER_BASE_URL: http://localhost:8080/api/v1
 SERVER_JOB_SUFFIX: /jobs/%s
 SERVER_ARTIFACT_SUFFIX: /jobs/%s/artifacts
-SERVER_TASK_CREATE_SUFFIX: /tasks
-SERVER_TASK_UPDATE_SUFFIX: /tasks/%s
+SERVER_TASK_SUFFIX: /tasks
+SERVER_TASK_CRUD_SUFFIX: /tasks/%s
 
 ##########################################################
 # executor
@@ -55,7 +55,17 @@ HEARTBEAT_INTERVAL: 5
 
 ##########################################################
 # forwarder
-FORWARDER_BASE_URL: http://localhost:8081/api/v1
+FORWARDER_BASE_URL: http://localhost:8083/api/v1
 FORWARDER_DATA_SUFFIX: /datas
 FORWARDER_LOG_SUFFIX: /logs
 FORWARDER_METRIC_SUFFIX: /metrics
+
+##########################################################
+# current server api for scheduler task
+SCHEDULER_BASE_URL: http://localhost:8081/api/v1
+# get executor and update executor count
+SCHEDULER_EXECUTOR_SUFFIX: /executors
+SCHEDULER_EXECUTOR_CRUD_SUFFIX: /executors/%s
+# create task and update
+SCHEDULER_TASK_SUFFIX: /tasks
+SCHEDULER_TASK_CRUD_SUFFIX: /tasks/%s

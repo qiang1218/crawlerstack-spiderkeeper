@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 def settings():
     """settings fixture"""
     server_settings.EXPIRE_INTERVAL = 0.5
+    server_settings.MQ = 'memory://localhost'
     return server_settings
 
 

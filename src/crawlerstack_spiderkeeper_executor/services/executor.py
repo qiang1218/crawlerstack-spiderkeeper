@@ -7,6 +7,7 @@ from crawlerstack_spiderkeeper_executor.schemas.base import TaskSchema
 from crawlerstack_spiderkeeper_executor.utils.exceptions import (
     ContainerRmError, ContainerStopError, RemoteTaskCheckError,
     RemoteTaskRunError)
+from crawlerstack_spiderkeeper_executor.utils.status import ContainerStatus
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,8 @@ class ExecutorService:
         :return:
         """
         try:
-            return await self.executor.status(container_id)
+            status = await self.executor.status(container_id)
+            return ContainerStatus[status].value  # noqa
         except Exception as ex:
             logger.warning("Task check failed: %s", ex)
         raise RemoteTaskCheckError()

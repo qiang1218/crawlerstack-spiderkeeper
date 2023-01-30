@@ -71,7 +71,7 @@ class BaseTask:
                 logger.debug('Cancel metric task.')
         logger.info('Stopped metric task, name: %s', self.NAME)
 
-    async def callback(self, data: dict):
+    async def callback(self, body: dict):
         """Callback"""
         raise NotImplementedError
 

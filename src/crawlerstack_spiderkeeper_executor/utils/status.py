@@ -1,5 +1,5 @@
 """status"""
-from enum import IntEnum
+from enum import Enum, IntEnum
 
 
 # noinspection PyArgumentList
@@ -21,3 +21,16 @@ class Status(IntEnum):
 
     STOPPED = -1
     FAILURE = -2
+
+
+# noinspection PyArgumentList
+# pylint: disable=invalid-name
+class ContainerStatus(Enum):
+    """Container Status enum"""
+    # docker 中 status=(created restarting running paused exited dead)，后续添加对k8s状态的支持映射
+    created = 'CREATED'
+    restarting = 'RESTARTING'
+    running = 'RUNNING'
+    paused = 'PAUSED'
+    exited = 'EXITED'
+    dead = 'DEAD'
