@@ -40,17 +40,14 @@ class MysqlStorage(Storage):
         self.default_connector = self._connectors.get(name)
         return self
 
-    def save(self, data) -> bool:
+    def save(self, data: dict) -> bool:
         """save"""
         # 首先进行数据组装
         sql = self.sql(tb_name=data.get('title'), fields=data.get('fields'))
 
         # 进行引擎判断
         conn = self.default_connector.conn
-        if not conn.ping():
-            # 重新链接
-            logger.debug("Reconnecting with name %s", self.default_connector.name)
-
+        conn.ping()
         # 数据存储
         cursor = conn.cursor()
         cursor.executemany(sql, data.get('datas'))

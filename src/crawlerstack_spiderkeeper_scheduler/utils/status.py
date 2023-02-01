@@ -24,9 +24,9 @@ class Status(IntEnum):
 
 
 # noinspection PyArgumentList
-class ExceptStatus(IntEnum):
+class ExitStatus(IntEnum):
     """
-    Except status enum
+    Exit status enum
     """
     PAUSED = 4
     EXITED = 5

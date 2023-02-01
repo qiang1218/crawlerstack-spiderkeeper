@@ -41,7 +41,7 @@ class Executor(BaseModel):
 
     task = relationship(
         'Task',
-        backref='task',
+        back_populates='task',
         passive_deletes=True
     )
 
@@ -63,3 +63,8 @@ class Task(BaseModel):
     container_id = Column(String(200), nullable=False, comment='容器ID')
     task_start_time = Column(DateTime, default=datetime.now, comment='任务创建时间')
     task_end_time = Column(DateTime, nullable=True, default=None, comment='任务结束时间')
+
+    task = relationship(
+        'Executor',
+        back_populates='task',
+    )

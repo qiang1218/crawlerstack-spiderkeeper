@@ -9,6 +9,8 @@ cors_origins:
   - http://localhost:8080
   - http://127.0.0.1:8080
   - http://172.*.*.*:*
+  - http://192.168.6.18:9090
+  - http://192.168.6.18:80
   - http://192.168.6.18:3001
 ##########################################################
 # Log
@@ -49,7 +51,7 @@ EXPIRE_INTERVAL: 3600
 # scheduler
 # EXPIRE_DAY default: 1  # 1day
 # EXPIRE_INTERVAL default: 3600  # 3600s
-SCHEDULER_URL: localhost:8081/api/v1
+SCHEDULER_URL: http://localhost:8081/api/v1
 SCHEDULER_START_SUFFIX: /jobs/%s/_start
 SCHEDULER_STOP_SUFFIX: /jobs/%s/_stop
 SCHEDULER_PAUSE_SUFFIX: /jobs/%s/_pause

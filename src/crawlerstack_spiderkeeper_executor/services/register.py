@@ -68,7 +68,7 @@ class RegisterService(metaclass=SingletonMeta):
         """
         return {'name': self.executor_name,
                 'selector': self.executor_selector,
-                'url': self.executor_remote_url,
+                'url': self.local_url,
                 'type': self.executor_type}
 
     def heartbeat_params(self):

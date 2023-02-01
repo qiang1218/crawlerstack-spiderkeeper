@@ -54,7 +54,6 @@ class BaseTask:
             routing_key=self.routing_key,
             exchange_name=self.exchange_name,
             register_callbacks=[functools.partial(self.consuming, loop=loop)],
-            should_stop=self._should_stop
         ))
         logger.debug('Start consuming data from kombu.')
 
@@ -63,12 +62,9 @@ class BaseTask:
         Stop server
         :return:
         """
-        if not self._should_stop.done():
-            self._should_stop.set_result('Stop')
-            await asyncio.sleep(0)
-            if self._task and not self._task.done():
-                self._task.cancel()
-                logger.debug('Cancel metric task.')
+        if self._task and not self._task.done():
+            self._task.cancel()
+            logger.debug('Cancel metric task.')
         logger.info('Stopped metric task, name: %s', self.NAME)
 
     async def callback(self, body: dict):

@@ -238,7 +238,7 @@ class Kombu(metaclass=SingletonMeta):
                 logger.debug('%s should stop, so stop consuming message.', self)
                 break
             try:
-                logger.debug('Kumbu draining event 1 seconds.')
+                logger.debug('Kombu draining event 1 seconds.')
                 self.connect.drain_events(timeout=1)
             except socket.timeout:
                 self.connect.heartbeat_check()

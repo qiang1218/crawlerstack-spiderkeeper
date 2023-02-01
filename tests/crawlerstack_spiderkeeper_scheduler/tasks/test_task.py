@@ -41,7 +41,7 @@ class TestTask:
         """test run task"""
         request = mocker.patch.object(RequestWithSession, 'request',
                                       return_value={'message': 'ok', 'data': {'container_id': 'task_1'}})
-        task.run_task(url='http://localhost:2375', params={'job_id': 'task_1'})
+        task.run_task(url='http://localhost:8082/api/vi/_run', params={'job_id': 'task_1'})
         request.assert_called_once()
 
     def test_run_task_failed(self, task, mocker):

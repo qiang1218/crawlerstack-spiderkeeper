@@ -1,10 +1,13 @@
 """log"""
+import logging
 from pathlib import Path
 from typing import Any, List
 
 from crawlerstack_spiderkeeper_server.config import local_path, settings
 from crawlerstack_spiderkeeper_server.services.base import ICRUD
 from crawlerstack_spiderkeeper_server.utils import File
+
+logger = logging.getLogger(__name__)
 
 
 class LogService(ICRUD):
@@ -32,7 +35,10 @@ class LogService(ICRUD):
         """
         filename = self.gen_log_path_str(query.get('task_name'))
         rows = query.get('rows')
-        return await File(filename).last(line=rows)
+        try:
+            return await File(filename).last(line=rows)
+        except FileNotFoundError as ex:
+            logger.error('No such file or directory, filename: %s' % filename)
 
     async def create(self, data: dict) -> None:
         """Create log by task name"""

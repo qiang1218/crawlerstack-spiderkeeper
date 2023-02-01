@@ -10,10 +10,11 @@ from typing import Any, Callable, List, Optional
 
 from kombu import Connection, Consumer, Exchange, Queue, producers
 
-from crawlerstack_spiderkeeper_server.config import settings
-from crawlerstack_spiderkeeper_server.utils import (SingletonMeta,
-                                                    run_in_executor)
-from crawlerstack_spiderkeeper_server.utils.exceptions import SpiderkeeperError
+from crawlerstack_spiderkeeper_forwarder.config import settings
+from crawlerstack_spiderkeeper_forwarder.utils import (SingletonMeta,
+                                                       run_in_executor)
+from crawlerstack_spiderkeeper_forwarder.utils.exceptions import \
+    SpiderkeeperError
 
 logger = logging.getLogger(__name__)
 
@@ -27,18 +28,23 @@ class Kombu(metaclass=SingletonMeta):
 
     __connect = None
     _server_running = False
+    _should_stop: asyncio.Future = asyncio.Future()
 
     async def server_start(self, **_):
         """server start"""
         self._server_running = True
-        logger.info("Kombu server started")
+        if self._should_stop.done():
+            self._should_stop = asyncio.Future()
 
     async def server_stop(self, **_):
         """Call to stop when server stop signal fire."""
         self._server_running = False
+        if not self._should_stop.done():
+            self._should_stop.set_result('Stop')
         if self.connect:
             logger.debug('Stop kombu connection.')
-            await asyncio.to_thread(self.connect.close)
+            await asyncio.sleep(2)
+            self.connect.close()
 
     def check_server(self) -> bool:
         """
@@ -105,10 +111,6 @@ class Kombu(metaclass=SingletonMeta):
             routing_key: str,
             exchange_name: str,
             register_callbacks: List[Callable],
-            limit: Optional[int] = None,
-            timeout: Optional[int] = None,
-            safety_interval: Optional[int] = 1,
-            should_stop: Optional[asyncio.Future] = None,
     ) -> None:
         """
 
@@ -200,18 +202,31 @@ class Kombu(metaclass=SingletonMeta):
         """
         self.check_server()
         queue = Queue(name=queue_name, exchange=Exchange(exchange_name), routing_key=routing_key)
-        consumer = Consumer(self.channel, queues=[queue])
-
+        consumer = Consumer(self.channel, queues=[queue], tag_prefix=queue_name)
         for callback in register_callbacks:
             consumer.register_callback(callback)
         consumer.consume()
-        await asyncio.to_thread(
-            self._consuming,
-            limit=limit,
-            timeout=timeout,
-            safety_interval=safety_interval,
-            should_stop=should_stop
-        )
+        # 添加延迟,让channel绑定成功
+        await asyncio.sleep(5)
+
+    async def start_consume(
+            self,
+            limit: Optional[int] = None,
+            timeout: Optional[int] = None,
+            safety_interval: Optional[int] = 1,
+    ):
+        """
+        开启消费
+        :param limit:
+        :param timeout:
+        :param safety_interval:
+        :return:
+        """
+        await asyncio.to_thread(self._consuming,
+                                limit=limit,
+                                timeout=timeout,
+                                safety_interval=safety_interval,
+                                should_stop=self._should_stop)
 
     def _consuming(
             self,
@@ -221,7 +236,7 @@ class Kombu(metaclass=SingletonMeta):
             should_stop: Optional[asyncio.Future] = None
     ):
         """
-
+        循环获取消息
         :param limit:
         :param timeout:
             超时停止消费
@@ -240,7 +255,7 @@ class Kombu(metaclass=SingletonMeta):
                 break
             try:
                 logger.debug('Kombu draining event 1 seconds.')
-                self.connect.drain_events(timeout=1)
+                self.connect.drain_events(timeout=2)
             except socket.timeout:
                 self.connect.heartbeat_check()
                 # 超时计时，如果超时时间 elapsed 大于给定的超时时间 timeout 则退出

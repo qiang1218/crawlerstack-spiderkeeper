@@ -51,7 +51,6 @@ async def test_kombu():
         queue_name='foo',
         routing_key='bar',
         exchange_name='foo',
-        limit=1,
         register_callbacks=[callback],
     )
 

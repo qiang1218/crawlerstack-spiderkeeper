@@ -61,4 +61,5 @@ async def remove(
     :param service:
     :return:
     """
-    return await service.rm_by_id(container_id=pk)
+    await service.rm_by_id(container_id=pk)
+    return {'message': f'Remove {pk} successfully'}

@@ -104,7 +104,7 @@ class JobService:
         :return:
         """
         # 执行器变量，统一小写
-        images = artifact.get('image') + (artifact.get('version') if artifact.get('version') else 'latest')
+        images = artifact.get('image') + ':' + (artifact.get('version') if artifact.get('version') else 'latest')
         # cmdline 字符串 如果多个命令字符串 "['','']"
         cmdline = job.get('cmdline', '')
         executor_selector = job.get('executor_selector')
@@ -114,7 +114,7 @@ class JobService:
         # environment ['FOO=bar', 'BAZ=q']  ;切割
         environment = job.get('environment', '').split(';')
 
-        return {'image_name': images, 'cmdline': cmdline, 'executor_selector': executor_selector,
+        return {'image': images, 'cmdline': cmdline, 'executor_selector': executor_selector,
                 'executor_type': executor_type, 'volume': volume, 'environment': environment}
 
     def stop_by_id(self, job_id: str) -> dict:

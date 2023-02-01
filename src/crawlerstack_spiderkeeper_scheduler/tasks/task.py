@@ -14,7 +14,7 @@ from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
     RemoteTaskRunError
 from crawlerstack_spiderkeeper_scheduler.utils.request import \
     RequestWithSession
-from crawlerstack_spiderkeeper_scheduler.utils.status import (ExceptStatus,
+from crawlerstack_spiderkeeper_scheduler.utils.status import (ExitStatus,
                                                               Status)
 
 
@@ -56,6 +56,7 @@ class Task(metaclass=SingletonMeta):
         # 1. 爬虫参数
         params = self.gen_task_params(**kwargs)
         task_name = params.pop('task_name')
+        job_id = kwargs.get('job_id')
 
         # 2. 获取执行器的相关信息，根据策略确定需要调度的位置，并在执行器的计数中加1
         executor = self.choose_executor(params.pop('executor_type'), params.pop('executor_selector'))
@@ -70,7 +71,7 @@ class Task(metaclass=SingletonMeta):
         task = self.create_scheduler_task_record(task_name=task_name, container_id=container_id, executor=executor)
 
         # 3.3 创建server中task表
-        server_task_id = self.create_server_task_record(task_name)
+        server_task_id = self.create_server_task_record(task_name, job_id)
 
         # 4. 任务状态检测
         # 任务状态的更新机制，根据容器的状态进行更新，默认created状态
@@ -85,7 +86,7 @@ class Task(metaclass=SingletonMeta):
                 # scheduler中task表状态更新
                 self.update_scheduler_task_record(pk=task.id, status=Status[status].value, task_end_time=datetime.now())
                 # 如果退出状态时，循环终止
-                if _status in ExceptStatus.list():
+                if _status in ExitStatus.list():
                     break
             time.sleep(5)
         # 5.3 调度器中detail表任务个数状态更新
@@ -119,7 +120,7 @@ class Task(metaclass=SingletonMeta):
 
     def remove_container(self, url: str, container_id: str):
         """remove container from remote executor"""
-        self.request_session.request('GET', url + self.executor_rm_url_suffix % container_id)
+        return self.request_session.request('GET', url + self.executor_rm_url_suffix % container_id)
 
     def get_active_executors(self, executor_type: str, status: int) -> list[ExecutorSchema]:
         """
@@ -132,9 +133,9 @@ class Task(metaclass=SingletonMeta):
         resp = self.request_session.request('GET', self.scheduler_executor_url,
                                             params={'filter_type': executor_type,
                                                     'filter_status': status})
-        return resp.get('data')
+        return [ExecutorSchema.parse_obj(i) for i in resp.get('data')]
 
-    def run_task(self, url: str, params: dict):
+    def run_task(self, url: str, params: dict) -> str:
         """
         run task
         :param url:
@@ -142,7 +143,7 @@ class Task(metaclass=SingletonMeta):
         :return:
         """
         resp = self.request_session.request('POST', url + self.executor_run_url_suffix,
-                                            json=json.dumps(params))
+                                            json=params)
         container_id = resp.get('data', {}).get('container_id')
         if container_id:
             return container_id
@@ -167,31 +168,34 @@ class Task(metaclass=SingletonMeta):
         task_name = kwargs.pop('task_name')
         container_id = kwargs.pop('container_id')
         executor = kwargs.pop('executor')
-        obj_in = TaskCreate(name=task_name, url=executor.url, type=executor.type, executor_id=executor.id,
-                            container_id=container_id, status=Status.CREATED.value)  # noqa
+        obj_in = dict(name=task_name, url=executor.url, type=executor.type, executor_id=executor.id,
+                            container_id=container_id, status=Status.CREATED.value,  # noqa
+                            task_start_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         resp = self.request_session.request('POST', self.scheduler_task_url, json=obj_in)
-        return resp.get('data')
+        return TaskSchema.parse_obj(resp.get('data'))
 
-    def update_scheduler_task_record(self, pk: int, **kwargs) -> TaskSchema:
+    def update_scheduler_task_record(self, pk: int, status: str, task_end_time: datetime) -> TaskSchema:
         """
         update task record
         :param pk:
-        :param kwargs:
+        :param status:
+        :param task_end_time:
         :return:
         """
         # 主要字段为 status 和 task_end_time
-        obj_in = TaskUpdate(status=kwargs.pop('status'), task_end_time=kwargs.pop('task_end_time'))
+        obj_in = dict(status=status, task_end_time=task_end_time.strftime('%Y-%m-%d %H:%M:%S'))
         resp = self.request_session.request('PATCH', self.scheduler_task_crud_url % pk, json=obj_in)
-        return resp.get('data')
+        return TaskSchema.parse_obj(resp.get('data'))
 
-    def create_server_task_record(self, task_name: str) -> int:
+    def create_server_task_record(self, task_name: str, job_id: str) -> int:
         """
         create server task record
         :param task_name:
+        :param job_id:
         :return:
         """
         # task组装
-        task_create = {'name': task_name}
+        task_create = {'name': task_name, 'job_id': job_id}
         task = self.request_session.request('POST', self.server_task_url, json=task_create).get('data', {})
         task_id = task.get('id')
         return task_id
@@ -229,7 +233,7 @@ class Task(metaclass=SingletonMeta):
         :return:
         """
         resp = self.request_session.request('GET', self.scheduler_executor_crud_url % pk)
-        return resp.get('data')
+        return ExecutorSchema.parse_obj(resp.get('data'))
 
     def choose_executor(self, executor_type: str, selector: str) -> ExecutorSchema:
         """
@@ -246,7 +250,8 @@ class Task(metaclass=SingletonMeta):
         # 3. 如果没有对应执行器的，则获取全部执行器任务调度个数最少的一个
 
         # 4. 如果有对应的执行器，则获取对应执行器中任务调度个数最少的一个
-        return active_executors[0]
+        choose_executor = active_executors[0]
+        return choose_executor
 
     @staticmethod
     def gen_task_name(job_id: str, scheduler_type: str = 'scheduled') -> str:

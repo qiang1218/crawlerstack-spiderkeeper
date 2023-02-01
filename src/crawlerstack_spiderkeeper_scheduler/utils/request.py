@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 class BaseRequest(metaclass=SingletonMeta):
     """Base request"""
     NAME: str
-    DELAY = 1
-    MAX_RETRY = 3
+    DELAY = 0
+    MAX_RETRY = 1
 
     def request(self, *args, **kwargs):
         """request"""

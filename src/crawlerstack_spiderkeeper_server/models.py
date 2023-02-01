@@ -36,7 +36,7 @@ class Project(BaseModel):
     # Cascade delete artifacts when delete project.
     artifacts = relationship(
         'Artifact',
-        backref='project',
+        back_populates='project',
         passive_deletes=True  # 在删除父记录的时候检查子记录的约束。如果 ON DELETE 为 RESTRICT 则抛出异常。对于非数据库
     )
 
@@ -56,8 +56,10 @@ class Artifact(BaseModel):
         nullable=False
     )  # 级联删除
 
+    project = relationship('Project', back_populates='artifacts')
+
     # Restrict delete jobs when delete project.
-    jobs = relationship('Job', backref='artifact', passive_deletes=True)
+    jobs = relationship('Job', back_populates='artifact', passive_deletes=True)
 
 
 class StorageServer(BaseModel):
@@ -71,7 +73,7 @@ class StorageServer(BaseModel):
 
     jobs = relationship(
         'Job',
-        backref='storage_server',
+        back_populates='storage_server',
         passive_deletes=False  # 在删除父记录的时候检查子记录的约束。如果 ON DELETE 为 RESTRICT 则抛出异常。对于非数据库
     )
 
@@ -102,8 +104,12 @@ class Job(BaseModel):
         ForeignKey('artifact.id', ondelete='RESTRICT')
     )
 
+    # add ref parent relationship
+    storage_server = relationship('StorageServer', back_populates='jobs')
+    artifact = relationship('Artifact', back_populates='jobs')
+
     # Restrict delete when delete job.
-    tasks = relationship("Task", backref="job", cascade="all, delete-orphan", passive_deletes=True)
+    tasks = relationship("Task", back_populates="job", cascade="all, delete-orphan", passive_deletes=True)
 
 
 class Task(BaseModel):
@@ -118,7 +124,10 @@ class Task(BaseModel):
         nullable=True,
         comment='job id'
     )
-    task_details = relationship('TaskDetail', backref='task', cascade='all, delete-orphan', passive_deletes=True)
+
+    job = relationship('Job', back_populates='tasks')
+
+    task_details = relationship('TaskDetail', back_populates='task', cascade='all, delete-orphan', passive_deletes=True)
 
 
 class TaskDetail(BaseModel):
@@ -133,3 +142,5 @@ class TaskDetail(BaseModel):
         nullable=False,
         comment='task id'
     )
+
+    task = relationship('Task', back_populates='task_details')

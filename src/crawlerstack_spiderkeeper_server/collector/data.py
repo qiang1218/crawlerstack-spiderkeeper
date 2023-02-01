@@ -14,4 +14,5 @@ class DataBackgroundTask(BaseTask):
         :return:
         """
         task_name = body.get('task_name')
-        await DataService().create(task_name=task_name, data=body)
+        data = body.get('data')
+        await DataService().create(task_name=task_name, data=data)

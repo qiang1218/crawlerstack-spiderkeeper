@@ -3,6 +3,7 @@
 import logging
 from typing import Any
 
+from fastapi_sa.database import session_ctx
 from crawlerstack_spiderkeeper_server.data_storage import StorageFactory
 from crawlerstack_spiderkeeper_server.repository.job import JobRepository
 from crawlerstack_spiderkeeper_server.repository.storage_server import \
@@ -45,6 +46,7 @@ class DataService(ICRUD):
         """Task detail repository"""
         return TaskDetailRepository()
 
+    @session_ctx
     async def create(self, task_name: str, data: dict) -> None:
         """Create data"""
         # 1.根据task_name获取对应的task_id
@@ -56,7 +58,7 @@ class DataService(ICRUD):
             return
 
         # 3.根据storage_server的storage_class 和 uri确定存储的实现逻辑
-        storage_server = await self.storage_server_repository.get_storage_server_from_job_id(job.storage_server_id)
+        storage_server = await self.storage_server_repository.get_storage_server_from_job_id(job.id)
 
         # 4.保存数据
         name = storage_server.name
