@@ -41,11 +41,11 @@ async def test_write(temp_dir):
     with tempfile.TemporaryFile(dir=temp_dir) as file:
         file.close()
         file_name = Path(file.name)
-        tail = File(file_name)
-        await tail.write(data)
-        await tail.write(data)
+        file_obj = File(file_name)
+        await file_obj.write(data)
+        await file_obj.write(data)
 
-        with open(file_name, 'r') as f:
+        with open(file_name, 'r', encoding="utf-8") as f:
             file_data = f.readlines()
             assert len(file_data) == len(data) * 2
 

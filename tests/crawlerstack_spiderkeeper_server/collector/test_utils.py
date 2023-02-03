@@ -35,16 +35,14 @@ async def test_kombu():
 
     async def use_data(data):
         """consume then have to do some coroutine"""
-        # await asyncio.sleep(0)
         data = json.loads(data)
         assert data['msg'] == 'foo'
 
     def consume_and_auto_ack(loop: AbstractEventLoop, body, message):
         """Registered the callback to consumer """
-        # To submit a coroutine object to the event loop. (thread safe)
         fut = asyncio.run_coroutine_threadsafe(use_data(body), loop)
-        fut.result(5)  # Wait for the result from other os thread
-        message.ack()  # then manual ack
+        fut.result(5)
+        message.ack()
 
     callback = functools.partial(consume_and_auto_ack, asyncio.get_running_loop())
     await kombu.consume(
@@ -53,5 +51,8 @@ async def test_kombu():
         exchange_name='foo',
         register_callbacks=[callback],
     )
+    await asyncio.sleep(0.001)
+    asyncio.run_coroutine_threadsafe(kombu.start_consume(limit=1), asyncio.get_running_loop())
+    await asyncio.sleep(0.001)
 
-    await kombu.server_stop()
+    await asyncio.sleep(2)

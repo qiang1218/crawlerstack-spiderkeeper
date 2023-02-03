@@ -5,7 +5,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from crawlerstack_spiderkeeper_forwarder.config import \
-    settings as executor_settings
+    settings as forwarder_settings
 from crawlerstack_spiderkeeper_forwarder.manage import SpiderKeeperForwarder
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,8 @@ def api_url():
 @pytest.fixture()
 def settings():
     """settings fixture"""
-    return executor_settings
+    forwarder_settings.MQ = 'memory://localhost'
+    return forwarder_settings
 
 
 @pytest.fixture(autouse=True)

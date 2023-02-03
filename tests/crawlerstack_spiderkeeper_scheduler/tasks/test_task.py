@@ -1,6 +1,4 @@
 """test task"""
-import datetime
-
 import pytest
 
 from crawlerstack_spiderkeeper_scheduler.services import ExecutorService
@@ -72,7 +70,8 @@ class TestTask:
     def test_create_server_task_record(self, task, mocker):
         """test create server task record"""
         request = mocker.patch.object(RequestWithSession, 'request', return_value={'data': {'id': 1}})
-        task.create_server_task_record(task_name='1-scheduled-20230109175203')
+        task_id = task.create_server_task_record(task_name='1-scheduled-20230109175203', job_id='1')
+        assert task_id == 1
         request.assert_called_once()
 
     def test_update_server_task_record(self, task, mocker):

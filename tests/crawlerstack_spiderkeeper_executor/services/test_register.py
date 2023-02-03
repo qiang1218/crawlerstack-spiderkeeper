@@ -2,7 +2,7 @@
 import pytest
 
 from crawlerstack_spiderkeeper_executor.services import RegisterService
-from crawlerstack_spiderkeeper_executor.utils.request import RequestWithSession
+from crawlerstack_spiderkeeper_executor.utils.request import RequestWithHttpx
 
 
 @pytest.fixture
@@ -11,10 +11,10 @@ def register_service(settings):
     return RegisterService(settings)
 
 
-def test_register(register_service, mocker):
+async def test_register(register_service, mocker):
     """test register"""
-    request = mocker.patch.object(RequestWithSession, 'request', return_value={'data': {'id': 1}})
-    executor_id = register_service.register()
+    request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'data': {'id': 1}})
+    executor_id = await register_service.register()
     assert executor_id == 1
     request.assert_called_once()
 
