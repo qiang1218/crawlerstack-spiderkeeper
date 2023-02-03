@@ -8,7 +8,7 @@ from crawlerstack_spiderkeeper_server.services.job import JobService
 from crawlerstack_spiderkeeper_server.utils.exceptions import (
     JobPauseError, JobRunError, JobStoppedError, JobUnpauseError,
     ObjectDoesNotExist)
-from crawlerstack_spiderkeeper_server.utils.request import RequestWithSession
+from crawlerstack_spiderkeeper_server.utils.request import RequestWithHttpx
 
 
 @pytest.fixture()
@@ -108,12 +108,12 @@ async def test_get_storage_server_from_job_id(init_job, session, service, pk, st
 )
 async def test_run_by_id(init_job, session, service, mocker, pk, expect_value):
     """test run by id"""
-    request = mocker.patch.object(RequestWithSession, 'request', return_value={'message': 'ok'})
+    request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'success'})
     if inspect.isclass(expect_value):
         with pytest.raises(expect_value):
-            await service.run_by_id(pk)
+            await service.start_by_id(pk)
     else:
-        obj = await service.run_by_id(pk)
+        obj = await service.start_by_id(pk)
         assert obj.enabled
         request.assert_called_once()
 
@@ -128,7 +128,7 @@ async def test_run_by_id(init_job, session, service, mocker, pk, expect_value):
 )
 async def test_stop_by_id(init_job, session, service, mocker, pk, expect_value):
     """test stop by id"""
-    request = mocker.patch.object(RequestWithSession, 'request', return_value={'message': 'ok'})
+    request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'success'})
     if inspect.isclass(expect_value):
         with pytest.raises(expect_value):
             await service.stop_by_id(pk)
@@ -148,7 +148,7 @@ async def test_stop_by_id(init_job, session, service, mocker, pk, expect_value):
 )
 async def test_pause_by_id(init_job, session, service, mocker, pk, expect_value):
     """test pause by id"""
-    request = mocker.patch.object(RequestWithSession, 'request', return_value={'message': 'ok'})
+    request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'success'})
     if inspect.isclass(expect_value):
         with pytest.raises(expect_value):
             await service.pause_by_id(pk)
@@ -170,7 +170,7 @@ async def test_pause_by_id(init_job, session, service, mocker, pk, expect_value)
 )
 async def test_unpause_by_id(init_job, session, service, mocker, pk, expect_value):
     """test unpause by id"""
-    request = mocker.patch.object(RequestWithSession, 'request', return_value={'message': 'ok'})
+    request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'success'})
     if inspect.isclass(expect_value):
         with pytest.raises(expect_value):
             await service.unpause_by_id(pk)
