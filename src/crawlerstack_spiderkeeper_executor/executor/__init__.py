@@ -3,7 +3,7 @@ Executor API
 """
 from typing import Type
 
-from crawlerstack_spiderkeeper.utils.exceptions import SpiderkeeperError
+from crawlerstack_spiderkeeper_executor.utils.exceptions import SpiderkeeperError
 from crawlerstack_spiderkeeper_executor.config import settings
 from crawlerstack_spiderkeeper_executor.executor.base import BaseExecutor
 from crawlerstack_spiderkeeper_executor.executor.docker import DockerExecutor
