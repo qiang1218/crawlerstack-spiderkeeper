@@ -20,7 +20,6 @@ class BaseTask:
     kombu = Kombu()
 
     _task: Optional[asyncio.Task] = None
-    _should_stop: asyncio.Future = asyncio.Future()
 
     @property
     def queue_name(self):
@@ -43,9 +42,6 @@ class BaseTask:
         :return:
         """
         logger.info('Starting task, name: %s', self.NAME)
-        if self._should_stop.done():
-            self._should_stop = asyncio.Future()
-
         # 系统启动后开启监控数据消费任务
         loop = asyncio.get_running_loop()
 

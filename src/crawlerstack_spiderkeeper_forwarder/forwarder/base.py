@@ -15,7 +15,16 @@ class BaseTask:
     kombu = Kombu()
 
     _task: Optional[asyncio.Task] = None
-    _should_stop: asyncio.Future = asyncio.Future()
+    _should_stop: asyncio.Future = None
+
+    @classmethod
+    async def start_from_cls(cls, **_kwargs):
+        """
+        Stop server
+        :return:
+        """
+        obj = cls()
+        await obj.start()
 
     @classmethod
     async def stop_from_cls(cls, **_kwargs):
@@ -58,6 +67,15 @@ class BaseTask:
             exchange_name=self.exchange_name,
             body=body
         )
+
+    async def start(self, **_):
+        """
+        Start server
+        :return:
+        """
+        logger.info('Starting task, name: %s', self.NAME)
+        if self._should_stop.done():
+            self._should_stop = asyncio.Future()
 
     async def stop(self):
         """

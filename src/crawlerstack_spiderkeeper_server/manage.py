@@ -10,7 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from crawlerstack_spiderkeeper_server.collector import Kombu
 from crawlerstack_spiderkeeper_server.rest_api import RestAPI
-from crawlerstack_spiderkeeper_server.signals import server_start, server_stop
+from crawlerstack_spiderkeeper_server.signals import (kombu_start, kombu_stop,
+                                                      server_start,
+                                                      server_stop)
 from crawlerstack_spiderkeeper_server.utils.exceptions import SpiderkeeperError
 from crawlerstack_spiderkeeper_server.utils.log import configure_logging
 
@@ -52,9 +54,23 @@ class SpiderKeeperServer:
     async def start(self):
         """Start api"""
         self.rest_api.init()
-        await Kombu().server_start()
         await server_start.send()
         logger.debug('Spiderkeeper server started')
+
+    @staticmethod
+    async def kombu_start():
+        """Kombu start"""
+        # 将消费者与事件单独绑定,减少在测试时候的多次初始化
+        await kombu_start.send()
+        await asyncio.sleep(0.01)
+        asyncio.run_coroutine_threadsafe(Kombu().start_consume(), asyncio.get_running_loop())
+
+    @staticmethod
+    async def kombu_stop():
+        """Kombu stop"""
+        # 消费者事件信号处理,关闭对应的绑定
+        await kombu_stop.send()
+        await asyncio.sleep(2)
 
     async def run(self):
         """Run"""
@@ -62,20 +78,20 @@ class SpiderKeeperServer:
             await self.rest_api.start()
             self.install_signal_handlers()
             await self.start()
-            await asyncio.sleep(10)
-            await Kombu().start_consume()
+            await self.kombu_start()
             while not self.should_exit:
                 # 暂时不做任何处理。
                 await asyncio.sleep(0.001)
         except SpiderkeeperError as ex:
             logging.exception(ex)
         finally:
+            await self.kombu_stop()
             await self.stop()
 
     async def stop(self):
         """Stop spiderkeeper"""
         await server_stop.send()
-        await asyncio.sleep(5)
+        await asyncio.sleep(0.001)
         await self.rest_api.stop()
 
     def install_signal_handlers(self) -> None:
