@@ -1,21 +1,17 @@
-"""task"""
-import json
+"""Task"""
 import time
 from datetime import datetime
 from typing import Any
 
 from crawlerstack_spiderkeeper_scheduler.config import settings
 from crawlerstack_spiderkeeper_scheduler.schemas.executor import ExecutorSchema
-from crawlerstack_spiderkeeper_scheduler.schemas.task import (TaskCreate,
-                                                              TaskSchema,
-                                                              TaskUpdate)
+from crawlerstack_spiderkeeper_scheduler.schemas.task import TaskSchema
 from crawlerstack_spiderkeeper_scheduler.utils import SingletonMeta
 from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
     RemoteTaskRunError
 from crawlerstack_spiderkeeper_scheduler.utils.request import \
     RequestWithSession
-from crawlerstack_spiderkeeper_scheduler.utils.status import (ExitStatus,
-                                                              Status)
+from crawlerstack_spiderkeeper_scheduler.utils.status import ExitStatus, Status
 
 
 class Task(metaclass=SingletonMeta):
@@ -84,7 +80,8 @@ class Task(metaclass=SingletonMeta):
                 # 任务状态更新操作
                 self.update_server_task_record(pk=server_task_id, status=Status[status].value)  # noqa
                 # scheduler中task表状态更新
-                self.update_scheduler_task_record(pk=task.id, status=Status[status].value, task_end_time=datetime.now())
+                self.update_scheduler_task_record(pk=task.id, status=Status[status].value,  # noqa
+                                                  task_end_time=datetime.now())
                 # 如果退出状态时，循环终止
                 if _status in ExitStatus.list():
                     break
@@ -169,8 +166,8 @@ class Task(metaclass=SingletonMeta):
         container_id = kwargs.pop('container_id')
         executor = kwargs.pop('executor')
         obj_in = dict(name=task_name, url=executor.url, type=executor.type, executor_id=executor.id,
-                            container_id=container_id, status=Status.CREATED.value,  # noqa
-                            task_start_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                      container_id=container_id, status=Status.CREATED.value,  # noqa
+                      task_start_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         resp = self.request_session.request('POST', self.scheduler_task_url, json=obj_in)
         return TaskSchema.parse_obj(resp.get('data'))
 

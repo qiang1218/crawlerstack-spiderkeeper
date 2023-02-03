@@ -5,7 +5,7 @@ import logging
 from typing import Any
 
 from crawlerstack_spiderkeeper_executor.utils import SingletonMeta
-from crawlerstack_spiderkeeper_executor.utils.request import RequestWithSession
+from crawlerstack_spiderkeeper_executor.utils.request import RequestWithHttpx
 from crawlerstack_spiderkeeper_executor.utils.status import Status
 
 logger = logging.getLogger(__name__)
@@ -49,14 +49,14 @@ class RegisterService(metaclass=SingletonMeta):
     @property
     def request_session(self):
         """request session"""
-        return RequestWithSession()
+        return RequestWithHttpx()
 
-    def register(self) -> int:
+    async def register(self) -> int:
         """
         register
         :return:
         """
-        resp = self.request_session.request('POST', self.register_url, json=self.register_params)
+        resp = await self.request_session.request('POST', self.register_url, json=self.register_params)
         executor_id = resp.get('data', {}).get('id')
         return executor_id
 
@@ -105,8 +105,9 @@ class RegisterService(metaclass=SingletonMeta):
             if self.heartbeat_interval > self.heartbeat_timeout:
                 break
 
-            resp = self.request_session.request('POST', self.heartbeat_url % executor_id, json=self.heartbeat_params(),
-                                                timeout=5)
+            resp = await self.request_session.request('POST', self.heartbeat_url % executor_id,
+                                                      json=self.heartbeat_params(),
+                                                      timeout=5)
             if not resp:
                 self.heartbeat_interval += self.settings.HEARTBEAT_INTERVAL
                 self.heartbeat_retry_count += 1

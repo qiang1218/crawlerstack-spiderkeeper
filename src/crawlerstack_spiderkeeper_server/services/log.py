@@ -38,7 +38,8 @@ class LogService(ICRUD):
         try:
             return await File(filename).last(line=rows)
         except FileNotFoundError as ex:
-            logger.error('No such file or directory, filename: %s' % filename)
+            logger.error('No such file or directory, filename: %s', filename)
+            logger.error('%s', ex)
 
     async def create(self, data: dict) -> None:
         """Create log by task name"""

@@ -4,6 +4,7 @@ import logging
 from typing import Any
 
 from fastapi_sa.database import session_ctx
+
 from crawlerstack_spiderkeeper_server.data_storage import StorageFactory
 from crawlerstack_spiderkeeper_server.repository.job import JobRepository
 from crawlerstack_spiderkeeper_server.repository.storage_server import \

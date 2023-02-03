@@ -412,7 +412,7 @@ python-versions = ">=3.7"
 name = "httpcore"
 version = "0.16.3"
 description = "A minimal low-level HTTP client."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -430,7 +430,7 @@ socks = ["socksio (>=1.0.0,<2.0.0)"]
 name = "httpx"
 version = "0.23.3"
 description = "The next generation HTTP client."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -842,7 +842,7 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 name = "rfc3986"
 version = "1.5.0"
 description = "Validating URI References per RFC 3986"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -1093,7 +1093,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "86e6987f2294e6399bc42d5f1c69e5440a59851fa2cc45290a8ce039455e54cb"
+content-hash = "8233f8e702a1a50306557c2cf58bc92f0739f12cf2e1759381055df7599e204f"
 
 [metadata.files]
 aio-pydispatch = [
