@@ -57,7 +57,7 @@ class SpiderKeeperExecutor:
     async def start_background_task(self):
         """Start background task"""
 
-        executor_id = self.register.register()
+        executor_id = await self.register.register()
         if executor_id:
             await self.register.heartbeat(executor_id=executor_id)
         else:
