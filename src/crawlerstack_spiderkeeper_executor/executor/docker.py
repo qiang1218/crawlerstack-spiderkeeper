@@ -63,13 +63,13 @@ class DockerExecutor(BaseExecutor):
                   'Tty': False,
                   'OpenStdin': False,
                   "Detach": True,
-                  'NetworkDisabled': True,
                   'HostConfig': {
                       'NetworkMode': self.settings.DOCKER_NETWORK,
                       'Init': True,
                       'Binds': executor_params.volume,
-                      'AutoRemove': False
-                  }}
+                      'AutoRemove': False},
+                  'NetworkingConfig': {self.settings.Docker_NETWORK: None}
+                  }
         return config
 
     @staticmethod
