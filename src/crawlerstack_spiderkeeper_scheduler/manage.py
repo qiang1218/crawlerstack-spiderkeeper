@@ -87,6 +87,7 @@ class SpiderKeeperScheduler:
     async def stop(self):
         """Stop spiderkeeper"""
         await server_stop.send()
+        await asyncio.sleep(0.001)
         await self.rest_api.stop()
 
     def install_signal_handlers(self) -> None:
