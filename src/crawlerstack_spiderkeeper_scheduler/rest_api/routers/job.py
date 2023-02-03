@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.get('/jobs/{pk}/_start', response_model=BaseMessage)
-def start(
+async def start(
         *,
         pk: str,
         service: JobService = Depends(),
@@ -25,11 +25,12 @@ def start(
     :param service:
     :return:
     """
-    return service.start_by_id(job_id=pk)
+    await service.start_by_id(job_id=pk)
+    return await service.start_by_id(job_id=pk)
 
 
 @router.get('/jobs/{pk}/_stop', response_model=BaseMessage)
-def stop(
+async def stop(
         *,
         pk: str,
         service: JobService = Depends(),
@@ -40,11 +41,11 @@ def stop(
     :param service:
     :return:
     """
-    return service.stop_by_id(job_id=pk)
+    return await service.stop_by_id(job_id=pk)
 
 
 @router.get('/jobs/{pk}/_pause', response_model=BaseMessage)
-def pause(
+async def pause(
         *,
         pk: str,
         service: JobService = Depends(),
@@ -55,11 +56,11 @@ def pause(
     :param service:
     :return:
     """
-    return service.pause_by_id(job_id=pk)
+    return await service.pause_by_id(job_id=pk)
 
 
 @router.get('/jobs/{pk}/_unpause', response_model=BaseMessage)
-def unpause(
+async def unpause(
         *,
         pk: str,
         service: JobService = Depends(),
@@ -70,4 +71,4 @@ def unpause(
     :param service:
     :return:
     """
-    return service.unpause_by_id(job_id=pk)
+    return await service.unpause_by_id(job_id=pk)

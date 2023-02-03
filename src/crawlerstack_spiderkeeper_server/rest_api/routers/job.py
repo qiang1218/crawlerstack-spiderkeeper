@@ -104,8 +104,8 @@ async def delete(
     return await service.delete_by_id(pk=pk)
 
 
-@router.get('/jobs/{pk}/_run', response_model=BaseMessage)
-async def run(
+@router.get('/jobs/{pk}/_start', response_model=BaseMessage)
+async def start(
         *,
         pk: int,
         service: JobService = Depends(),
@@ -116,7 +116,7 @@ async def run(
     :param service:
     :return:
     """
-    return await service.run_by_id(pk=pk)
+    return await service.start_by_id(pk=pk)
 
 
 @router.get('/jobs/{pk}/_pause', response_model=BaseMessage)

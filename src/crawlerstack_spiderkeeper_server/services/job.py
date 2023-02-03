@@ -18,7 +18,7 @@ from crawlerstack_spiderkeeper_server.utils.exceptions import (JobPauseError,
                                                                JobRunError,
                                                                JobStoppedError,
                                                                JobUnpauseError)
-from crawlerstack_spiderkeeper_server.utils.request import RequestWithSession
+from crawlerstack_spiderkeeper_server.utils.request import RequestWithHttpx
 from crawlerstack_spiderkeeper_server.utils.types import (CreateSchemaType,
                                                           ModelSchemaType,
                                                           UpdateSchemaType)
@@ -43,7 +43,7 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
     @property
     def request_session(self):
         """Request"""
-        return RequestWithSession()
+        return RequestWithHttpx()
 
     @property
     def start_url(self):
@@ -104,9 +104,9 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
             await self.storage_server_repository.exists(obj_in.storage_server_id)
         return await self.repository.update_by_id(pk=pk, obj_in=obj_in)
 
-    async def run_by_id(self, pk: int):
+    async def start_by_id(self, pk: int):
         """
-        Run by id
+        Start by id
         :param pk:
         :return:
         """
@@ -115,8 +115,8 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
         # 2. 状态一致性判断
         if not job.enabled:
             # 3. 调用调度器接口
-            resp = self.request_session.request('GET', self.start_url % pk)
-            if resp.get('message') == 'ok':
+            resp = await self.request_session.request('GET', self.start_url % pk)
+            if resp.get('message') == 'success':
                 # 4. 数据库状态修改
                 return await self.repository.update_by_id(pk=pk, obj_in=dict(enabled=True, pause=False))
             return {'message': f"Job start Scheduler failed, job id: {pk}, exception info: {resp.get('message')}"}
@@ -134,8 +134,8 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
         # 2. 状态一致性判断
         if job.enabled:
             # 3. 接口调用
-            resp = self.request_session.request('GET', self.stop_url % pk)
-            if resp.get('message') == 'ok':
+            resp = await self.request_session.request('GET', self.stop_url % pk)
+            if resp.get('message') == 'success':
                 # 数据库状态修改
                 return await self.repository.update_by_id(pk=pk, obj_in=dict(enabled=False, pause=False))
             return {'message': f"Job stop failed, job id: {pk}, exception info: {resp.get('message')}"}
@@ -153,8 +153,8 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
         # 2. 状态一致性判断
         if job.enabled and not job.pause:
             # 3. 接口调用
-            resp = self.request_session.request('GET', self.pause_url % pk)
-            if resp.get('message') == 'ok':
+            resp = await self.request_session.request('GET', self.pause_url % pk)
+            if resp.get('message') == 'success':
                 # 数据库状态修改
                 return await self.repository.update_by_id(pk=pk, obj_in=dict(pause=True))
             return {'message': f"Job pause failed, job id: {pk}, exception info: {resp.get('message')}"}
@@ -172,8 +172,8 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
         # 2. 状态一致性判断
         if job.enabled and job.pause:
             # 3. 接口调用
-            resp = self.request_session.request('GET', self.unpause_url % pk)
-            if resp.get('message') == 'ok':
+            resp = await self.request_session.request('GET', self.unpause_url % pk)
+            if resp.get('message') == 'success':
                 # 数据库状态修改
                 return await self.repository.update_by_id(pk=pk, obj_in=dict(pause=False))
             return {'message': f"Job unpause failed, job id: {pk}, exception info: {resp.get('message')}"}
