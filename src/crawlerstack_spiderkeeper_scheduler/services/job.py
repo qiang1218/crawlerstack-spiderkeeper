@@ -111,13 +111,13 @@ class JobService:
         """
         # 执行器变量，统一小写
         images = artifact.get('image') + ':' + (artifact.get('version') if artifact.get('version') else 'latest')
-        # cmdline 字符串 如果多个命令字符串 "['','']"
+        # cmdline 字符串 空格链接
         cmdline = job.get('cmdline', '')
         executor_selector = job.get('executor_selector')
         executor_type = job.get('executor_type')
         # volume ; 切割
         volume = job.get('volume', '').split(';')
-        # environment ['FOO=bar', 'BAZ=q']  ;切割
+        # environment  字符串 ;切割 ['FOO=bar', 'BAZ=q']
         environment = job.get('environment', '').split(';')
 
         return {'image': images, 'cmdline': cmdline, 'executor_selector': executor_selector,

@@ -55,16 +55,3 @@
 #         await asyncio.sleep(1)
 #
 #         await executor.client.close()
-#
-#     @pytest.mark.parametrize(
-#         'command, expect_value',
-#         [
-#             ('["python", "main.py"]', ['python', 'main.py']),
-#             (['python', 'main.py'], ['python', 'main.py']),
-#             ('test', 'test')
-#         ]
-#     )
-#     def test_format_command(self, executor, command, expect_value):
-#         """test format command"""
-#         result = executor.format_command(command)
-#         assert result == expect_value

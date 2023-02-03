@@ -55,7 +55,7 @@ class DockerExecutor(BaseExecutor):
         environment.extend(self._convert_env(spider_params.dict()))
 
         config = {'Image': image_name,
-                  'Cmd': self.format_command(cmd),
+                  'Cmd': cmd,
                   'Env': environment,
                   'AttachStdin': False,
                   'AttachStdout': False,
@@ -136,12 +136,12 @@ class DockerExecutor(BaseExecutor):
                 yield line
 
     @staticmethod
-    def format_command(command: str | list[str]) -> list[str] | str:
+    def format_command(command: str | list[str], step=' ') -> list[str] | str:
         """
-        Retrieve command(s). if command string starts with [, it returns the command list)
+        Retrieve command(s).
         """
-        if isinstance(command, str) and command.strip().find("[") == 0:
-            return ast.literal_eval(command)
+        if isinstance(command, str) and command:
+            return str.split(step)
         return command
 
     async def close(self):
