@@ -10,11 +10,10 @@ from typing import Any, Callable, List, Optional
 
 from kombu import Connection, Consumer, Exchange, Queue, producers
 
-from crawlerstack_spiderkeeper_forwarder.config import settings
-from crawlerstack_spiderkeeper_forwarder.utils import (SingletonMeta,
-                                                       run_in_executor)
-from crawlerstack_spiderkeeper_forwarder.utils.exceptions import \
-    SpiderkeeperError
+from crawlerstack_spiderkeeper_server.config import settings
+from crawlerstack_spiderkeeper_server.utils import (SingletonMeta,
+                                                    run_in_executor)
+from crawlerstack_spiderkeeper_server.utils.exceptions import SpiderkeeperError
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +27,12 @@ class Kombu(metaclass=SingletonMeta):
 
     __connect = None
     _server_running = False
-    _should_stop: asyncio.Future = asyncio.Future()
+    _should_stop: asyncio.Future = None
 
     async def server_start(self, **_):
         """server start"""
         self._server_running = True
-        if self._should_stop.done():
+        if not self._should_stop:
             self._should_stop = asyncio.Future()
 
     async def server_stop(self, **_):
@@ -49,7 +48,7 @@ class Kombu(metaclass=SingletonMeta):
     def check_server(self) -> bool:
         """
         检查 server 的状态，如果 server 没启动，
-        则等待 5 秒后再次检查，如果仍没有启动，抛出异常。
+        则等待 2 秒后再次检查，如果仍没有启动，抛出异常。
         :return:
         """
         if not self._server_running:
@@ -193,11 +192,6 @@ class Kombu(metaclass=SingletonMeta):
             def cb(body: Dict, message: Message):
                 logging.debug(body)
                 message.ack()
-        :param limit:
-        :param timeout:
-        :param safety_interval:
-        :param should_stop:
-
         :return:
         """
         self.check_server()
@@ -207,7 +201,7 @@ class Kombu(metaclass=SingletonMeta):
             consumer.register_callback(callback)
         consumer.consume()
         # 添加延迟,让channel绑定成功
-        await asyncio.sleep(5)
+        await asyncio.sleep(0.001)
 
     async def start_consume(
             self,
@@ -246,7 +240,12 @@ class Kombu(metaclass=SingletonMeta):
         """
         elapsed = 0
         for _ in limit and range(limit) or count():
-            server_running = self.check_server()
+            # 如果信号中断发生在之前, 需要处理异常,确保循环中断
+            try:
+                server_running = self.check_server()
+            except SpiderkeeperError:
+                logger.debug('Kombu server stop')
+                server_running = False
 
             _should_stop = not server_running or (should_stop and should_stop.done())
             # 如果 Server 不在运行，或者 should_stop
@@ -255,7 +254,7 @@ class Kombu(metaclass=SingletonMeta):
                 break
             try:
                 logger.debug('Kombu draining event 1 seconds.')
-                self.connect.drain_events(timeout=2)
+                self.connect.drain_events(timeout=1)
             except socket.timeout:
                 self.connect.heartbeat_check()
                 # 超时计时，如果超时时间 elapsed 大于给定的超时时间 timeout 则退出
