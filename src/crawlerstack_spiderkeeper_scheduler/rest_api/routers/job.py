@@ -25,7 +25,6 @@ async def start(
     :param service:
     :return:
     """
-    await service.start_by_id(job_id=pk)
     return await service.start_by_id(job_id=pk)
 
 
