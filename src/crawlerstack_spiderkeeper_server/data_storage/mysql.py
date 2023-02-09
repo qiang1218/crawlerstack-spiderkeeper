@@ -49,10 +49,9 @@ class MysqlStorage(Storage):
         conn = self.default_connector.conn
         conn.ping()
         # 数据存储
-        cursor = conn.cursor()
-        cursor.executemany(sql, data.get('datas'))
-        conn.commit()
-        cursor.close()
+        with conn.cursor() as cursor:
+            cursor.executemany(sql, data.get('datas'))
+            conn.commit()
         # 引擎过期时间更新
         self.default_connector.expire_date = datetime.now() + timedelta(self.expire_day)
         return True
