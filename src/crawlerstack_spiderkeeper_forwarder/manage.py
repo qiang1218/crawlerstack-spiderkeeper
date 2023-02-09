@@ -5,7 +5,6 @@ import asyncio
 import logging
 import signal as system_signal
 
-from crawlerstack_spiderkeeper_forwarder.forwarder.utils import Kombu
 from crawlerstack_spiderkeeper_forwarder.rest_api import RestAPI
 from crawlerstack_spiderkeeper_forwarder.signals import (server_start,
                                                          server_stop)
@@ -46,7 +45,6 @@ class SpiderKeeperForwarder:
         """Start api"""
         self.rest_api.init()
         await server_start.send()
-        await Kombu().server_start()
 
     async def run(self):
         """Run"""
