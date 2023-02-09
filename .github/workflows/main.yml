@@ -14,34 +14,33 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04]
-        python: [3.10]
+        os: [ ubuntu-20.04 ]
+        python: [ "3.10" ]
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v3
+
+      - name: Install libxml2 and libxslt
+        run: sudo apt-get install libxml2-dev libxslt-dev python-dev
+
       - name: Set up Python ${{ matrix.python }} on ${{ matrix.os }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install tox
-      - name: test
+      - name: Test with tox
         run: |
           tox -e py
-
   linting:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
       - run: pip install tox
       - run: |
           tox -e isort
-          tox -e pylint
+          tox -e lint
