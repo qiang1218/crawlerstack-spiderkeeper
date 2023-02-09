@@ -39,15 +39,15 @@ async def test_write(temp_dir):
     """Test write"""
     data = ['line1', 'line2', 'line3']
     with tempfile.TemporaryFile(dir=temp_dir) as file:
-        file.close()
         file_name = Path(file.name)
-        file_obj = File(file_name)
-        await file_obj.write(data)
-        await file_obj.write(data)
+        file.close()
+    file_obj = File(file_name)
+    await file_obj.write(data)
+    await file_obj.write(data)
 
-        with open(file_name, 'r', encoding="utf-8") as f:
-            file_data = f.readlines()
-            assert len(file_data) == len(data) * 2
+    with open(file_name, 'r', encoding="utf-8") as f:
+        file_data = f.readlines()
+        assert len(file_data) == len(data) * 2
 
 
 @pytest.mark.parametrize(
