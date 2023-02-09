@@ -38,7 +38,7 @@ async def test_head(tail):
 async def test_write(temp_dir):
     """Test write"""
     data = ['line1', 'line2', 'line3']
-    with tempfile.TemporaryFile(
+    with tempfile.NamedTemporaryFile(
             mode='w',
             dir=temp_dir,
             prefix='test-write',
