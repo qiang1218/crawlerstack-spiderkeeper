@@ -29,8 +29,8 @@
 #         ),
 #             executor_params=ExecutorSchema(
 #                 image='python:3.10',
-#                 cmdline="['python','-c', 'for i in range(100):import logging;"
-#                         "logging.error(i);import time;time.sleep(0.1)']",
+#                 cmdline=['python', '-c',
+#                          'for i in range(100):import logging;logging.error(i);import time;time.sleep(0.1)'],
 #                 volume=None,
 #                 environment=None
 #             ))
