@@ -1,0 +1,58 @@
+DEBUG: false
+verbose: false
+
+##########################################################
+HOST: localhost
+PORT: 8080
+
+cors_origins:
+  - http://localhost:8080
+  - http://127.0.0.1:8080
+  - http://172.*.*.*:*
+  - http://192.168.6.18:9090
+  - http://192.168.6.18:80
+  - http://192.168.6.18:3001
+##########################################################
+# Log
+# default log path is `/home/<user>/.local/spiderkeeper/log`
+LOGPATH: logs
+LOGLEVEL: INFO
+LOG_TASK_LINE: 20
+LOG_TASK_PATH_PREFIX: task_logs
+LOG_TASK_PATH_SUFFIX: .log
+LOG_TASK_PATH_SEPARATOR: '-'
+
+##########################################################
+# database uri
+# ref https://docs.sqlalchemy.org/en/13/core/engines.html
+# eg: mysql://root:root@127.0.0.1:3306/spiderkeeper?charset=utf8
+# eg: sqlite:///tmp/spiderkeeper.db
+# eg: postgresql://scott:tiger@localhost:5432/mydatabase
+DATABASE: mysql+aiomysql://root:1qazZAQ!@192.168.6.15:3306/spiderkeeper_server?charset=UTF8MB4
+
+##########################################################
+# Kombu
+#  mq: 'amqp://guest:guest@localhost:5672//'
+MQ: memory://localhost
+
+##########################################################
+# pagination
+PAGE: 0
+SIZE: 10
+
+##########################################################
+# data storage
+# EXPIRE_DAY default: 1  # 1day
+# EXPIRE_INTERVAL default: 3600  # 3600s
+EXPIRE_DAY: 1
+EXPIRE_INTERVAL: 3600
+
+##########################################################
+# scheduler
+# EXPIRE_DAY default: 1  # 1day
+# EXPIRE_INTERVAL default: 3600  # 3600s
+SCHEDULER_URL: http://localhost:8081/api/v1
+SCHEDULER_START_SUFFIX: /jobs/%s/_start
+SCHEDULER_STOP_SUFFIX: /jobs/%s/_stop
+SCHEDULER_PAUSE_SUFFIX: /jobs/%s/_pause
+SCHEDULER_UNPAUSE_SUFFIX: /jobs/%s/_unpause

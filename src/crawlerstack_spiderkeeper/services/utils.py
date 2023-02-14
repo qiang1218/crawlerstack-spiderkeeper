@@ -7,7 +7,7 @@ import socket
 from itertools import count
 from typing import Any, Callable, List, Optional, TypeVar
 
-from kombu import (Connection, Consumer, Exchange, Queue, producers)
+from kombu import Connection, Consumer, Exchange, Queue, producers
 
 from crawlerstack_spiderkeeper.config import settings
 from crawlerstack_spiderkeeper.signals import server_start, server_stop
