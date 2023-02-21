@@ -144,3 +144,17 @@ class TaskDetail(BaseModel):
     )
 
     task = relationship('Task', back_populates='task_details')
+
+
+class FileArchive(BaseModel):
+    """
+    File Archive model
+    """
+    # 用来解决缓存状态的文件上传到s3的问题
+    name = Column(String(100), nullable=False, unique=True, comment='名称')
+    local_path = Column(String(200), nullable=False, comment='本地文件路径')
+    key = Column(String(200), nullable=False, comment='s3文件key')
+    storage_name = Column(String(100), nullable=False, comment='存储名称')
+    storage_url = Column(String(200), nullable=False, comment='存储目标url')
+    status = Column(Boolean, default=0, comment='文件待上传状态')
+    expired_time = Column(DateTime, comment='过期时间')

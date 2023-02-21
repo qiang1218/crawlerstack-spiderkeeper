@@ -56,3 +56,9 @@ SCHEDULER_START_SUFFIX: /jobs/%s/_start
 SCHEDULER_STOP_SUFFIX: /jobs/%s/_stop
 SCHEDULER_PAUSE_SUFFIX: /jobs/%s/_pause
 SCHEDULER_UNPAUSE_SUFFIX: /jobs/%s/_unpause
+
+##########################################################
+# file cache
+FILE_PATH_PREFIX: datas
+ARCHIVE_INTERVAL: 3600
+ARCHIVE_MINUTES: 30
