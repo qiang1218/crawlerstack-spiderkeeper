@@ -1,4 +1,5 @@
 """Test config"""
+import datetime
 import logging
 import os
 import tempfile
@@ -11,9 +12,10 @@ from starlette.testclient import TestClient
 
 from crawlerstack_spiderkeeper_server.config import settings as server_settings
 from crawlerstack_spiderkeeper_server.manage import SpiderKeeperServer
-from crawlerstack_spiderkeeper_server.models import (Artifact, BaseModel, Job,
-                                                     Project, StorageServer,
-                                                     Task, TaskDetail)
+from crawlerstack_spiderkeeper_server.models import (Artifact, BaseModel,
+                                                     FileArchive, Job, Project,
+                                                     StorageServer, Task,
+                                                     TaskDetail)
 
 logger = logging.getLogger(__name__)
 
@@ -234,4 +236,20 @@ async def init_task_detail(init_task):
             TaskDetail(item_count=1, task_id=2),
         ]
         db.session.add_all(task_details)
+        await db.session.flush()
+
+
+@pytest.fixture()
+async def init_file_archive():
+    """Init file archive"""
+    async with db():
+        file_archives = [
+            FileArchive(name='test1', local_path='/tmp/test.json', key='/test/test.json', storage_name='s3',
+                        storage_url='s3://access_key:secret_key:entrypoint/bucket', status=True,
+                        expired_time=datetime.datetime.now()),
+            FileArchive(name='test2', local_path='/tmp/test.json', key='/test/test.json', storage_name='s3',
+                        storage_url='s3://access_key:secret_key:entrypoint/bucket', status=True,
+                        expired_time=datetime.datetime.now()),
+        ]
+        db.session.add_all(file_archives)
         await db.session.flush()
