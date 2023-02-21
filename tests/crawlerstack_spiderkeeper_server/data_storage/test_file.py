@@ -71,8 +71,6 @@ class TestFileStorage:
     #         file_name = Path(file.name)
     #     key_obj.get_contents_to_filename(file_name)
     #     await File(file_name).write([data])
-    #     await File(file_name).write([data])
-    #     await File(file_name).write([data])
     #     storage.upload_file(key_name, str(file_name))
     #     # 下载对比，写入2次，三行
     #     key_obj = storage.get(key_name)

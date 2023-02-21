@@ -66,7 +66,7 @@ class TestMysqlStorage:
     #          'drop table test1', 'select count(*) from test1', 2),
     #     ]
     # )
-    # def test_save(self, mocker, storage, url, name, data, insert_sql, table_sql, drop_sql, select_sql, expect_value):
+    # async def test_save(self, mocker, storage, url, name, data, insert_sql, table_sql, drop_sql, select_sql, expect_value):
     #     """test save"""
     #     sql = mocker.patch.object(MysqlStorage, 'sql', return_value=insert_sql)
     #     # 初始化连接
@@ -81,7 +81,7 @@ class TestMysqlStorage:
     #     cursor.execute(table_sql)
     #     storage.default_connector.conn.commit()
     #     # 核心逻辑
-    #     status = storage.save(data)
+    #     status = await storage.save(data)
     #     assert status
     #     # 判断
     #     cursor.execute(select_sql)
