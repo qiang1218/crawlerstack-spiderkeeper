@@ -20,7 +20,8 @@ class SchedulerServer(metaclass=SingletonMeta):
         self.settings = settings
         # 根据环境变量,初始化对应的参数
         jobstores = {
-            'default': SQLAlchemyJobStore(url=self.settings.SCHEDULER_JOB_STORE_DEFAULT)
+            'default': SQLAlchemyJobStore(url=self.settings.SCHEDULER_JOB_STORE_DEFAULT,
+                                          engine_options={"pool_recycle": 3600})
         }
         job_defaults = {
             'coalesce': self.settings.SCHEDULER_JOB_DEFAULTS_COALESCE,
