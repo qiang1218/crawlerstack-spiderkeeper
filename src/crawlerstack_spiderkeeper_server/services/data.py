@@ -65,7 +65,7 @@ class DataService(ICRUD):
         name = storage_server.name
         storage_class = storage_server.storage_class
         url = storage_server.url
-        status = StorageFactory().get_storage(storage_class, name, url).save(data)
+        status = await StorageFactory().get_storage(storage_class, name, url).save(data)
 
         # 5.同时计算数据量，将task_detail表的数据进行填充更新操作,完毕后退出
         data_count = len(data.get('datas'))

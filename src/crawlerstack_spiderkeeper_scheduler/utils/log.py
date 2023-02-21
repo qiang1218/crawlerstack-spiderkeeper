@@ -90,11 +90,11 @@ def init_logging_config() -> Dict:
         },
         "loggers": {
             '': {'level': level, 'handlers': ['console', 'file']},
-            # 'uvicorn.access': {
-            #     'handlers': ['access_file', 'console'],
-            #     'level': level,
-            #     'propagate': False
-            # },
+            'uvicorn.access': {
+                'handlers': ['access_file', 'console'],
+                'level': level,
+                'propagate': False
+            },
             # 'sqlalchemy.engine.base.Engine': {
             #     'handlers': ['console'],
             #     'level': level,
@@ -110,4 +110,6 @@ def init_logging_config() -> Dict:
 
 def configure_logging():
     """Config log"""
-    dictConfig(init_logging_config())
+    log_config = init_logging_config()
+    dictConfig(log_config)
+    return log_config

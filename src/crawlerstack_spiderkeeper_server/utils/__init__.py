@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, AsyncIterable, Callable, List, Optional, Union
 
 import aiofiles
+import aiofiles.os
 from aiofiles.threadpool.binary import AsyncBufferedReader
 
 logger = logging.getLogger(__name__)
@@ -80,6 +81,13 @@ class File:
         async with aiofiles.open(self.filename, 'a', encoding='utf-8') as f_obj:
             for i in datas:
                 await f_obj.write(f'{i}\n')
+
+    async def remove(self):
+        """
+        Remove the file
+        :return:
+        """
+        await aiofiles.os.remove(self.filename)
 
     async def head(self, line_number: int = 50) -> AsyncIterable[str]:
         """

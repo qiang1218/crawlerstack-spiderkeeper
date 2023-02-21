@@ -47,6 +47,16 @@ class UnprocessableEntityError(SpiderkeeperError):
         super().__init__(detail)
 
 
+class CreateConnectionError(SpiderkeeperError):
+    """Create connection error"""
+
+    def __init__(
+            self,
+            detail: str | list | dict = 'Create connection error',
+    ):
+        super().__init__(detail)
+
+
 class DeleteConstraintError(SpiderkeeperError):
     """
     406 Not Acceptable.

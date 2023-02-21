@@ -1,9 +1,9 @@
 """data storage"""
 
 from crawlerstack_spiderkeeper_server.data_storage.base import Storage
-from crawlerstack_spiderkeeper_server.data_storage.file import FileStorage
 from crawlerstack_spiderkeeper_server.data_storage.mongo import MongoStorage
 from crawlerstack_spiderkeeper_server.data_storage.mysql import MysqlStorage
+from crawlerstack_spiderkeeper_server.data_storage.s3_file import FileStorage
 from crawlerstack_spiderkeeper_server.signals import server_start, server_stop
 
 
@@ -25,3 +25,17 @@ server_stop.connect(MysqlStorage().server_stop)
 
 server_start.connect(MysqlStorage().expired)
 server_stop.connect(MysqlStorage().stop)
+
+server_start.connect(MongoStorage().server_start)
+server_stop.connect(MongoStorage().server_stop)
+
+server_start.connect(MongoStorage().expired)
+server_stop.connect(MongoStorage().stop)
+
+server_start.connect(FileStorage().server_start)
+server_stop.connect(FileStorage().server_stop)
+
+server_start.connect(FileStorage().expired)
+server_stop.connect(FileStorage().stop)
+
+server_start.connect(FileStorage().archive)

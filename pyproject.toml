@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "crawlerstack-spiderkeeper"
-version = "3.0.0"
+version = "3.1.0"
 description = "spider keeper"
 authors = ["whg517 <huagang517@126.com>"]
 readme = "README.md"
@@ -43,6 +43,8 @@ cryptography = "^39.0.0"
 greenlet = "^2.0.1"
 requests = "^2.28.2"
 httpx = "^0.23.3"
+pymongo = "^4.3.3"
+boto = "^2.49.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -103,6 +105,7 @@ good-names = [
     "pk",
     "id",
     "v",
+    "db",
     "ModelType",
     "CreateSchemaType",
     "UpdateSchemaType",
