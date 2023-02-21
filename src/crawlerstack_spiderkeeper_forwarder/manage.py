@@ -22,7 +22,7 @@ class SpiderKeeperForwarder:
     """Spiderkeeper manager"""
 
     def __init__(self, settings):
-        configure_logging()
+        log_config = configure_logging()
 
         self.logger = logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
@@ -32,6 +32,7 @@ class SpiderKeeperForwarder:
             host=self.settings.HOST,
             port=self.settings.PORT,
             debug=self.settings.DEBUG,
+            log_config=log_config
         )
         self.should_exit = False
         self.force_exit = True

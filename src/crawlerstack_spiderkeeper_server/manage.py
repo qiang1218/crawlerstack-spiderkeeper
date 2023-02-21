@@ -28,7 +28,7 @@ class SpiderKeeperServer:
     """Spiderkeeper manager"""
 
     def __init__(self, settings):
-        configure_logging()
+        log_config = configure_logging()
 
         self.logger = logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
@@ -41,7 +41,8 @@ class SpiderKeeperServer:
             host=self.settings.HOST,
             port=self.settings.PORT,
             debug=self.settings.DEBUG,
-            db_url=self.settings.DATABASE
+            db_url=self.settings.DATABASE,
+            log_config=log_config,
         )
         self.should_exit = False
         self.force_exit = True

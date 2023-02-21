@@ -2,11 +2,12 @@
 Service API
 """
 from asyncio import Task
-from typing import Optional
+from typing import Any, Dict, Optional, Union
 
 from fastapi import FastAPI
 from uvicorn import Config, Server
 
+from crawlerstack_spiderkeeper_executor import __version__
 from crawlerstack_spiderkeeper_executor.rest_api.handler import \
     init_exception_handler
 from crawlerstack_spiderkeeper_executor.rest_api.middlewares import \
@@ -26,20 +27,21 @@ class RestAPI:
             debug: Optional[bool] = False,
             name: Optional[str] = __name__,
             reload: Optional[bool] = False,
-
+            log_config: Optional[Union[Dict[str, Any], str]] = None,
     ):
         self.name = name
         self.host = host
         self.port = port
         self.debug = debug
         self.reload = reload
+        self.log_config = log_config
 
         self._app = FastAPI(
             title="SpiderKeeperExecutor",
-            version="3.0",
+            version=__version__,
         )
 
-        uvicorn_config = Config(self.app, host=self.host, port=self.port)
+        uvicorn_config = Config(self.app, host=self.host, port=self.port, log_config=self.log_config)
         self._uvicorn_server = Server(uvicorn_config)
         self._server_task: Optional[Task] = None
 
