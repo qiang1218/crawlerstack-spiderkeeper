@@ -64,7 +64,7 @@ class SpiderKeeperServer:
         # 将消费者与事件单独绑定,减少在测试时候的多次初始化
         await kombu_start.send()
         await asyncio.sleep(0.01)
-        asyncio.run_coroutine_threadsafe(Kombu().start_consume(), asyncio.get_running_loop())
+        await Kombu().start_consume(loop=asyncio.get_running_loop())
 
     @staticmethod
     async def kombu_stop():

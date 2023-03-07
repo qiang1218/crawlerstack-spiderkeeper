@@ -30,3 +30,16 @@ class StorageServerRepository(BaseRepository[StorageServer, StorageServerCreate,
             # Job does not exist
             raise ObjectDoesNotExist()
         return self.model_schema.from_orm(job.storage_server)
+
+    async def get_snapshot_server_from_job_id(self, job_id: int) -> StorageServerSchema:
+        """
+        Get snapshot server form job id
+        :param job_id:
+        :return:
+        """
+        stmt = select(Job).filter(Job.id == job_id).options(selectinload(Job.snapshot_server))
+        job: Job = await self.session.scalar(stmt)
+        if not job:
+            # Job does not exist
+            raise ObjectDoesNotExist()
+        return self.model_schema.from_orm(job.snapshot_server)
