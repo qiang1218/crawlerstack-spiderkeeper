@@ -51,6 +51,7 @@ SERVER_TASK_CRUD_SUFFIX: /tasks/%s
 EXECUTOR_RUN_SUFFIX: /_run
 EXECUTOR_WAIT_SUFFIX: /_check/%s
 EXECUTOR_RM_SUFFIX: /_rm/%s
+EXECUTOR_GET_SUFFIX: /containers
 HEARTBEAT_INTERVAL: 5
 
 ##########################################################
@@ -65,7 +66,5 @@ FORWARDER_METRIC_SUFFIX: /metrics
 SCHEDULER_BASE_URL: http://localhost:8081/api/v1
 # get executor and update executor count
 SCHEDULER_EXECUTOR_SUFFIX: /executors
-SCHEDULER_EXECUTOR_CRUD_SUFFIX: /executors/%s
 # create task and update
 SCHEDULER_TASK_SUFFIX: /tasks
-SCHEDULER_TASK_CRUD_SUFFIX: /tasks/%s
