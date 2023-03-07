@@ -5,7 +5,7 @@ from crawlerstack_spiderkeeper_server.services.log import LogService
 
 class LogBackgroundTask(BaseTask):
     """Log background task"""
-    NAME = 'log'
+    NAME = 'spiderkeeper-log'
 
     async def callback(self, body: dict):
         """
