@@ -6,7 +6,7 @@ from crawlerstack_spiderkeeper_executor.executor import executor_factory
 from crawlerstack_spiderkeeper_executor.schemas.base import TaskSchema
 from crawlerstack_spiderkeeper_executor.utils.exceptions import (
     ContainerRmError, ContainerStopError, RemoteTaskCheckError,
-    RemoteTaskRunError)
+    RemoteTaskGetError, RemoteTaskRunError)
 from crawlerstack_spiderkeeper_executor.utils.status import ContainerStatus
 
 logger = logging.getLogger(__name__)
@@ -22,6 +22,22 @@ class ExecutorService:
     def executor(self):
         """executor"""
         return self.executor_cls(settings)
+
+    async def get(self) -> list:
+        """
+        get all active containers
+        :return:
+        """
+        try:
+            datas = await self.executor.get()
+            # 统一进行状态码转换
+            for i in datas:
+                status = i.get('status')
+                i['status'] = ContainerStatus[status].value
+            return datas
+        except Exception as ex:
+            logger.warning("Get active containers failed: %s", ex)
+        raise RemoteTaskGetError()
 
     async def run(self, obj_in: TaskSchema) -> str:
         """

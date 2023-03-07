@@ -6,8 +6,8 @@ import logging
 from fastapi import APIRouter, Depends
 
 from crawlerstack_spiderkeeper_executor.messages.base import BaseMessage
-from crawlerstack_spiderkeeper_executor.messages.executor import \
-    ExecutorMessage
+from crawlerstack_spiderkeeper_executor.messages.executor import (
+    ExecutorAllMessage, ExecutorMessage)
 from crawlerstack_spiderkeeper_executor.schemas.base import TaskSchema
 from crawlerstack_spiderkeeper_executor.services.executor import \
     ExecutorService
@@ -63,3 +63,17 @@ async def remove(
     """
     await service.rm_by_id(container_id=pk)
     return {'message': f'Remove {pk} successfully'}
+
+
+@router.get('/containers', response_model=ExecutorAllMessage)
+async def get(
+        *,
+        service: ExecutorService = Depends(),
+):
+    """
+    get containers
+    :param service:
+    :return:
+    """
+    datas = await service.get()
+    return {'data': datas}
