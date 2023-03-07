@@ -52,7 +52,7 @@ async def test_kombu():
         register_callbacks=[callback],
     )
     await asyncio.sleep(0.001)
-    asyncio.run_coroutine_threadsafe(kombu.start_consume(limit=1), asyncio.get_running_loop())
+    await kombu.start_consume(limit=1, loop=asyncio.get_running_loop())
     await asyncio.sleep(0.001)
 
     await asyncio.sleep(2)

@@ -47,7 +47,7 @@ async def test_create(init_task, mocker, session, service, task_name, data):
 async def test_create_task_detail(init_task, session, service, task_detail_service, task_name, data_count, status):
     """test create task detail"""
     before_count = await task_detail_service.count()
-    await service.create_or_update_task_detail(task_name, data_count, status)
+    await service.create_or_update_task_detail(task_name, data_count, status, 'item_count')
     after_count = await task_detail_service.count()
     assert before_count == after_count - 1
 
@@ -63,7 +63,7 @@ async def test_update_task_detail(init_task_detail, session, service, task_detai
                                   status):
     """test update task detail"""
     before = await task_detail_service.get_by_id(pk)
-    await service.create_or_update_task_detail(task_name, data_count, status)
+    await service.create_or_update_task_detail(task_name, data_count, status, 'item_count')
     after = await task_detail_service.get_by_id(pk)
     assert before.item_count != after.item_count
     assert after.item_count == data_count

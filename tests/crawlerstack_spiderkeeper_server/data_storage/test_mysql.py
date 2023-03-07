@@ -66,7 +66,8 @@ class TestMysqlStorage:
     #          'drop table test1', 'select count(*) from test1', 2),
     #     ]
     # )
-    # async def test_save(self, mocker, storage, url, name, data, insert_sql, table_sql, drop_sql, select_sql, expect_value):
+    # async def test_save(self, mocker, storage, url, name, data, insert_sql, table_sql,
+    #                     drop_sql, select_sql, expect_value):
     #     """test save"""
     #     sql = mocker.patch.object(MysqlStorage, 'sql', return_value=insert_sql)
     #     # 初始化连接

@@ -5,16 +5,62 @@
 import pytest
 
 from crawlerstack_spiderkeeper_server.data_storage import FileStorage
+from crawlerstack_spiderkeeper_server.data_storage.s3_file import StorageRecord
+from crawlerstack_spiderkeeper_server.schemas.file_archive import \
+    FileArchiveCreate
 
 # from crawlerstack_spiderkeeper_server.utils import File
 
 
-class TestFileStorage:
-    """test mongo storage"""
+class TestStorageRecord:
+    """Test storage record"""
 
     @pytest.fixture
     def storage(self):
-        """storage fixtures"""
+        """Storage"""
+        return StorageRecord()
+
+    async def test_clear_record(self, storage, session, init_file_archive):
+        """Test clear record"""
+        await storage.clear_record(pk=1)
+        count = await storage.repository.count()
+        assert count == 1
+
+    async def test_get_record(self, storage, init_file_archive):
+        """Test get record"""
+        result = await storage.get_record()
+        assert len(result) == 1
+
+    async def test_get_record_by_name(self, storage, init_file_archive):
+        """Test get record by name"""
+        result = await storage.get_record_by_name('test1')
+        assert result.id == 1
+
+    async def test_create_record(self, storage, session):
+        """Test create by name"""
+        data = FileArchiveCreate(name='test1',
+                                 local_path='/tmp/test.json',
+                                 key='/test/test.json',
+                                 storage_name='s3',
+                                 storage_url='s3://access_key:secret_key:entrypoint/bucket',
+                                 expired_time=1678172211)
+        await storage.create_record(obj_in=data)
+        count = await storage.repository.count()
+        assert count == 1
+
+    async def test_update_record(self, storage, init_file_archive):
+        """Test update record"""
+
+        result = await storage.update_record(pk=1, obj_in={'name': 'test1_updated'})
+        assert result.name == 'test1_updated'
+
+
+class TestFileStorage:
+    """Test mongo storage"""
+
+    @pytest.fixture
+    def storage(self):
+        """Storage fixtures"""
         return FileStorage()
 
     @pytest.mark.parametrize(
@@ -26,16 +72,29 @@ class TestFileStorage:
         ]
     )
     def test_concat_data(self, storage, fields, datas, expect_value):
-        """test concat data"""
+        """Test concat data"""
         result = storage.concat_data(fields, datas)
         assert result == expect_value
 
     def test_gen_key_name(self, storage):
-        """test gen key name"""
+        """Test gen key name"""
         name = 'test'
-        key_name = storage.gen_key_name(name)
-        assert key_name == storage._key_prefix + 'test.json'  # pylint: disable=protected-access
-    #
+        key_name = storage.gen_data_key_name(name)
+        assert key_name == storage._data_key_prefix + 'test.json'  # pylint: disable=protected-access
+
+    async def test_save_snapshot_data(self, storage, mocker):
+        """Test save snapshot data"""
+        data = {
+            'title': 'foo',
+            'fields': ['file_name', 'content'],
+            'datas': [
+                ['test.html', '<h1>test<h1>'],
+            ]
+        }
+        upload_string = mocker.patch.object(FileStorage, 'upload_string')
+        await storage.save_snapshot_data(data)
+        upload_string.assert_called_once()
+
     # async def test_save(self, storage, temp_dir, mocker):
     #     """test create db conn"""
     #     # 测试时替换对应的连接
