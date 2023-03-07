@@ -2,8 +2,11 @@
 from datetime import datetime
 
 import pytest
+from sqlalchemy import select
 
+from crawlerstack_spiderkeeper_scheduler.models import Task
 from crawlerstack_spiderkeeper_scheduler.schemas.task import (TaskCreate,
+                                                              TaskSchema,
                                                               TaskUpdate)
 from crawlerstack_spiderkeeper_scheduler.services.task import TaskService
 from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
@@ -61,3 +64,25 @@ async def test_update_by_id(init_task, session, service, pk, executor_id, exist)
     else:
         with pytest.raises(ObjectDoesNotExist):
             await service.update_by_id(pk, obj_in=obj_in)
+
+
+@pytest.mark.parametrize(
+    'name, status, exist',
+    [
+        ('1_scheduler_', 3, True),
+        ('100_scheduler_', 3, False)
+    ]
+)
+async def test_update_by_name(init_task, session, service, name, status, exist):
+    """Test update by name"""
+    obj_in = TaskUpdate(status=status, task_end_time=datetime.now())
+    if exist:
+        stmt = select(Task).where(Task.name == name)
+        obj = await session.scalar(stmt)
+        before = TaskSchema.from_orm(obj)
+        after = await service.update_by_name(name, obj_in=obj_in)
+        assert after.status != before.status
+        assert after.status == status
+    else:
+        after = await service.update_by_name(name, obj_in=obj_in)
+        assert not after

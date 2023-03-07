@@ -27,7 +27,8 @@ def service():
 async def test_create(init_artifact, init_storage_server, session, service, artifact_id, storage_server_id, exist):
     """test create"""
     obj_in = JobCreate(name="test1", trigger_expression="0 0 * * *", storage_enable=True, executor_type='docker',
-                       storage_server_id=storage_server_id, artifact_id=artifact_id, enabled=False, pause=False)
+                       storage_server_id=storage_server_id, snapshot_enable=False, snapshot_server_id=storage_server_id,
+                       artifact_id=artifact_id, enabled=False, pause=False)
     if exist:
         await service.create(obj_in=obj_in)
         count = await service.count()

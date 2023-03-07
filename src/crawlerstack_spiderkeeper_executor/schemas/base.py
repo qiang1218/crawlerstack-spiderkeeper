@@ -8,8 +8,9 @@ class SpiderSchema(BaseModel):
     """Spider"""
     DATA_URL: str
     LOG_URL: str
-    METRICS: str
+    METRICS_URL: str
     STORAGE_ENABLE: bool
+    SNAPSHOT_ENABLE: bool
     TASK_NAME: str
 
 

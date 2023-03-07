@@ -9,8 +9,9 @@ from crawlerstack_spiderkeeper_server.schemas.base import InDBMixin
 class TaskBase(BaseModel):
     """Task base schema."""
     name: constr(max_length=200) = None
-    status: int = None
     job_id: int = None
+    task_status: int = None
+    consume_status: int = None
 
 
 class TaskSchema(TaskBase, InDBMixin):
@@ -25,4 +26,3 @@ class TaskCreate(TaskBase):
 
 class TaskUpdate(TaskBase):
     """Task update schema."""
-    status: int

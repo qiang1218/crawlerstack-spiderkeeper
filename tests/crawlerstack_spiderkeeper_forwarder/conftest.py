@@ -46,3 +46,17 @@ async def client(spiderkeeper_executor):
         raise_server_exceptions=False
     )
     yield _client
+
+
+@pytest.fixture
+async def data():
+    """Data fixture"""
+    _data = {
+        'task_name': 'test',
+        'data': {
+            'title': 'user',
+            'fields': ['name', 'age', 'gender'],
+            'datas': [('zhangSan', 10, 0), ('liHua', 25, 1)]
+        }
+    }
+    return _data

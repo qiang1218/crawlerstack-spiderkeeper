@@ -10,8 +10,9 @@ async def test_run(client, api_url, mocker):
     api = api_url + '/_run'
     data = {'spider_params': {'DATA_URL': '',
                               'LOG_URL': '',
-                              'METRICS': '',
+                              'METRICS_URL': '',
                               'STORAGE_ENABLE': True,
+                              'SNAPSHOT_ENABLE': True,
                               'TASK_NAME': 'test'},
             'executor_params': {'image': '',
                                 'cmdline': '',
@@ -39,3 +40,13 @@ async def test_rm(client, api_url, mocker):
     response = client.get(api)
     assert_status_code(response)
     run.assert_called_once()
+
+
+async def test_get(client, api_url, mocker):
+    """test rm"""
+    api = api_url + '/containers'
+    get = mocker.patch.object(ExecutorService, 'get',
+                              return_value=[{'container_id': 'test', 'status': 'exited', 'task_name': 'test'}])
+    response = client.get(api)
+    assert_status_code(response)
+    get.assert_called_once()

@@ -98,8 +98,9 @@ class JobService:
         """
         # 考虑爬虫程序中获取变量，统一大写
         storage_enable = job.get('storage_enable')
-        return {'DATA_URL': self.data_url, 'LOG_URL': self.log_url, 'METRICS': self.metric_url,
-                'STORAGE_ENABLE': storage_enable}
+        snapshot_enable = job.get('snapshot_enable')
+        return {'DATA_URL': self.data_url, 'LOG_URL': self.log_url, 'METRICS_URL': self.metric_url,
+                'STORAGE_ENABLE': storage_enable, 'SNAPSHOT_ENABLE': snapshot_enable}
 
     @staticmethod
     def executor_params(job: dict, artifact: dict) -> dict:

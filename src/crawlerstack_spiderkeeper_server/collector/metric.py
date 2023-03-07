@@ -5,7 +5,7 @@ from crawlerstack_spiderkeeper_server.services.metric import MetricService
 
 class MetricBackgroundTask(BaseTask):
     """Metric background task"""
-    NAME = 'metric'
+    NAME = 'spiderkeeper-metric'
 
     async def callback(self, body: dict):
         """

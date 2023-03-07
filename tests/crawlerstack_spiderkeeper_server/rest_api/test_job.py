@@ -28,7 +28,7 @@ def test_create(client, init_artifact, init_storage_server, api_url):
     """test create"""
     api = api_url + '/jobs'
     data = dict(name="test1", trigger_expression="0 0 * * *", storage_enable=True, executor_type='docker',
-                storage_server_id=1, artifact_id=1)
+                storage_server_id=1, artifact_id=1, snapshot_enable=False)
     response = client.post(api, json=data)
     assert_status_code(response)
     assert response.json().get('data').get('id') == 1

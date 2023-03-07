@@ -23,3 +23,6 @@ class K8SExecutor(BaseExecutor):
 
     async def close(self, *args, **kwargs):
         pass
+
+    async def get(self, *args, **kwargs):
+        pass

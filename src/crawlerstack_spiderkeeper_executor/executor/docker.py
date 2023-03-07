@@ -21,6 +21,24 @@ class DockerExecutor(BaseExecutor):
     def __init__(self, settings):
         super().__init__(settings)
         self.client = Docker(url=self.settings.EXECUTOR_REMOTE_URL)
+        self._prefix = 'SpiderKeeper-'
+
+    async def get(self) -> list:
+        """
+        get all containers about spiderkeeper
+        :return:
+        """
+        status = ["running", "paused", "exited", "dead"]
+        containers = await self.client.containers.list(filters={'status': status, 'label': ["task_name"]})
+        datas = []
+        for i in containers:
+            _container = i._container  # pylint: disable=W0212  # noqa
+            container_id = _container.get('Id')[:12]
+            status = _container.get('State')
+            task_name = _container.get('Labels').get('task_name')
+            datas.append(dict(container_id=container_id, status=status, task_name=task_name))
+
+        return datas
 
     async def run(self, obj_in: TaskSchema, **_) -> str:
         """
@@ -33,7 +51,7 @@ class DockerExecutor(BaseExecutor):
         spider_params = obj_in.spider_params
         # 2 执行器的参数组装
         config = self._merge_executor_params(executor_params, spider_params)
-        container_name = f'SpiderKeeper-{spider_params.TASK_NAME}'
+        container_name = f'{self._prefix}{spider_params.TASK_NAME}'
 
         # 3 执行运行命令，包含镜像的 pull, create, start
         container = await self.client.containers.run(config=config, name=container_name)
@@ -61,7 +79,8 @@ class DockerExecutor(BaseExecutor):
                   'AttachStderr': False,
                   'Tty': False,
                   'OpenStdin': False,
-                  "Detach": True,
+                  'Detach': True,
+                  'Labels': {'task_name': spider_params.TASK_NAME},
                   'HostConfig': {
                       'NetworkMode': self.settings.DOCKER_NETWORK,
                       'Init': True,

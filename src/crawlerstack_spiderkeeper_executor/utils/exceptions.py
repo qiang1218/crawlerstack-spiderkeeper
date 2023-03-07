@@ -71,6 +71,18 @@ class RequestError(SpiderkeeperError):
         super().__init__(detail)
 
 
+class RemoteTaskGetError(SpiderkeeperError):
+    """
+    RemoteTaskRunError
+    """
+
+    def __init__(
+            self,
+            detail: Optional[str] = 'Remote task get failed.'
+    ):
+        super().__init__(detail)
+
+
 class RemoteTaskRunError(SpiderkeeperError):
     """
     RemoteTaskRunError

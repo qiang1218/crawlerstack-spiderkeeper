@@ -7,6 +7,7 @@ from crawlerstack_spiderkeeper_executor.schemas.base import (ExecutorSchema,
                                                              SpiderSchema,
                                                              TaskSchema)
 from crawlerstack_spiderkeeper_executor.services import ExecutorService
+from crawlerstack_spiderkeeper_executor.utils.status import Status
 
 
 @pytest.fixture
@@ -21,8 +22,9 @@ def task_params():
     return TaskSchema(spider_params=SpiderSchema(
         DATA_URL='http://localhost:8080/data_url',
         LOG_URL='http://localhost:8080/log',
-        METRICS='metrics',
+        METRICS_URL='metrics',
         STORAGE_ENABLE=True,
+        SNAPSHOT_ENABLE=True,
         TASK_NAME='task_name'
     ),
         executor_params=ExecutorSchema(
@@ -72,4 +74,19 @@ async def test_rm_by_id(executor_service, mocker, container_id):
     """test check by id"""
     delete = mocker.patch.object(DockerExecutor, 'delete')
     await executor_service.rm_by_id(container_id)
+    delete.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    'real_value',
+    [
+        [{'container_id': 'test', 'status': 'exited', 'task_name': 'test'}],
+    ]
+)
+async def test_get(executor_service, mocker, real_value):
+    """test check by id"""
+    delete = mocker.patch.object(DockerExecutor, 'get', return_value=real_value)
+    results = await executor_service.get()
+    assert results[0].get('status') == Status.EXITED.name
+
     delete.assert_called_once()

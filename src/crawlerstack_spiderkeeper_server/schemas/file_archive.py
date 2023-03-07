@@ -1,8 +1,6 @@
 """
 FileArchive schema
 """
-from datetime import datetime
-
 from pydantic import BaseModel, constr  # pylint: disable=no-name-in-module
 
 from crawlerstack_spiderkeeper_server.schemas.base import InDBMixin
@@ -16,7 +14,7 @@ class FileArchiveBase(BaseModel):
     storage_name: constr(max_length=100) = None
     storage_url: constr(max_length=200) = None
     status: bool = False
-    expired_time: datetime = None
+    expired_time: int = None
 
 
 class FileArchiveSchema(FileArchiveBase, InDBMixin):
@@ -30,9 +28,9 @@ class FileArchiveCreate(FileArchiveBase):
     key: constr(max_length=200)
     storage_name: constr(max_length=100)
     storage_url: constr(max_length=200)
-    expired_time: datetime
+    expired_time: int
 
 
 class FileArchiveUpdate(FileArchiveBase):
     """FileArchive update schema."""
-    expired_time: datetime
+    expired_time: int

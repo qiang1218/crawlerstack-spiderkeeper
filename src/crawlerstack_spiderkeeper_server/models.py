@@ -2,7 +2,8 @@
 from datetime import datetime
 
 import inflection
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import (BigInteger, Boolean, Column, DateTime, ForeignKey,
+                        Integer, String)
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 
@@ -71,10 +72,17 @@ class StorageServer(BaseModel):
     url = Column(String(200), nullable=False, comment='地址')
     storage_class = Column(String(200), nullable=False, comment="存储实现")
 
-    jobs = relationship(
+    storage_jobs = relationship(
         'Job',
         back_populates='storage_server',
-        passive_deletes=False  # 在删除父记录的时候检查子记录的约束。如果 ON DELETE 为 RESTRICT 则抛出异常。对于非数据库
+        passive_deletes=False,
+        foreign_keys='Job.storage_server_id'
+    )
+    snapshot_jobs = relationship(
+        'Job',
+        back_populates='snapshot_server',
+        passive_deletes=False,
+        foreign_keys='Job.snapshot_server_id'
     )
 
 
@@ -88,13 +96,20 @@ class Job(BaseModel):
     volume = Column(String(2000), nullable=True, comment='目录挂载')
     trigger_expression = Column(String(100), nullable=False, comment='crontab表达式')
     storage_enable = Column(Boolean, default=False, comment='是否开启存储')
-
     storage_server_id = Column(
         Integer,
         ForeignKey('storage_server.id', ondelete='SET NULL'),
         nullable=True,
         comment='存储服务id'
-    )  # 级联删除
+    )
+    # 快照的设置
+    snapshot_enable = Column(Boolean, default=False, comment='是否开启快照')
+    snapshot_server_id = Column(
+        Integer,
+        ForeignKey('storage_server.id', ondelete='SET NULL'),
+        nullable=True,
+        comment='快照服务id'
+    )
     executor_type = Column(String(100), nullable=False, comment='执行器类型')
     enabled = Column(Boolean, default=False, comment='job状态')
     pause = Column(Boolean, default=False, comment='任务暂停状态')
@@ -105,7 +120,10 @@ class Job(BaseModel):
     )
 
     # add ref parent relationship
-    storage_server = relationship('StorageServer', back_populates='jobs')
+    storage_server = relationship('StorageServer', back_populates='storage_jobs', uselist=False,
+                                  foreign_keys=storage_server_id)
+    snapshot_server = relationship('StorageServer', back_populates='snapshot_jobs', uselist=False,
+                                   foreign_keys=snapshot_server_id)
     artifact = relationship('Artifact', back_populates='jobs')
 
     # Restrict delete when delete job.
@@ -117,7 +135,8 @@ class Task(BaseModel):
     Task model
     """
     name = Column(String(200), nullable=False, comment='任务名称')
-    status = Column(Integer, default=Status.CREATED.value, comment='任务状态')
+    task_status = Column(Integer, default=Status.CREATED.value, comment='任务状态')
+    consume_status = Column(Integer, default=Status.RUNNING.value, comment='消费状态')
     job_id = Column(
         Integer,
         ForeignKey('job.id', ondelete='SET NULL'),
@@ -135,6 +154,7 @@ class TaskDetail(BaseModel):
     TaskDetail model
     """
     item_count = Column(Integer, default=0, nullable=False, comment='写入数据量')
+    snapshot_count = Column(Integer, default=0, nullable=False, comment='写入快照数')
     detail = Column(String(100), nullable=True, comment='任务失败值存储')
     task_id = Column(
         Integer,
@@ -157,4 +177,4 @@ class FileArchive(BaseModel):
     storage_name = Column(String(100), nullable=False, comment='存储名称')
     storage_url = Column(String(200), nullable=False, comment='存储目标url')
     status = Column(Boolean, default=0, comment='文件待上传状态')
-    expired_time = Column(DateTime, comment='过期时间')
+    expired_time = Column(BigInteger, comment='过期时间')

@@ -195,3 +195,19 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
         :return:
         """
         return await self.storage_server_repository.get_storage_server_from_job_id(pk)
+
+    async def get_snapshot_server_from_job_id(self, pk: int) -> StorageServerSchema:
+        """
+        Get a snapshot server from job id
+        :param pk:
+        :return:
+        """
+        return await self.storage_server_repository.get_snapshot_server_from_job_id(pk)
+
+    async def get_job_from_task_name(self, task_name: str) -> JobSchema:
+        """
+        Get job from task name
+        :param task_name:
+        :return:
+        """
+        return await self.repository.get_job_from_task_name(task_name)

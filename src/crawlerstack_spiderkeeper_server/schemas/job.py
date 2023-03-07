@@ -17,6 +17,8 @@ class JobBase(BaseModel):
     trigger_expression: constr(max_length=100) = None
     storage_enable: bool = False
     storage_server_id: int = None
+    snapshot_enable: bool = False
+    snapshot_server_id: int = None
     executor_type: constr(max_length=100) = None
     enabled: bool = False
     pause: bool = False
@@ -45,6 +47,7 @@ class JobCreate(JobBase):
     name: constr(max_length=200)
     trigger_expression: constr(max_length=100)
     storage_enable: bool
+    snapshot_enable: bool
     executor_type: constr(max_length=100)
     artifact_id: int
 

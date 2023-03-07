@@ -115,3 +115,15 @@ class JobUnpauseError(SpiderkeeperError):
             detail: Optional[str] = 'Job repeated unpause or status error'
     ):
         super().__init__(detail)
+
+
+class TaskActionError(SpiderkeeperError):
+    """
+    Task action error
+    """
+
+    def __init__(
+            self,
+            detail: Optional[str] = 'Task action error'
+    ):
+        super().__init__(detail)

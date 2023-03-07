@@ -48,7 +48,7 @@ async def get(
         service: TaskService = Depends(),
 ):
     """
-    get one job by pk
+    Get one task by pk
     :param pk:
     :param service:
     :return:
@@ -63,7 +63,7 @@ async def create(
         service: TaskService = Depends(),
 ):
     """
-    create job
+    create task
     :param obj_in:
     :param service:
     :return:
@@ -79,7 +79,7 @@ async def patch(
         service: TaskService = Depends(),
 ):
     """
-    Update one job's some fields
+    Update one task's some fields
     :param pk:
     :param service:
     :param obj_in:
@@ -95,7 +95,7 @@ async def delete(
         service: TaskService = Depends(),
 ):
     """
-    Delete one project
+    Delete one task
     :param pk:
     :param service:
     :return:
@@ -117,3 +117,48 @@ async def get_job_from_task_id(
     """
 
     return {'data': await service.get_job_from_task_id(pk)}
+
+
+@router.get('/tasks/{pk}/_start', response_model=BaseMessage)
+async def start_task_consume(
+        *,
+        pk: int,
+        service: TaskService = Depends(),
+):
+    """
+    start task consume by id
+    :param pk:
+    :param service:
+    :return:
+    """
+    return {'message': await service.start_task_consume(pk)}
+
+
+@router.get('/tasks/{pk}/_stop', response_model=BaseMessage)
+async def stop_task_consume(
+        *,
+        pk: int,
+        service: TaskService = Depends(),
+):
+    """
+    stop task consumes by id
+    :param pk:
+    :param service:
+    :return:
+    """
+    return {'message': await service.stop_task_consume(pk)}
+
+
+@router.get('/tasks/{pk}/_terminate', response_model=BaseMessage)
+async def terminate_task_consume(
+        *,
+        pk: int,
+        service: TaskService = Depends(),
+):
+    """
+    stop task consumes by id
+    :param pk:
+    :param service:
+    :return:
+    """
+    return {'message': await service.terminate_task_consume(pk)}

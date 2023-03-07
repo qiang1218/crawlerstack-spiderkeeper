@@ -62,3 +62,7 @@ SCHEDULER_UNPAUSE_SUFFIX: /jobs/%s/_unpause
 FILE_PATH_PREFIX: datas
 ARCHIVE_INTERVAL: 3600
 ARCHIVE_MINUTES: 30
+
+##########################################################
+# storage data task
+DATA_TASK_INTERVAL: 30

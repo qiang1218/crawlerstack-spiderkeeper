@@ -1,5 +1,4 @@
 """Test config"""
-import datetime
 import logging
 import os
 import tempfile
@@ -16,6 +15,8 @@ from crawlerstack_spiderkeeper_server.models import (Artifact, BaseModel,
                                                      FileArchive, Job, Project,
                                                      StorageServer, Task,
                                                      TaskDetail)
+from crawlerstack_spiderkeeper_server.signals import server_start, server_stop
+from crawlerstack_spiderkeeper_server.utils.status import Status
 
 logger = logging.getLogger(__name__)
 
@@ -130,10 +131,12 @@ async def migrate(db_url):
 
 
 @pytest.fixture(autouse=True)
-async def spiderkeeper_server(migrate, db_url, settings):
+async def spiderkeeper_server(migrate, db_url, settings, mocker):
     """spider keeper server fixture"""
     settings.DATABASE = db_url
     logger.debug('Starting spiderkeeper!!!')
+    mocker.patch.object(server_start, 'send')
+    mocker.patch.object(server_stop, 'send')
     _spiderkeeper_server = SpiderKeeperServer(settings)
     await _spiderkeeper_server.start()
     yield _spiderkeeper_server
@@ -205,11 +208,12 @@ async def init_job(init_artifact, init_storage_server):
     async with db():
         jobs = [
             Job(name="test1", trigger_expression="0 0 * * *", storage_enable=True, executor_type='docker',
-                storage_server_id=1, artifact_id=1, enabled=False, pause=False),
+                storage_server_id=1, artifact_id=1, enabled=False, pause=False, snapshot_enable=True,
+                snapshot_server_id=1),
             Job(name="test2", trigger_expression="0 1 * * *", storage_enable=False, executor_type='docker',
-                artifact_id=1, enabled=True, pause=False),
+                artifact_id=1, enabled=True, pause=False, snapshot_enable=False),
             Job(name="test3", trigger_expression="0 1 * * *", storage_enable=False, executor_type='docker',
-                artifact_id=1, enabled=True, pause=True),
+                artifact_id=1, enabled=True, pause=True, snapshot_enable=False),
         ]
         db.session.add_all(jobs)
         await db.session.flush()
@@ -220,8 +224,8 @@ async def init_task(init_job):
     """Init task fixture."""
     async with db():
         tasks = [
-            Task(name="test1", job_id=1),
-            Task(name="test2", job_id=2),
+            Task(name="test1", job_id=1, task_status=Status.EXITED.value, consume_status=Status.STOPPED.value),
+            Task(name="test2", job_id=2, task_status=Status.EXITED.value, consume_status=Status.RUNNING.value),
         ]
         db.session.add_all(tasks)
         await db.session.flush()
@@ -246,10 +250,10 @@ async def init_file_archive():
         file_archives = [
             FileArchive(name='test1', local_path='/tmp/test.json', key='/test/test.json', storage_name='s3',
                         storage_url='s3://access_key:secret_key:entrypoint/bucket', status=True,
-                        expired_time=datetime.datetime.now()),
+                        expired_time=1678172211),
             FileArchive(name='test2', local_path='/tmp/test.json', key='/test/test.json', storage_name='s3',
-                        storage_url='s3://access_key:secret_key:entrypoint/bucket', status=True,
-                        expired_time=datetime.datetime.now()),
+                        storage_url='s3://access_key:secret_key:entrypoint/bucket', status=False,
+                        expired_time=1678172211),
         ]
         db.session.add_all(file_archives)
         await db.session.flush()

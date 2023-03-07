@@ -17,6 +17,15 @@ class BaseExecutor(metaclass=SingletonMeta):
     def __init__(self, settings):
         self.settings = settings
 
+    async def get(self, *args, **kwargs):
+        """
+        Get
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        raise NotImplementedError
+
     async def run(self, *args, **kwargs):
         """
         Run

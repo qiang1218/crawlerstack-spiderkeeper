@@ -14,17 +14,35 @@ def init_exception_handler(app: FastAPI):
     :param app:
     :return:
     """
-    # handle spiderkeeper root exception with http code 500
-    app.add_exception_handler(
-        exc_class_or_status_code=exs.SpiderkeeperError,
-        handler=exh.spiderkeeper_exception_handler
-    )
-    # handle ObjectDoseNotExist with http code 404
-    app.add_exception_handler(
-        exc_class_or_status_code=exs.ObjectDoesNotExist,
-        handler=exh.object_does_not_exist_handler,
-    )
-    app.add_exception_handler(
-        exc_class_or_status_code=exs.UnprocessableEntityError,
-        handler=exh.unprocessable_entity_error_handler
-    )
+    # 多对应关系
+    exceptions = [
+        exs.SpiderkeeperError,
+        exs.ObjectDoesNotExist,
+        exs.UnprocessableEntityError,
+        exs.DeleteConstraintError,
+        exs.CreateConnectionError,
+        exs.JobStoppedError,
+        exs.JobRunError,
+        exs.JobPauseError,
+        exs.JobUnpauseError,
+        exs.TaskActionError,
+    ]
+
+    handler_exceptions = [
+        exh.spiderkeeper_exception_handler,
+        exh.object_does_not_exist_handler,
+        exh.unprocessable_entity_error_handler,
+        exh.delete_connection_error_handler,
+        exh.create_connection_error_handler,
+        exh.job_stopped_error_handler,
+        exh.job_run_error_handler,
+        exh.job_pause_error_handler,
+        exh.job_unpause_error_handler,
+        exh.task_action_handler,
+    ]
+
+    for k, v in dict(zip(exceptions, handler_exceptions)).items():
+        app.add_exception_handler(
+            exc_class_or_status_code=k,
+            handler=v
+        )

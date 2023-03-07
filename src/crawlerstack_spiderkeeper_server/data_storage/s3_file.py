@@ -2,6 +2,7 @@
 import asyncio
 import json
 import logging
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -12,15 +13,45 @@ from crawlerstack_spiderkeeper_server.config import local_path, settings
 from crawlerstack_spiderkeeper_server.data_storage.base import Storage
 from crawlerstack_spiderkeeper_server.data_storage.utils import (
     Connector, transform_s3_url)
-from crawlerstack_spiderkeeper_server.schemas.file_archive import \
-    FileArchiveCreate
-from crawlerstack_spiderkeeper_server.services.file_archive import \
-    FileArchiveService
+from crawlerstack_spiderkeeper_server.repository.file_archive import \
+    FileArchiveRepository
+from crawlerstack_spiderkeeper_server.schemas.file_archive import (
+    FileArchiveCreate, FileArchiveSchema)
 from crawlerstack_spiderkeeper_server.utils import File
 from crawlerstack_spiderkeeper_server.utils.exceptions import \
     ObjectDoesNotExist
 
 logger = logging.getLogger(__name__)
+
+
+class StorageRecord:
+    """Storage record"""
+    repository = FileArchiveRepository()
+
+    @session_ctx
+    async def clear_record(self, pk) -> FileArchiveSchema:
+        """Clear record"""
+        return await self.repository.delete_by_id(pk=pk)
+
+    @session_ctx
+    async def get_record(self) -> list[FileArchiveSchema]:
+        """Get record"""
+        return await self.repository.get(search_fields={'status': '0'})
+
+    @session_ctx
+    async def get_record_by_name(self, name: str) -> FileArchiveSchema:
+        """Get record by name"""
+        return await self.repository.get_by_name(name)
+
+    @session_ctx
+    async def create_record(self, obj_in: FileArchiveCreate) -> FileArchiveSchema:
+        """Create record"""
+        return await self.repository.create(obj_in=obj_in)
+
+    @session_ctx
+    async def update_record(self, pk: int, obj_in: dict) -> FileArchiveSchema:
+        """Update record"""
+        return await self.repository.update_by_id(pk=pk, obj_in=obj_in)
 
 
 class FileStorage(Storage):
@@ -32,9 +63,11 @@ class FileStorage(Storage):
     archive_task: asyncio.Task | None = None
     _server_running = None
     file_prefix = settings.FILE_PATH_PREFIX
-    _key_prefix = 'data/'
+    _data_key_prefix = 'data/'
+    _snapshot_key_prefix = 'snapshot/'
     archive_interval = settings.ARCHIVE_INTERVAL
     archive_minutes = settings.ARCHIVE_MINUTES
+    repository = StorageRecord()
 
     @staticmethod
     def create_conn(config: dict):
@@ -61,14 +94,9 @@ class FileStorage(Storage):
         return self.default_connector.conn.get_bucket(self.default_connector.db)
 
     @property
-    def service(self):
-        """Service"""
-        return FileArchiveService()
-
-    @property
-    def expired_time(self):
-        """Expired time"""
-        return datetime.now() + timedelta(minutes=self.archive_minutes)
+    def expired_time(self) -> int:
+        """Expired timestamp in seconds"""
+        return int(time.time()) + self.archive_minutes * 60
 
     def file_path(self, filename: str):
         """data path"""
@@ -84,13 +112,11 @@ class FileStorage(Storage):
 
     def upload_file(self, key_name: str, filename: str):
         """Upload file"""
-        # 上传文件时，两种可能，一种直接是对象，能一种时文件
         key = self.bucket.new_key(key_name)
         key.set_contents_from_filename(filename)
 
     def upload_string(self, key_name: str, file_str: str):
-        """Upload file"""
-        # 上传文件时，两种可能，一种直接是对象，能一种时文件
+        """Upload string"""
         key = self.bucket.new_key(key_name)
         key.set_contents_from_string(file_str)
 
@@ -99,15 +125,24 @@ class FileStorage(Storage):
         return self.bucket.get_key(key_name)
 
     @staticmethod
-    def gen_title_name(title: str) -> str:
-        """Generate title"""
+    def gen_data_title_name(title: str) -> str:
+        """Generate data  title"""
         # 周数 /%Y%W  年月日 /%Y%m%d  采用年月日的方式
         _suffix = datetime.now().strftime("/%Y%m%d")
         return title + _suffix
 
-    def gen_key_name(self, title: str) -> str:
-        """Generate key"""
-        return self._key_prefix + title + '.json'
+    @staticmethod
+    def gen_snapshot_title_name(title: str, file_name: str) -> str:
+        """Generate snapshot title"""
+        return title + '/' + file_name
+
+    def gen_data_key_name(self, name: str) -> str:
+        """Generate data key"""
+        return self._data_key_prefix + name + '.json'
+
+    def gen_snapshot_key_name(self, name: str) -> str:
+        """Generate snapshot key"""
+        return self._snapshot_key_prefix + name
 
     @staticmethod
     def concat_data(fields: list, datas: list) -> list:
@@ -119,14 +154,23 @@ class FileStorage(Storage):
 
     async def save(self, data: dict) -> bool:
         """save"""
+        snapshot_enabled = data.get('snapshot_enabled')
+        if snapshot_enabled:
+            # 快照保存，单文件保存，不涉及数据追加
+            return await self.save_snapshot_data(data)
+        return await self.save_structured_data(data)
+
+    async def save_structured_data(self, data: dict) -> bool:
+        """
+        save structured data
+        :param data:
+        :return:
+        """
         # 先对数据进行组装
-        name = self.gen_title_name(data.get('title'))
+        name = self.gen_data_title_name(data.get('title'))
         datas = self.concat_data(fields=data.get('fields'), datas=data.get('datas'))
-        # 进行json.dumps 转换，文件的存储需要
-
         # 由于以文件对象形式保存，则需要进行文件命名操作，同一个task_name会对应多个文件，规则制定
-        key_name = self.gen_key_name(name)
-
+        key_name = self.gen_data_key_name(name)
         origin_data = self.get(key_name)
         if origin_data is None:
             # 通过对key值的判断，获取存在状态
@@ -139,14 +183,14 @@ class FileStorage(Storage):
             storage_name = self.default_connector.name + '-' + name
             # 判断本地表的数据，如果有
             try:
-                file_archives = await self.service.get_by_name(storage_name)
+                file_archives = await self.repository.get_record_by_name(storage_name)
             except ObjectDoesNotExist:
                 # 先保存到本地，追加本地，创建表
                 logger.debug('Initialize the local file, key: %s', name)
                 # 先获取到文件
                 origin_data.get_contents_to_filename(file_local_path)
 
-                await self.service.create(
+                await self.repository.create_record(
                     obj_in=FileArchiveCreate(
                         name=storage_name,
                         local_path=str(file_local_path),
@@ -158,11 +202,26 @@ class FileStorage(Storage):
 
             else:
                 # 追加本地，更新表
-                await self.service.update_by_id(file_archives.id, {'expired_time': self.expired_time})
+                await self.repository.update_record(pk=file_archives.id, obj_in={'expired_time': self.expired_time})
             finally:
                 await File(file_local_path).write(datas=datas)
 
         self.default_connector.expire_date = datetime.now() + timedelta(self.expire_day)
+        return True
+
+    async def save_snapshot_data(self, data: dict) -> bool:
+        """
+        Save snapshot data
+        :param data:
+        :return:
+        """
+        title = data.get('title')
+        fields = data.get('fields')
+        for i in data.get('datas'):
+            row = dict(zip(fields, i))
+            name = self.gen_snapshot_title_name(title, row.pop('file_name'))
+            key_name = self.gen_snapshot_key_name(name)
+            self.upload_string(key_name, row.pop('content'))
         return True
 
     async def archive(self, **_):
@@ -177,11 +236,10 @@ class FileStorage(Storage):
                 break
             # 进行数据库中的数据获取，针对超出范围的数据，进行归档上传，记录清除
             try:
-                archives = await self.get_record()
+                archives = await self.repository.get_record()
                 # 遍历
                 for archive in archives:
-                    # 对时间进行控制，超过1小时的开始上传处理
-                    if archive.expired_time < datetime.now():
+                    if archive.expired_time < int(time.time()):
                         # 进行归档
                         logger.debug('Archive s3 file, key: %s', archive.key)
                         storage_name = archive.storage_name
@@ -196,22 +254,12 @@ class FileStorage(Storage):
                         # 删除本地文件
                         await File(Path(archive.local_path)).remove()
                         # 删除本条记录，不保存流水
-                        await self.clear_record(archive.id)
+                        await self.repository.clear_record(archive.id)
 
             except ObjectDoesNotExist:
                 logger.debug('No archives file')
             await asyncio.sleep(self.archive_interval)
         logger.debug('Stopped %s archived background task.', self.__class__.name)
-
-    @session_ctx
-    async def clear_record(self, pk):
-        """clear record"""
-        await self.service.delete(pk=pk)
-
-    @session_ctx
-    async def get_record(self):
-        """get record"""
-        await self.service.get(search_fields={'status': '0'})
 
     async def server_stop(self, **_):
         """server stop"""
