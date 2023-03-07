@@ -14,6 +14,8 @@ from crawlerstack_spiderkeeper_scheduler.services.executor import \
     ExecutorService
 from crawlerstack_spiderkeeper_scheduler.services.task import TaskService
 from crawlerstack_spiderkeeper_scheduler.utils import SingletonMeta
+from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
+    ObjectDoesNotExist
 from crawlerstack_spiderkeeper_scheduler.utils.request import RequestWithHttpx
 from crawlerstack_spiderkeeper_scheduler.utils.status import Status
 
@@ -60,10 +62,15 @@ class LifeCycle(metaclass=SingletonMeta):
         while True:
             if not self._server_running:
                 break
-            executors = await self.get_executors()
-            for executor in executors:
-                # 遍历获取每一个执行器的信息
-                if executor.status == Status.ONLINE.value:
+            try:
+                executors = await self.get_executors()
+            except ObjectDoesNotExist:
+                logger.info('No active executors')
+            else:
+                for executor in executors:
+                    # 遍历获取每一个执行器的信息
+                    if executor.status != Status.ONLINE.value:
+                        continue
                     task_count = 0
                     # 请求
                     containers = await self.get_all_containers(executor.url)
