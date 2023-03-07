@@ -13,6 +13,8 @@ from crawlerstack_spiderkeeper_scheduler.config import \
 from crawlerstack_spiderkeeper_scheduler.manage import SpiderKeeperScheduler
 from crawlerstack_spiderkeeper_scheduler.models import (BaseModel, Executor,
                                                         Task)
+from crawlerstack_spiderkeeper_scheduler.signals import (server_start,
+                                                         server_stop)
 
 logger = logging.getLogger(__name__)
 
@@ -72,11 +74,14 @@ async def migrate(db_url):
 
 
 @pytest.fixture(autouse=True)
-async def spiderkeeper_server(migrate, settings, db_url, apscheduler_store_url):
+async def spiderkeeper_server(migrate, settings, db_url, apscheduler_store_url, mocker):
     """spiderkeeper server fixture"""
     settings.DATABASE = db_url
     settings.SCHEDULER_JOB_STORE_DEFAULT = apscheduler_store_url
+    settings.HEARTBEAT_INTERVAL = -1
     logger.debug('Starting spiderkeeper!!!')
+    mocker.patch.object(server_start, 'send')
+    mocker.patch.object(server_stop, 'send')
     _spiderkeeper_server = SpiderKeeperScheduler(settings)
     await _spiderkeeper_server.start()
     yield _spiderkeeper_server
