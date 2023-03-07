@@ -28,7 +28,7 @@ class BaseTask:
         """Exchange name."""
         return self.NAME
 
-    async def publish(self, body: Any):
+    async def publish(self, body: Any, **_):
         """
         Publish message
         :param body:

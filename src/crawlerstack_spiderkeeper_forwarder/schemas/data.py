@@ -9,6 +9,7 @@ from pydantic import BaseModel, constr  # pylint: disable=no-name-in-module
 class DataContentSchema(BaseModel):
     """Data content schema"""
     title: constr(max_length=200)
+    snapshot_enabled: bool = False
     fields: list
     datas: list[tuple[Any] | list[Any]]
 
