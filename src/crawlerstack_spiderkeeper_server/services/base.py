@@ -80,7 +80,7 @@ class EntityService(ICRUD, Generic[ModelType, CreateSchemaType, UpdateSchemaType
             self,
             *,
             sorting_fields: Optional[Union[set[str], list[str]]] = None,
-            search_fields: Optional[dict[str, str]] = None,
+            search_fields: Optional[dict[str, Any]] = None,
             limit: int = 5,
             offset: int = 0,
             **kwargs
