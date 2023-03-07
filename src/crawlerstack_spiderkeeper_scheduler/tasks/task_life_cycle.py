@@ -14,7 +14,8 @@ from crawlerstack_spiderkeeper_scheduler.services.executor import \
     ExecutorService
 from crawlerstack_spiderkeeper_scheduler.services.task import TaskService
 from crawlerstack_spiderkeeper_scheduler.utils import SingletonMeta
-from crawlerstack_spiderkeeper_scheduler.utils.exceptions import ObjectDoesNotExist
+from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
+    ObjectDoesNotExist
 from crawlerstack_spiderkeeper_scheduler.utils.request import RequestWithHttpx
 from crawlerstack_spiderkeeper_scheduler.utils.status import Status
 
@@ -68,25 +69,26 @@ class LifeCycle(metaclass=SingletonMeta):
             else:
                 for executor in executors:
                     # 遍历获取每一个执行器的信息
-                    if executor.status == Status.ONLINE.value:
-                        task_count = 0
-                        # 请求
-                        containers = await self.get_all_containers(executor.url)
-                        for container in containers:
-                            if container.status == Status.RUNNING.name:
-                                task_count += 1
-                            else:
-                                # 数据更新
-                                status = Status[container.status].value
-                                await self.update_task_record(task_name=container.task_name,
-                                                              status=status,  # noqa
-                                                              task_end_time=datetime.now())
-                                await self.update_server_task_record(task_name=container.task_name,
-                                                                     task_status=status)  # noqa
-                                await self.remove_container(url=executor.url, container_id=container.container_id)
-                                logger.info("Completed task %s life cycle", container.task_name)
-                        await self.update_task_count(pk=executor.id, task_count=task_count)
-                        logger.debug("Executor %s task count is %d", executor.id, task_count)
+                    if executor.status != Status.ONLINE.value:
+                        continue
+                    task_count = 0
+                    # 请求
+                    containers = await self.get_all_containers(executor.url)
+                    for container in containers:
+                        if container.status == Status.RUNNING.name:
+                            task_count += 1
+                        else:
+                            # 数据更新
+                            status = Status[container.status].value
+                            await self.update_task_record(task_name=container.task_name,
+                                                          status=status,  # noqa
+                                                          task_end_time=datetime.now())
+                            await self.update_server_task_record(task_name=container.task_name,
+                                                                 task_status=status)  # noqa
+                            await self.remove_container(url=executor.url, container_id=container.container_id)
+                            logger.info("Completed task %s life cycle", container.task_name)
+                    await self.update_task_count(pk=executor.id, task_count=task_count)
+                    logger.debug("Executor %s task count is %d", executor.id, task_count)
             await asyncio.sleep(20)
         logger.info('Check life cycle task is stopped')
 
