@@ -55,7 +55,7 @@ class RestAPI:
 
     def init_db(self):
         """init db"""
-        db.init(url=self.db_url)
+        db.init(url=self.db_url, engine_kw={"pool_recycle": 3600})
 
     def init(self):
         """
