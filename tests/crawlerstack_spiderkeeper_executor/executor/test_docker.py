@@ -23,8 +23,9 @@
 #         return TaskSchema(spider_params=SpiderSchema(
 #             DATA_URL='data_url',
 #             LOG_URL='log_url',
-#             METRICS='metrics',
+#             METRICS_URL='metrics',
 #             STORAGE_ENABLE=False,
+#             SNAPSHOT_ENABLE=False,
 #             TASK_NAME='test_task_name'
 #         ),
 #             executor_params=ExecutorSchema(
@@ -37,7 +38,6 @@
 #
 #     async def test(self, executor, task_params):
 #         """test"""
-#
 #         container_id = await executor.run(obj_in=task_params)
 #         await asyncio.sleep(1)
 #
@@ -47,6 +47,9 @@
 #
 #         status = await executor.status(container_id)
 #         assert status == 'exited'
+#
+#         containers = await executor.get()
+#         assert len(containers) >= 1
 #
 #         await executor.stop(container_id)
 #         await asyncio.sleep(1)
