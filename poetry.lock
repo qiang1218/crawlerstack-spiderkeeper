@@ -379,7 +379,7 @@ test = ["anyio[trio] (>=3.2.1,<4.0.0)", "black (==22.8.0)", "coverage[toml] (>=6
 
 [[package]]
 name = "fastapi-sa"
-version = "0.0.1.dev1"
+version = "0.1.0"
 description = "fastapi-sa provides a simple integration between FastAPI and SQLAlchemy in your application"
 category = "main"
 optional = false
@@ -1137,7 +1137,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "e16cc3444beaf5830cb0d1a19efcb36873632ec37206b6eaf0f58a535894105a"
+content-hash = "cf7e79a4e8d5ca38122d649a750c35296d7563397ac73dbdddd09afd234bf466"
 
 [metadata.files]
 aio-pydispatch = [
@@ -1513,8 +1513,8 @@ fastapi = [
     {file = "fastapi-0.87.0.tar.gz", hash = "sha256:07032e53df9a57165047b4f38731c38bdcc3be5493220471015e2b4b51b486a4"},
 ]
 fastapi-sa = [
-    {file = "fastapi_sa-0.0.1.dev1-py3-none-any.whl", hash = "sha256:5be1e5519779e31f2a7886fd87089bee6f03cc2583218a5f289a3fffe0594499"},
-    {file = "fastapi_sa-0.0.1.dev1.tar.gz", hash = "sha256:99922303f559e35a7f5ccc872efaa107a6d08652b5a1ea0d2cfd02365f8ccaa7"},
+    {file = "fastapi_sa-0.1.0-py3-none-any.whl", hash = "sha256:f3272d520effe62872a2805f79be0c6210f00e92df218c1437a1dc8f33ad480c"},
+    {file = "fastapi_sa-0.1.0.tar.gz", hash = "sha256:d5bd82c9e83fb80d95894e2e5266be0b64087b7cc72b3a361c92a8c10c64f05e"},
 ]
 filelock = [
     {file = "filelock-3.9.0-py3-none-any.whl", hash = "sha256:f58d535af89bb9ad5cd4df046f741f8553a418c01a7856bf0d173bbc9f6bd16d"},
