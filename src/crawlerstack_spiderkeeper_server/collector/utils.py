@@ -4,8 +4,8 @@ utils
 import asyncio
 import logging
 import socket
+from asyncio import AbstractEventLoop
 from itertools import count
-from time import sleep
 from typing import Any, Callable, List, Optional
 
 from kombu import Connection, Consumer, Exchange, Queue, producers
@@ -18,6 +18,45 @@ from crawlerstack_spiderkeeper_server.utils.exceptions import SpiderkeeperError
 logger = logging.getLogger(__name__)
 
 
+class Channel:
+    """Channel"""
+
+    def __init__(self, channel):
+        self._channel = channel
+        self._consume_tags = {}
+
+    @property
+    def channel(self):
+        """channel"""
+        return self._channel
+
+    def set_consume_tags(self, tags: dict):
+        """
+        Set consume tags with tags dict
+        :param tags:
+        :return:
+        """
+        self._consume_tags.update(tags)
+
+    def tag(self, queue_name: str) -> str:
+        """
+        Get consume tag with queue name
+        :param queue_name:
+        :return:
+        """
+        try:
+            return self._consume_tags.pop(queue_name)
+        except KeyError:
+            logger.warning("Key error, %s not in consume_tags", queue_name)
+        return ''
+
+    def cancel_consume(self, queue_name: str):
+        """Cancel a consume"""
+        tag = self.tag(queue_name)
+        if tag:
+            self.channel.basic_cancel(tag)
+
+
 class Kombu(metaclass=SingletonMeta):
     """
     Kombu server ，提供队列服务。
@@ -28,6 +67,8 @@ class Kombu(metaclass=SingletonMeta):
     __connect = None
     _server_running = False
     _should_stop: asyncio.Future = None
+
+    channels = {}
 
     async def server_start(self, **_):
         """server start"""
@@ -45,7 +86,7 @@ class Kombu(metaclass=SingletonMeta):
             await asyncio.sleep(2)
             self.connect.close()
 
-    def check_server(self) -> bool:
+    async def check_server(self) -> bool:
         """
         检查 server 的状态，如果 server 没启动，
         则等待 2 秒后再次检查，如果仍没有启动，抛出异常。
@@ -53,7 +94,7 @@ class Kombu(metaclass=SingletonMeta):
         """
         if not self._server_running:
             logger.info('Server has not start, delay 5 seconds.')
-            sleep(2)
+            await asyncio.sleep(2)
             if not self._server_running:
                 raise SpiderkeeperError(
                     'Server not started. You should start server or '
@@ -70,10 +111,57 @@ class Kombu(metaclass=SingletonMeta):
             self.__connect = Connection(settings.MQ)
         return self.__connect
 
-    @property
-    def channel(self):
-        """创建并返回一个新的 channel"""
-        return self.connect.channel()
+    def create_channel(self, name: str) -> Channel:
+        """创建并返回一个新的 channel对象"""
+        if name not in self.channels:
+            self.channels.setdefault(name, Channel(channel=self.connect.channel()))
+        return self.channels.get(name)
+
+    def cancel_consumer(self, queue_name: str, channel_name: str = 'data'):
+        """
+        Cancel consumer
+        :param queue_name:
+        :param channel_name:
+        :return:
+        """
+        self.create_channel(channel_name).cancel_consume(queue_name)
+        logger.info('Cancel consumer task, tag: %s', queue_name)
+
+    def create_queue(self, queue_name: str, channel_name: str = 'check'):
+        """
+        Create queue
+        对消费者管理，通常不进行真实创建
+        :param queue_name:
+        :param channel_name:
+        :return:
+        """
+        return Queue(name=queue_name, channel=self.create_channel(channel_name).channel)
+
+    def delete_queue(self, queue_name, if_unused=False, if_empty=False, nowait=False):
+        """
+        Delete queue
+        :param queue_name:
+        :param if_unused:
+        :param if_empty:
+        :param nowait:
+        :return:
+        """
+        return self.create_queue(queue_name).delete(if_unused=if_unused,
+                                                    if_empty=if_empty,
+                                                    nowait=nowait)
+
+    def queue_declare(self, queue_name, nowait=False, passive=False, channel=None):
+        """
+        Get queue count
+        :param queue_name:
+        :param nowait:
+        :param passive:
+        :param channel:
+        :return:
+        """
+        return self.create_queue(queue_name).queue_declare(nowait=nowait,
+                                                           passive=passive,
+                                                           channel=channel)
 
     async def publish(
             self,
@@ -110,6 +198,8 @@ class Kombu(metaclass=SingletonMeta):
             routing_key: str,
             exchange_name: str,
             register_callbacks: List[Callable],
+            prefetch_count: int = 1,
+            channel_name: str = 'data',
     ) -> None:
         """
 
@@ -192,14 +282,22 @@ class Kombu(metaclass=SingletonMeta):
             def cb(body: Dict, message: Message):
                 logging.debug(body)
                 message.ack()
+        :param prefetch_count: default 1
+        :param channel_name: default data
         :return:
         """
-        self.check_server()
+        await self.check_server()
         queue = Queue(name=queue_name, exchange=Exchange(exchange_name), routing_key=routing_key)
-        consumer = Consumer(self.channel, queues=[queue], tag_prefix=queue_name)
+        consumer = Consumer(
+            self.create_channel(channel_name).channel,
+            queues=[queue],
+            tag_prefix=queue_name,
+            prefetch_count=prefetch_count
+        )
         for callback in register_callbacks:
             consumer.register_callback(callback)
         consumer.consume()
+        self.create_channel(channel_name).set_consume_tags(consumer._active_tags)  # noqa  # pylint: disable=W0212
         # 添加延迟,让channel绑定成功
         await asyncio.sleep(0.001)
 
@@ -208,21 +306,24 @@ class Kombu(metaclass=SingletonMeta):
             limit: Optional[int] = None,
             timeout: Optional[int] = None,
             safety_interval: Optional[int] = 1,
+            loop: AbstractEventLoop = None
     ):
         """
         开启消费
         :param limit:
         :param timeout:
         :param safety_interval:
+        :param loop:
         :return:
         """
-        await asyncio.to_thread(self._consuming,
-                                limit=limit,
-                                timeout=timeout,
-                                safety_interval=safety_interval,
-                                should_stop=self._should_stop)
+        await asyncio.sleep(0.01)
+        asyncio.run_coroutine_threadsafe(self._consuming(
+            limit=limit,
+            timeout=timeout,
+            safety_interval=safety_interval,
+            should_stop=self._should_stop), loop)
 
-    def _consuming(
+    async def _consuming(
             self,
             limit: Optional[int] = None,
             timeout: Optional[int] = None,
@@ -242,11 +343,10 @@ class Kombu(metaclass=SingletonMeta):
         for _ in limit and range(limit) or count():
             # 如果信号中断发生在之前, 需要处理异常,确保循环中断
             try:
-                server_running = self.check_server()
+                server_running = await self.check_server()
             except SpiderkeeperError:
                 logger.debug('Kombu server stop')
                 server_running = False
-
             _should_stop = not server_running or (should_stop and should_stop.done())
             # 如果 Server 不在运行，或者 should_stop
             if _should_stop:
@@ -254,6 +354,7 @@ class Kombu(metaclass=SingletonMeta):
                 break
             try:
                 logger.debug('Kombu draining event 1 seconds.')
+                await asyncio.sleep(1)
                 self.connect.drain_events(timeout=1)
             except socket.timeout:
                 self.connect.heartbeat_check()
