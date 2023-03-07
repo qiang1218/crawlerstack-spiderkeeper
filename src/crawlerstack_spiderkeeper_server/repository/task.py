@@ -31,3 +31,16 @@ class TaskRepository(BaseRepository[Task, TaskCreate, TaskUpdate, TaskSchema]):
             # Task does not exist
             raise ObjectDoesNotExist()
         return self.model_schema.from_orm(task_detail.task)
+
+    async def get_by_name(self, name: str) -> TaskSchema:
+        """
+        Get task by name
+        :param name:
+        :return:
+        """
+        stmt = select(Task).filter(Task.name == name)
+        task: Task = await self.session.scalar(stmt)
+        if not task:
+            # Task does not exist
+            raise ObjectDoesNotExist()
+        return self.model_schema.from_orm(task)
