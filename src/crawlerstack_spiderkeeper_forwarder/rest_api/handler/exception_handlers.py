@@ -8,7 +8,8 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from crawlerstack_spiderkeeper_forwarder.utils.exceptions import (
-    ObjectDoesNotExist, SpiderkeeperError, UnprocessableEntityError)
+    DeleteConstraintError, ObjectDoesNotExist, RemoteTaskRunError,
+    RequestError, SpiderkeeperError, UnprocessableEntityError)
 
 
 async def spiderkeeper_exception_handler(request: Request, ex: SpiderkeeperError):
@@ -49,5 +50,47 @@ async def unprocessable_entity_error_handler(request: Request, ex: Unprocessable
     _ = request
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={'detail': ex.detail}
+    )
+
+
+async def delete_constraint_error_handler(request: Request, ex: DeleteConstraintError):
+    """
+    Handle DeleteConstraintError with http code 406
+    :param request:
+    :param ex:
+    :return:
+    """
+    _ = request
+    return JSONResponse(
+        status_code=status.HTTP_406_NOT_ACCEPTABLE,
+        content={'detail': ex.detail}
+    )
+
+
+async def request_error_handler(request: Request, ex: RequestError):
+    """
+    Handle RequestError with http code 400
+    :param request:
+    :param ex:
+    :return:
+    """
+    _ = request
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={'detail': ex.detail}
+    )
+
+
+async def remote_task_run_error_handler(request: Request, ex: RemoteTaskRunError):
+    """
+    Handle RemoteTaskRunError with http code 400
+    :param request:
+    :param ex:
+    :return:
+    """
+    _ = request
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
         content={'detail': ex.detail}
     )
