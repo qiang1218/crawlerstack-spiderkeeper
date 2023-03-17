@@ -45,6 +45,7 @@ httpx = "^0.23.3"
 pymongo = "^4.3.3"
 boto = "^2.49.0"
 fastapi-sa = "^0.1.0"
+kubernetes = "^26.1.0"
 
 
 [tool.poetry.group.dev.dependencies]
