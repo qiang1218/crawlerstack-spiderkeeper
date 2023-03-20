@@ -1,12 +1,16 @@
 """file"""
 import asyncio
+import base64
 import json
 import logging
+import os
+import tempfile
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
 import boto.s3.connection
+from boto.s3.key import Key
 from fastapi_sa.database import session_ctx
 
 from crawlerstack_spiderkeeper_server.config import local_path, settings
@@ -110,15 +114,24 @@ class FileStorage(Storage):
         bucket = config.get('bucket')
         return bucket, config
 
+    def new_key(self, key_name: str) -> Key:
+        """New key"""
+        return self.bucket.new_key(key_name)
+
     def upload_file(self, key_name: str, filename: str):
         """Upload file"""
-        key = self.bucket.new_key(key_name)
+        key = self.new_key(key_name)
         key.set_contents_from_filename(filename)
 
     def upload_string(self, key_name: str, file_str: str):
         """Upload string"""
-        key = self.bucket.new_key(key_name)
+        key = self.new_key(key_name)
         key.set_contents_from_string(file_str)
+
+    def upload_file_name(self, key_name: str, file_name: str):
+        """Upload steam"""
+        key = self.new_key(key_name)
+        key.set_contents_from_filename(file_name)
 
     def get(self, key_name: str):
         """Exists file"""
@@ -218,10 +231,28 @@ class FileStorage(Storage):
         title = data.get('title')
         fields = data.get('fields')
         for i in data.get('datas'):
-            row = dict(zip(fields, i))
-            name = self.gen_snapshot_title_name(title, row.pop('file_name'))
-            key_name = self.gen_snapshot_key_name(name)
-            self.upload_string(key_name, row.pop('content'))
+            try:
+                row = dict(zip(fields, i))
+                name = self.gen_snapshot_title_name(title, row.pop('file_name'))
+                key_name = self.gen_snapshot_key_name(name)
+                # 根据file_name后缀选用不同的方法
+                content = row.pop('content')
+                suffix = name.split('.')[-1]
+                if suffix in ('xlsx', 'xls', 'pdf', 'doc', 'docs'):
+                    # 生成临时文件
+                    _content = base64.b64decode(content.encode('utf-8'))
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.' + suffix) as fp:
+                        fp.write(_content)
+                    self.upload_file_name(key_name, file_name=fp.name)
+                    # 删除文件
+                    try:
+                        os.remove(fp.name)
+                    except FileNotFoundError:
+                        logger.warning('File not found, file name: %s', fp.name)
+                else:
+                    self.upload_string(key_name, row.pop('content'))
+            except Exception as ex:
+                logger.error('Save snapshot data error, exception info: %s', ex)
         return True
 
     async def archive(self, **_):
