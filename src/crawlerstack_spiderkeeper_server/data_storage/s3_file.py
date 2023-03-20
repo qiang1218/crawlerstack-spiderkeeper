@@ -250,7 +250,7 @@ class FileStorage(Storage):
                     except FileNotFoundError:
                         logger.warning('File not found, file name: %s', fp.name)
                 else:
-                    self.upload_string(key_name, row.pop('content'))
+                    self.upload_string(key_name, content)
             except Exception as ex:
                 logger.error('Save snapshot data error, exception info: %s', ex)
         return True
