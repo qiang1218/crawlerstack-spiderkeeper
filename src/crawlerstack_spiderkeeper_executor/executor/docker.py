@@ -21,7 +21,6 @@ class DockerExecutor(BaseExecutor):
     def __init__(self, settings):
         super().__init__(settings)
         self.client = Docker(url=self.settings.EXECUTOR_REMOTE_URL)
-        self._prefix = 'SpiderKeeper-'
 
     async def get(self) -> list:
         """
@@ -165,3 +164,7 @@ class DockerExecutor(BaseExecutor):
     async def close(self):
         """Close"""
         await self.client.close()
+
+    async def resource(self, *args, **kwargs):
+        """Resource"""
+        pass

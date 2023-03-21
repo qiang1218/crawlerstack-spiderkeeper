@@ -24,10 +24,8 @@ class RegisterService(metaclass=SingletonMeta):
         self.settings = settings
         self.local_url = self.settings.LOCAL_URL
         self.executor_type = self.settings.EXECUTOR_TYPE
-        self.executor_remote_url = self.settings.EXECUTOR_REMOTE_URL
         self.executor_name = self.settings.EXECUTOR_NAME
         self.executor_selector = self.settings.EXECUTOR_SELECTOR
-
         self.heartbeat_interval = self.settings.HEARTBEAT_INTERVAL
         self.heartbeat_timeout = self.settings.HEARTBEAT_TIMEOUT
         self.heartbeat_url = self.settings.SCHEDULER_BASE_URL + self.settings.SCHEDULER_HEARTBEATS_SUFFIX
