@@ -20,7 +20,7 @@ class K8SExecutor(BaseExecutor):
 
     def __init__(self, settings):
         super().__init__(settings)
-        self.namespace = 'default'
+        self.namespace = self.settings.NAMESPACE
         self.executor_config = self.settings.EXECUTOR_CONFIG or '~/.kube/config'
         self.api = self.init_api()
 
