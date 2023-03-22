@@ -2,11 +2,14 @@
 import logging
 from typing import Any
 
-from kubernetes import config, client
+from kubernetes import client, config
 
 from crawlerstack_spiderkeeper_executor.executor.base import BaseExecutor
-from crawlerstack_spiderkeeper_executor.schemas.base import TaskSchema, ExecutorSchema, SpiderSchema
-from crawlerstack_spiderkeeper_executor.utils.exceptions import SpiderkeeperError
+from crawlerstack_spiderkeeper_executor.schemas.base import (ExecutorSchema,
+                                                             SpiderSchema,
+                                                             TaskSchema)
+from crawlerstack_spiderkeeper_executor.utils.exceptions import \
+    SpiderkeeperError
 
 logger = logging.Logger(__name__)
 
