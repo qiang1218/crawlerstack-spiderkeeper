@@ -1,4 +1,5 @@
 """Executor"""
+import time
 
 from crawlerstack_spiderkeeper_scheduler.models import Executor
 from crawlerstack_spiderkeeper_scheduler.repository.executor import \
@@ -51,4 +52,6 @@ class ExecutorService(EntityService[Executor, ExecutorCreate, ExecutorUpdate, Ex
         :param obj_in:
         :return:
         """
+        # 设置过期参数
+        obj_in.expired_time = int(time.time())
         return await self.repository.update_by_id(pk=pk, obj_in=obj_in)

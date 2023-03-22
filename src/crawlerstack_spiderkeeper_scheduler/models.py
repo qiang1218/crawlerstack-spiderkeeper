@@ -2,7 +2,7 @@
 from datetime import datetime
 
 import inflection
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, BigInteger
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 
@@ -38,6 +38,7 @@ class Executor(BaseModel):
     memory = Column(Integer, nullable=False, comment='内存G')
     cpu = Column(Integer, nullable=False, comment='cpu占用%')
     task_count = Column(Integer, nullable=False, comment='任务个数')
+    expired_time = Column(BigInteger, comment='过期时间')
 
     task = relationship(
         'Task',
