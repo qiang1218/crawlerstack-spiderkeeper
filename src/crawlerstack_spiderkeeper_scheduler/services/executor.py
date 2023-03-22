@@ -32,6 +32,7 @@ class ExecutorService(EntityService[Executor, ExecutorCreate, ExecutorUpdate, Ex
         """
         # 创建部分需要特殊处理, 考虑到executor_name的全局唯一性， 默认状态为离线，需由心跳将状态置为在线
         # 同时创建 executor_detail表，创建时候，旧表置默认值
+        obj_in.expired_time = int(time.time())
         try:
             executor = await self.repository.get_by_name(obj_in.name)
             obj = await self.repository.update_by_id(pk=executor.id, obj_in=obj_in)
