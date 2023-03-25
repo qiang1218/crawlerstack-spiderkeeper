@@ -13,7 +13,7 @@ import boto.s3.connection
 from boto.s3.key import Key
 from fastapi_sa.database import session_ctx
 
-from crawlerstack_spiderkeeper_server.config import local_path, settings
+from crawlerstack_spiderkeeper_server.config import data_path, settings
 from crawlerstack_spiderkeeper_server.data_storage.base import Storage
 from crawlerstack_spiderkeeper_server.data_storage.utils import (
     Connector, transform_s3_url)
@@ -105,7 +105,7 @@ class FileStorage(Storage):
     def file_path(self, filename: str):
         """data path"""
         # 文件名合成添加连接器的name，防止多个job文件误操作
-        return Path(local_path, self.file_prefix, self.default_connector.name, filename)
+        return Path(data_path, self.file_prefix, self.default_connector.name, filename)
 
     @staticmethod
     def transform_url(url: str) -> tuple:

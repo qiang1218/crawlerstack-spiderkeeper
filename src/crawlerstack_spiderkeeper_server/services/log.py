@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from typing import Any, List
 
-from crawlerstack_spiderkeeper_server.config import local_path, settings
+from crawlerstack_spiderkeeper_server.config import data_path, settings
 from crawlerstack_spiderkeeper_server.services.base import ICRUD
 from crawlerstack_spiderkeeper_server.utils import File
 
@@ -25,7 +25,7 @@ class LogService(ICRUD):
         :return:
         """
         task_name += settings.LOG_TASK_PATH_SUFFIX
-        return Path(local_path, settings.LOG_TASK_PATH_PREFIX, *task_name.split(settings.LOG_TASK_PATH_SEPARATOR))
+        return Path(data_path, settings.LOG_TASK_PATH_PREFIX, *task_name.split(settings.LOG_TASK_PATH_SEPARATOR))
 
     async def get(self, query: dict) -> List[str]:
         """
