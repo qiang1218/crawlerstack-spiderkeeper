@@ -12,6 +12,8 @@ base_dir = Path(__file__).parent.parent
 
 local_path = base_dir / '.local'
 os.makedirs(local_path, exist_ok=True)
+data_path = Path('/tmp', 'spiderkeeper', 'server', 'datas')
+os.makedirs(data_path, exist_ok=True)
 
 _settings_files = [
     Path(__file__).parent / 'settings.yml',
@@ -32,7 +34,6 @@ settings = Dynaconf(
     base_dir=base_dir,  # 编码传入配置
     localpath=local_path
 )
-
 
 if not os.path.isabs(settings.LOGPATH):
     settings.set('LOGPATH', local_path / settings.LOGPATH)
