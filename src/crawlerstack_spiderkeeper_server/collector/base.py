@@ -80,6 +80,7 @@ class StorageBaseTask(metaclass=SingletonMeta):
     NAME: str
     kombu = Kombu()
     _storage_background_tasks: dict[str, asyncio.Task] = {}
+    dead_letter_queue = 'spiderkeeper_dead_queue'
 
     def routing_key(self, task_name: str):
         """Routing key."""
@@ -193,8 +194,21 @@ class StorageBaseTask(metaclass=SingletonMeta):
         """
         raise NotImplementedError
 
+    async def _consuming(self, body: dict, message: Message, loop: AbstractEventLoop):
+        task = loop.create_task(self.callback(body))
+        try:
+            await task
+        except Exception as ex:
+            logger.warning('Consume failed, exception info: %s, try reject,', ex)
+            message.reject()
+            body.update({'exception': str(ex)})
+            await self.kombu.publish(self.dead_letter_queue, self.dead_letter_queue, self.dead_letter_queue,
+                                     json.dumps(body))
+            await asyncio.sleep(3)
+        else:
+            message.ack()
+
     def consuming(self, body: str, message: Message, loop: AbstractEventLoop):
         """consume on response"""
         body = json.loads(body)
-        task = asyncio.run_coroutine_threadsafe(self.callback(body), loop)
-        task.add_done_callback(message.ack)  # 手动 ack
+        asyncio.run_coroutine_threadsafe(self._consuming(body, message, loop), loop)
