@@ -9,9 +9,11 @@ stages:
 
 .base_test:
   stage: test
+  environment:
+    PIP_INDEX_URL: https://pypi.tuna.tsinghua.edu.cn/simple/
   script:
-  - pip install -U tox -i https://pypi.tuna.tsinghua.edu.cn/simple/
-  - tox -e py
+  - pip install -U tox -i $PIP_INDEX_URL
+  - tox -e py -i $PIP_INDEX_URL
 
 test:
   image: python:${PYTHONVERSION}
@@ -25,10 +27,12 @@ test:
 
 test:lint:
   stage: test
+  environment:
+    PIP_INDEX_URL: https://pypi.tuna.tsinghua.edu.cn/simple/
   script:
-  - pip install -U tox -i https://pypi.tuna.tsinghua.edu.cn/simple/
-  - tox -e isort
-  - tox -e pylint
+  - pip install -U tox -i $PIP_INDEX_URL
+  - tox -e isort -i $PIP_INDEX_URL
+  - tox -e pylint -i $PIP_INDEX_URL
 
 build:spiderkeeper:
   stage: build
