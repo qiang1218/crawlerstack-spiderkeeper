@@ -94,6 +94,8 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
         :return:
         """
         # 默认情况下，任务添加时的逻辑不进行任务调用触发，由单独的任务开关进行处理
+        if obj_in.enabled:
+            await self.stop_by_id(pk)
         obj_in.enabled = False
         obj_in.pause = False
         artifact_id = obj_in.artifact_id
