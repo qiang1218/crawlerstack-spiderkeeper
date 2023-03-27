@@ -1,0 +1,44 @@
+default:
+  image: python:3.10
+  before_script:
+  - pip install -U pip
+
+stages:
+  - test
+  - build
+  - deploy
+
+.base_test:
+  stage: test
+  script:
+  - pip install -U tox
+  - tox -e py
+
+test:
+  image: python:${PYTHONVERSION}
+  parallel:
+    matrix:
+    - PYTHONVERSION:
+      - "3.10"
+      - "3.11"
+  extends:
+  - .base_test
+
+test:lint:
+  stage: test
+  script:
+  - pip install -U tox
+  - tox -e isort
+  - tox -e pylint
+#
+#build:
+#  stage: build
+#  when: on_success
+#  script:
+#  - pip install -U poetry
+#  - poetry build
+#  artifacts:
+#    paths:
+#    - dist/*.whl
+#    expire_in: 3 days
+
