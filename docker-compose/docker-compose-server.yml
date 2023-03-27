@@ -4,6 +4,7 @@ services:
     image: crawlerstack-spiderkeeper:latest
     volumes:
       - ${PWD}/settings.local.yml:/usr/local/etc/SPIDERKEEPER/server/settings.yml:ro
+      - /temp/spiderkeeper:/tmp/spiderkeeper
     entrypoint: [ "crawlerstack_spiderkeeper_server" ]
     command: [ "api", "-h", "0.0.0.0", "-p", "8080" ]
     container_name: crawlerstack-spiderkeeper-server
