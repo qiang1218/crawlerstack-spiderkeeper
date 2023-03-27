@@ -74,26 +74,27 @@ class LifeCycle(metaclass=SingletonMeta):
                     # 请求
                     try:
                         containers = await self.get_all_containers(executor.url)
-                    except Exception as e:
+                    except Exception as ex:
                         logger.warning('Failed to get container for executor, executor id: %s, exception info: %s',
-                                       executor.id, e)
+                                       executor.id, ex)
                         continue
                     for container in containers:
-                        if container.status != Status.RUNNING.name:
-                            # 数据更新
-                            status = Status[container.status].value
-                            try:
-                                await self.update_task_record(task_name=container.task_name,
-                                                              status=status,  # noqa
-                                                              task_end_time=datetime.now())
-                                await self.update_server_task_record(task_name=container.task_name,
-                                                                     task_status=status)  # noqa
-                                await self.remove_container(url=executor.url, container_id=container.container_id)
-                            except Exception as e:
-                                logger.warning('Failed to update task record, exception info: %s', e)
-                            else:
-                                logger.info("Completed task %s life cycle management, container removal",
-                                            container.task_name)
+                        if container.status == Status.RUNNING.name:
+                            continue
+                        # 数据更新
+                        status = Status[container.status].value
+                        try:
+                            await self.update_task_record(task_name=container.task_name,
+                                                          status=status,  # noqa
+                                                          task_end_time=datetime.now())
+                            await self.update_server_task_record(task_name=container.task_name,
+                                                                 task_status=status)  # noqa
+                            await self.remove_container(url=executor.url, container_id=container.container_id)
+                        except Exception as ex:
+                            logger.warning('Failed to update task record, exception info: %s', ex)
+                        else:
+                            logger.info("Completed task %s life cycle management, container removal",
+                                        container.task_name)
             await asyncio.sleep(20)
         logger.info('Check life cycle task is stopped')
 

@@ -30,22 +30,22 @@ class K8SExecutor(BaseExecutor):
         try:
             # 默认通过集群内部连接
             config.load_incluster_config()
-        except Exception as e:
-            logger.debug('Non-cluster internal, initialization failed, exception info: %s', e)
+        except Exception as ex:
+            logger.debug('Non-cluster internal, initialization failed, exception info: %s', ex)
             # 通过集群外部连接，当使用容器化部署时，进行目录挂载
             try:
                 logger.info('Try to initialize with config')
                 config.load_kube_config(config_file=self.executor_config)
             except Exception as e:
-                logger.debug('Config init failed, exception info: s%', e)
+                logger.debug('Config init failed, exception info: %s', e)
 
         try:
             api = client.CoreV1Api()
             api.list_namespace()
             logger.info('successfully inited k8s client')
-        except Exception as e:
-            logger.warning('Failed to connect to k8s api, exception info: %s', e)
-            raise SpiderkeeperError('K8s client Init Failed, exit')
+        except Exception as ex:
+            logger.warning('Failed to connect to k8s api, exception info: %s', ex)
+            raise SpiderkeeperError(detail='K8s client Init Failed, exit') from ex
         else:
             return api
 
@@ -178,8 +178,6 @@ class K8SExecutor(BaseExecutor):
 
     async def close(self, *args, **kwargs):
         """Close"""
-        pass
 
     async def resource(self, *args, **kwargs):
         """Resource"""
-        pass

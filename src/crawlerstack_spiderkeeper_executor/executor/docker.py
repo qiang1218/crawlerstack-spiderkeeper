@@ -167,4 +167,3 @@ class DockerExecutor(BaseExecutor):
 
     async def resource(self, *args, **kwargs):
         """Resource"""
-        pass

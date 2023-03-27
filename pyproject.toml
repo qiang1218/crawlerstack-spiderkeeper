@@ -96,6 +96,7 @@ disable = [
     "arguments-differ"
 ]
 good-names = [
+    "e",
     "f",
     "i",
     "j",
