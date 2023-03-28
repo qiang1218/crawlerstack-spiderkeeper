@@ -34,11 +34,11 @@ build:image:
   image: quay.io/buildah/stable
   stage: build
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main" &&
+    - if: $CI_COMMIT_BRANCH == "main" &&
         $CI_PROJECT_NAME == "crawlerstack-spiderkeeper"  &&
-        $CI_PROJECT_NAMESPACE == "crawlerstack"  &&
+        $CI_PROJECT_NAMESPACE == "zncdata/develop/crawlerstack"  &&
         $REGISTRY_USER  &&
-        $REGISTRY_PASSWORD'
+        $REGISTRY_PASSWORD
       when: on_success
   variables:
     STORAGE_DRIVER: vfs
@@ -46,7 +46,7 @@ build:image:
     BUILDAH_ISOLATION: chroot
 
   before_script:
-    - export IMAGE_NAME=crawlerstack-spiderkeeper
+    - export IMAGE_NAME=zncdata/crawlerstack-spiderkeeper
     - export VERSION=v3.2.0
     - export VERIFY_REGISTRY=false
     - export REGISTRY=docker-private.zncdata.net
