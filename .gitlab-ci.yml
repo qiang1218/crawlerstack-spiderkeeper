@@ -1,7 +1,7 @@
 default:
   image: python:3.10
   before_script:
-  - pip install -U pip
+    - pip install -U pip
 
 stages:
   - test
@@ -10,54 +10,55 @@ stages:
 .base_test:
   stage: test
   script:
-  - pip install -U tox -i https://pypi.tuna.tsinghua.edu.cn/simple/
-  - tox -e py
+    - pip install -U tox
+    - tox -e py
 
 test:
   image: python:${PYTHONVERSION}
   parallel:
     matrix:
-    - PYTHONVERSION:
-      - "3.10"
-      - "3.11"
+      - PYTHONVERSION:
+          - "3.10"
+          - "3.11"
   extends:
-  - .base_test
+    - .base_test
 
 test:lint:
   stage: test
   script:
-  - pip install -U tox -i https://pypi.tuna.tsinghua.edu.cn/simple/
-  - tox -e isort
-  - tox -e pylint
+    - pip install -U tox
+    - tox -e isort
+    - tox -e pylint
 
 build:spiderkeeper:
   stage: build
-  only:
-    variables:
-    - $REGISTRY_USER
-    - $REGISTRY_PASSWORD
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" \
+            && $CI_PROJECT_NAME == "crawlerstack-spiderkeeper"  \
+            && $CI_PROJECT_NAMESPACE="crawlerstack" \
+            && $REGISTRY_USER  \ 
+            && $REGISTRY_PASSWORD'
   variables:
     STORAGE_DRIVER: vfs
     BUILDAH_FORMAT: docker
     BUILDAH_ISOLATION: chroot
 
   before_script:
-  - export IMAGE_NAME=crawlerstack-spiderkeeper
-  - export VERSION=v3.2.0
-  - export VERIFY_REGISTRY=false
-  - export REGISTRY=docker-private.zncdata.net
-  - export TAG=${IMAGE_NAME}:${VERSION}
-  - echo $REGISTRY
-  - echo $VERIFY_REGISTRY
-  - echo $REGISTRY_USER
-  - echo $REGISTRY_PASSWORD
-  - echo $TAG
-  - buildah info
-  - echo "$REGISTRY_PASSWORD" | buildah login --tls-verify=${VERIFY_REGISTRY} -u "$REGISTRY_USER" --password-stdin ${REGISTRY}
-  - cd crawlerstack-spiderkeeper
+    - export IMAGE_NAME=crawlerstack-spiderkeeper
+    - export VERSION=v3.2.0
+    - export VERIFY_REGISTRY=false
+    - export REGISTRY=docker-private.zncdata.net
+    - export TAG=${IMAGE_NAME}:${VERSION}
+    - echo $REGISTRY
+    - echo $VERIFY_REGISTRY
+    - echo $REGISTRY_USER
+    - echo $REGISTRY_PASSWORD
+    - echo $TAG
+    - buildah info
+    - echo "$REGISTRY_PASSWORD" | buildah login --tls-verify=${VERIFY_REGISTRY} -u "$REGISTRY_USER" --password-stdin ${REGISTRY}
 
   script:
-  - buildah build --jobs=2 --tls-verify=${VERIFY_REGISTRY} --platform=linux/arm64,linux/amd64 --manifest="$TAG" .
-  - buildah images
-  - buildah manifest inspect "$TAG"
-  - buildah manifest push --all --tls-verify=${VERIFY_REGISTRY} $TAG docker://${REGISTRY}/${TAG}
+    - buildah build --jobs=2 --tls-verify=${VERIFY_REGISTRY} --platform=linux/arm64,linux/amd64 --manifest="$TAG" .
+    - buildah images
+    - buildah manifest inspect "$TAG"
+    - buildah manifest push --all --tls-verify=${VERIFY_REGISTRY} $TAG docker://${REGISTRY}/${TAG}

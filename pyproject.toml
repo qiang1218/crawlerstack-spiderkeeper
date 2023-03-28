@@ -11,6 +11,11 @@ packages = [
     { include = "crawlerstack_spiderkeeper_server", from = "src" },
 ]
 
+[[tool.poetry.source]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
+
 [tool.poetry.dependencies]
 python = "^3.10"
 aio-pydispatch = "^1.0.0"
