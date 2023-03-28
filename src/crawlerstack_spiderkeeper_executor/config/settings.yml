@@ -1,0 +1,41 @@
+DEBUG: false
+verbose: false
+
+##########################################################
+HOST: localhost
+PORT: 8082
+
+cors_origins:
+  - http://localhost:8082
+  - http://127.0.0.1:8082
+
+##########################################################
+# Log
+# default log path is `/home/<user>/.local/spiderkeeper/log`
+LOGPATH: logs
+LOGLEVEL: INFO
+
+##########################################################
+# scheduler
+SCHEDULER_BASE_URL: http://localhost:8081/api/v1
+SCHEDULER_HEARTBEATS_SUFFIX: /heartbeats/%s
+SCHEDULER_EXECUTOR_CREATE_SUFFIX: /executors
+
+##########################################################
+# executor name 与其他执行器名称唯一
+# docker_network 为调度容器时的network
+# k8s执行器，指定config的位置，参数EXECUTOR_CONFIG
+EXECUTOR_TYPE: docker
+EXECUTOR_REMOTE_URL: 'unix://var/run/docker.sock'
+EXECUTOR_NAME: 'docker-local'
+EXECUTOR_SELECTOR: 'local'
+DOCKER_NETWORK: app
+EXECUTOR_CONFIG: '~/.kube/config'
+NAMESPACE: default
+
+##########################################################
+# local
+# use register and heartbeat
+LOCAL_URL: http://localhost:8082/api/v1
+HEARTBEAT_INTERVAL: 5
+HEARTBEAT_TIMEOUT: 200

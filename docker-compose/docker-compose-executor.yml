@@ -1,0 +1,21 @@
+version: "3.7"
+services:
+  app:
+    image: crawlerstack-spiderkeeper:latest
+    volumes:
+      - ${PWD}/settings.local.yml:/usr/local/etc/SPIDERKEEPER/executor/settings.yml:ro
+    entrypoint: ["crawlerstack_spiderkeeper_executor"]
+    command: [ "api", "-h", "0.0.0.0", "-p", "8082" ]
+    container_name: crawlerstack-spiderkeeper-executor
+    ports:
+      - "8085:8082"
+    logging:
+      options:
+        max-size: "200M"
+        max-file: "3"
+    networks:
+      - app
+
+networks:
+  app:
+    external: true

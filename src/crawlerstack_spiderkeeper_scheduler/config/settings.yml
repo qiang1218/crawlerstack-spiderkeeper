@@ -1,0 +1,70 @@
+DEBUG: false
+verbose: false
+
+##########################################################
+HOST: localhost
+PORT: 8081
+
+cors_origins:
+  - http://localhost:8001
+  - http://127.0.0.1:8001
+
+##########################################################
+# Log
+# default log path is `/home/<user>/.local/spiderkeeper/log`
+LOGPATH: logs
+LOGLEVEL: INFO
+
+##########################################################
+# database uri
+# ref https://docs.sqlalchemy.org/en/13/core/engines.html
+# eg: mysql://root:root@127.0.0.1:3306/spiderkeeper?charset=utf8
+# eg: sqlite:///tmp/spiderkeeper.db
+# eg: postgresql://scott:tiger@localhost:5432/mydatabase
+DATABASE: mysql+aiomysql://root:1qazZAQ!@192.168.6.15:3306/spiderkeeper_scheduler?charset=UTF8MB4
+
+##########################################################
+# pagination
+PAGE: 0
+SIZE: 10
+
+##########################################################
+# scheduler
+SCHEDULER_JOB_STORE_DEFAULT: mysql://root:1qazZAQ!@192.168.6.15:3306/spiderkeeper_scheduler
+SCHEDULER_EXECUTORS_DEFAULT_COUNT: 20
+SCHEDULER_JOB_DEFAULTS_COALESCE: false
+SCHEDULER_JOB_DEFAULTS_MAX_INSTANCES: 3
+SCHEDULER_TIMEZONE: Asia/Shanghai
+
+##########################################################
+# scheduler
+# EXPIRE_DAY default: 1  # 1day
+# EXPIRE_INTERVAL default: 3600  # 3600s
+SERVER_BASE_URL: http://localhost:8080/api/v1
+SERVER_JOB_SUFFIX: /jobs/%s
+SERVER_ARTIFACT_SUFFIX: /jobs/%s/artifacts
+SERVER_TASK_SUFFIX: /tasks
+SERVER_TASK_CRUD_SUFFIX: /tasks/%s
+
+##########################################################
+# executor
+EXECUTOR_RUN_SUFFIX: /_run
+EXECUTOR_WAIT_SUFFIX: /_check/%s
+EXECUTOR_RM_SUFFIX: /_rm/%s
+EXECUTOR_GET_SUFFIX: /containers
+HEARTBEAT_INTERVAL: 5
+
+##########################################################
+# forwarder
+FORWARDER_BASE_URL: http://localhost:8083/api/v1
+FORWARDER_DATA_SUFFIX: /datas
+FORWARDER_LOG_SUFFIX: /logs
+FORWARDER_METRIC_SUFFIX: /metrics
+
+##########################################################
+# current server api for scheduler task
+SCHEDULER_BASE_URL: http://localhost:8081/api/v1
+# get executor and update executor count
+SCHEDULER_EXECUTOR_SUFFIX: /executors
+# create task and update
+SCHEDULER_TASK_SUFFIX: /tasks

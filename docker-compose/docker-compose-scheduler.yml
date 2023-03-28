@@ -1,0 +1,21 @@
+version: "3.7"
+services:
+  app:
+    image: crawlerstack-spiderkeeper:latest
+    volumes:
+      - ${PWD}/settings.local.yml:/usr/local/etc/SPIDERKEEPER/scheduler/settings.yml:ro
+    entrypoint: ["crawlerstack_spiderkeeper_scheduler"]
+    command: [ "api", "-h", "0.0.0.0", "-p", "8081" ]
+    container_name: crawlerstack-spiderkeeper-scheduler
+    ports:
+      - "8084:8081"
+    logging:
+      options:
+        max-size: "200M"
+        max-file: "3"
+    networks:
+      - app
+
+networks:
+  app:
+    external: true

@@ -1,0 +1,10 @@
+"""
+Constants
+"""
+
+DEFAULT_CHARACTER = 'utf-8'
+
+ARTIFACT_VIRTUALENV_PATHNAME = 'virtualenvs'
+ARTIFACT_FILE_PATHNAME = 'artifacts'
+ARTIFACT_SOURCE_CODE_PATHNAME = 'workspaces'
+SPIDER_LOG_PATHNAME = 'logs'
