@@ -30,14 +30,16 @@ test:lint:
     - tox -e isort
     - tox -e pylint
 
-build:spiderkeeper:
+build:image:
+  image: quay.io/buildah/stable
   stage: build
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main" \
-            && $CI_PROJECT_NAME == "crawlerstack-spiderkeeper"  \
-            && $CI_PROJECT_NAMESPACE="crawlerstack" \
-            && $REGISTRY_USER  \ 
-            && $REGISTRY_PASSWORD'
+    - if: '$CI_COMMIT_BRANCH == "main" &&
+        $CI_PROJECT_NAME == "crawlerstack-spiderkeeper"  &&
+        $CI_PROJECT_NAMESPACE == "crawlerstack"  &&
+        $REGISTRY_USER  &&
+        $REGISTRY_PASSWORD'
+      when: on_success
   variables:
     STORAGE_DRIVER: vfs
     BUILDAH_FORMAT: docker
