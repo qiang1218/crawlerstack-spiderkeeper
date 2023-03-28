@@ -15,8 +15,6 @@ services:
         max-file: "3"
     networks:
       - app
-    environment:
-      - TZ=Asia/Shanghai
 
 networks:
   app:

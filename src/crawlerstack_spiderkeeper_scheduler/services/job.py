@@ -113,7 +113,7 @@ class JobService:
         # 执行器变量，统一小写
         images = artifact.get('image') + ':' + (artifact.get('version') if artifact.get('version') else 'latest')
         # cmdline 字符串 空格链接
-        cmdline = job.get('cmdline', '')
+        cmdline = job.get('cmdline', '').split(' ')
         executor_selector = job.get('executor_selector')
         executor_type = job.get('executor_type')
         # volume ; 切割

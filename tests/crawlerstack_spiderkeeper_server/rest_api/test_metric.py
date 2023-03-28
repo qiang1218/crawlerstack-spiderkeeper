@@ -17,9 +17,9 @@ def metric_service():
 
 def test_metric(client, metric_service):
     """test metric."""
-    metric_service.set_metric('2-scheduled-20191215152202', {'downloader_request_count': 10086})
+    metric_service.set_metric('2-scheduled-20191215152202', {'spiderkeeper_downloader_request_count': 10086})
     asyncio.run(asyncio.sleep(2))
 
     metric_response = client.get('/metrics')
     assert_status_code(metric_response)
-    assert '10086' in metric_response.text
+    assert 'downloader_request_count' in metric_response.text

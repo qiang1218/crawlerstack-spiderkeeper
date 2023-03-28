@@ -29,7 +29,7 @@ def task_params():
     ),
         executor_params=ExecutorSchema(
             image='image',
-            cmdline='cmdline',
+            cmdline=['cmdline'],
             volume=None,
             environment=None
         ))

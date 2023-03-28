@@ -15,7 +15,7 @@ async def test_run(client, api_url, mocker):
                               'SNAPSHOT_ENABLE': True,
                               'TASK_NAME': 'test'},
             'executor_params': {'image': '',
-                                'cmdline': '',
+                                'cmdline': [],
                                 'volume': None,
                                 'environment': None}}
     run = mocker.patch.object(ExecutorService, 'run', return_value='container_id')

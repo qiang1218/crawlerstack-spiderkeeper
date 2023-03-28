@@ -16,9 +16,9 @@ class TestLifeCycle:
         """Life cycle task fixture"""
         return LifeCycle()
 
-    async def test_get_executors(self, life_cycle_task, init_executor):
+    async def test_get_active_executors(self, life_cycle_task, init_executor):
         """Test get executors"""
-        result = await life_cycle_task.get_executors()
+        result = await life_cycle_task.get_active_executors()
         assert len(result) == 2
 
     async def test_get_all_containers(self, life_cycle_task, mocker):

@@ -8,21 +8,8 @@ from crawlerstack_spiderkeeper_server.services.base import ICRUD
 
 logger = logging.getLogger(__name__)
 
-metric_name = [
-    'downloader_request_count',
-    'downloader_request_bytes',
-    'downloader_request_method_count_GET',
-    'downloader_response_count',
-    'downloader_response_status_count_200',
-    'downloader_response_status_count_301',
-    'downloader_response_status_count_302',
-    'downloader_response_bytes',
-    'downloader_exception_count',
-]
-
-labels = ('Job_id', 'Task_name')
-
-metrics = {name: Histogram(name, name, labels) for name in metric_name}
+labels = ('Job_id', 'Task_name', 'Category')
+metrics = {}
 
 
 class MetricService(ICRUD):
@@ -53,9 +40,12 @@ class MetricService(ICRUD):
         job_id = task_name.split('-')[0]
         try:
             for name, value in data.items():
-                metric: Histogram = metrics.get(name)
-                if metric:
-                    metric.labels(job_id, task_name).observe(value)
+                if name.startswith('spiderkeeper_'):
+                    # 初始化后动态添加
+                    metric: Histogram = metrics.setdefault(name, Histogram(name, name, labels))
+                    category = name.split('_')[1]
+                    if metric:
+                        metric.labels(job_id, task_name, category).observe(value)
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
                 'Metric task: %s data parser error. data: %s. %s',
