@@ -47,7 +47,7 @@ build:image:
 
   before_script:
     - export IMAGE_NAME=zncdata/crawlerstack-spiderkeeper
-    - export VERSION=v3.2.0
+    - export VERSION=v3.2.1
     - export VERIFY_REGISTRY=false
     - export REGISTRY=docker-private.zncdata.net
     - export TAG=${IMAGE_NAME}:${VERSION}

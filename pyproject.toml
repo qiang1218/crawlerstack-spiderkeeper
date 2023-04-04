@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "crawlerstack-spiderkeeper"
-version = "3.2.0"
+version = "3.2.1"
 description = "spider keeper"
 authors = ["whg517 <huagang517@126.com>"]
 readme = "README.md"
@@ -45,12 +45,12 @@ pymysql = "^1.0.2"
 apscheduler = "^3.9.1.post1"
 cryptography = "^39.0.0"
 greenlet = "^2.0.1"
-requests = "^2.28.2"
 httpx = "^0.23.3"
 pymongo = "^4.3.3"
 boto = "^2.49.0"
 fastapi-sa = "^0.1.0"
 kubernetes = "^26.1.0"
+requests = "^2.28.2"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -60,7 +60,6 @@ pytest-cov = "^4.0.0"
 isort = "^5.10.1"
 pytest-asyncio = "^0.20.2"
 pytest-mock = "^3.10.0"
-requests = "^2.28.1"
 asyncmock = "^0.4.2"
 pylint = "^2.15.6"
 pylint-pytest = "^1.1.2"
@@ -133,6 +132,7 @@ ignore-paths = [
     "src/crawlerstack_spiderkeeper_scheduler/alembic",
     "src/crawlerstack_spiderkeeper_forwarder/.local",
     "src/crawlerstack_spiderkeeper_executor/.local",
+    ".*/demo.py",
 ]
 
 [tool.pylint.design]

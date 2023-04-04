@@ -109,7 +109,7 @@ class K8SExecutor(BaseExecutor):
                     name=container_name,
                     image=executor_params.image,
                     image_pull_policy='IfNotPresent',
-                    command=executor_params.cmdline,
+                    args=executor_params.cmdline,
                     env=[client.V1EnvVar(name=item.split('=')[0], value=item.split('=')[1]) for item in environment],
                 )
             ],

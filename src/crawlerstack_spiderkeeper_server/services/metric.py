@@ -42,7 +42,8 @@ class MetricService(ICRUD):
             for name, value in data.items():
                 if name.startswith('spiderkeeper_'):
                     # 初始化后动态添加
-                    metric: Histogram = metrics.setdefault(name, Histogram(name, name, labels))
+                    metric: Histogram = metrics.get(name) if name in metrics \
+                        else metrics.setdefault(name, Histogram(name, name, labels))
                     category = name.split('_')[1]
                     if metric:
                         metric.labels(job_id, task_name, category).observe(value)
