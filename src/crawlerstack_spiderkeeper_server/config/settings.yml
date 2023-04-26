@@ -56,6 +56,7 @@ SCHEDULER_START_SUFFIX: /jobs/%s/_start
 SCHEDULER_STOP_SUFFIX: /jobs/%s/_stop
 SCHEDULER_PAUSE_SUFFIX: /jobs/%s/_pause
 SCHEDULER_UNPAUSE_SUFFIX: /jobs/%s/_unpause
+SCHEDULER_EXECUTOR: /executors
 
 ##########################################################
 # file cache
