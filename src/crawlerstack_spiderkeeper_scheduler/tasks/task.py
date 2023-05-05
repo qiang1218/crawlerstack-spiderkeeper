@@ -119,7 +119,7 @@ class Task(metaclass=SingletonMeta):
         container_id = kwargs.pop('container_id')
         executor = kwargs.pop('executor')
         obj_in = dict(name=task_name, url=executor.url, type=executor.type, executor_id=executor.id,
-                      container_id=container_id, status=Status.CREATED.value,  # noqa
+                      container_id=container_id, status=Status.RUNNING.value,  # noqa
                       task_start_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         resp = self.request_session.request('POST', self.scheduler_task_url, json=obj_in)
         return TaskSchema.parse_obj(resp.get('data'))
@@ -132,7 +132,7 @@ class Task(metaclass=SingletonMeta):
         :return:
         """
         # task组装
-        task_create = {'name': task_name, 'job_id': job_id}
+        task_create = {'name': task_name, 'job_id': job_id, 'task_status': Status.RUNNING.value}
         task = self.request_session.request('POST', self.server_task_url, json=task_create).get('data', {})
         task_id = task.get('id')
         return task_id

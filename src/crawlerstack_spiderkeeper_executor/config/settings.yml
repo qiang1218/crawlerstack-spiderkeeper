@@ -32,6 +32,7 @@ EXECUTOR_SELECTOR: 'local'
 DOCKER_NETWORK: app
 EXECUTOR_CONFIG: '~/.kube/config'
 NAMESPACE: default
+PVC_CLAIM_NAME: spiderkeeper-executor-pod-pvc
 
 ##########################################################
 # local

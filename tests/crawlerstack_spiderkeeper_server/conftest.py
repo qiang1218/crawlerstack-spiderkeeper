@@ -208,12 +208,12 @@ async def init_job(init_artifact, init_storage_server):
     async with db():
         jobs = [
             Job(name="test1", trigger_expression="0 0 * * *", storage_enable=True, executor_type='docker',
-                storage_server_id=1, artifact_id=1, enabled=False, pause=False, snapshot_enable=True,
-                snapshot_server_id=1),
+                storage_server_id=1, artifact_id=1, cpu_limit=1000, memory_limit=1024, enabled=False, pause=False,
+                snapshot_enable=True, snapshot_server_id=1),
             Job(name="test2", trigger_expression="0 1 * * *", storage_enable=False, executor_type='docker',
-                artifact_id=1, enabled=True, pause=False, snapshot_enable=False),
+                artifact_id=1, cpu_limit=1000, memory_limit=1024, enabled=True, pause=False, snapshot_enable=False),
             Job(name="test3", trigger_expression="0 1 * * *", storage_enable=False, executor_type='docker',
-                artifact_id=1, enabled=True, pause=True, snapshot_enable=False),
+                artifact_id=1, cpu_limit=1000, memory_limit=1024, enabled=True, pause=True, snapshot_enable=False),
         ]
         db.session.add_all(jobs)
         await db.session.flush()
