@@ -13,6 +13,21 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+@router.get('/jobs/{pk}/_run', response_model=BaseMessage)
+async def run(
+        *,
+        pk: str,
+        service: JobService = Depends(),
+):
+    """
+    Run one project
+    :param pk:
+    :param service:
+    :return:
+    """
+    return await service.run_by_id(job_id=pk)
+
+
 @router.get('/jobs/{pk}/_start', response_model=BaseMessage)
 async def start(
         *,
@@ -20,7 +35,7 @@ async def start(
         service: JobService = Depends(),
 ):
     """
-    Run one project
+    Start one project
     :param pk:
     :param service:
     :return:

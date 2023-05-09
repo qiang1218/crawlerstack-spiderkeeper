@@ -52,6 +52,7 @@ EXPIRE_INTERVAL: 3600
 # EXPIRE_DAY default: 1  # 1day
 # EXPIRE_INTERVAL default: 3600  # 3600s
 SCHEDULER_URL: http://localhost:8081/api/v1
+SCHEDULER_RUN_SUFFIX: /jobs/%s/_run
 SCHEDULER_START_SUFFIX: /jobs/%s/_start
 SCHEDULER_STOP_SUFFIX: /jobs/%s/_stop
 SCHEDULER_PAUSE_SUFFIX: /jobs/%s/_pause

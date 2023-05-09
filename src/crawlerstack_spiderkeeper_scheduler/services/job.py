@@ -4,6 +4,7 @@ import logging
 from crawlerstack_spiderkeeper_scheduler.config import settings
 from crawlerstack_spiderkeeper_scheduler.services.scheduler import \
     SchedulerServer
+from crawlerstack_spiderkeeper_scheduler.signals import task_manual_trigger
 from crawlerstack_spiderkeeper_scheduler.tasks.task import task_run
 from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
     ObjectDoesNotExist
@@ -51,6 +52,29 @@ class JobService:
     def request_session(self):
         """request session"""
         return RequestWithHttpx()
+
+    async def run_by_id(self, job_id: str) -> dict:
+        """
+        Run by id
+        :param job_id:
+        :return:
+        """
+        job = await self.get_job(job_id)
+        artifact = await self.get_artifact(job_id)
+
+        if not (job and artifact):
+            raise ObjectDoesNotExist()
+
+        # 进行任务参数处理，组装
+        spider_params = self.spider_params(job)
+        executor_params = self.executor_params(job, artifact)
+        # 发送信号
+        await task_manual_trigger.send(spider_params=spider_params,
+                                       executor_params=executor_params,
+                                       job_id=job_id,
+                                       scheduler_type='manual')
+
+        return {'message': 'success'}
 
     async def start_by_id(self, job_id: str) -> dict:
         """Start job_id"""

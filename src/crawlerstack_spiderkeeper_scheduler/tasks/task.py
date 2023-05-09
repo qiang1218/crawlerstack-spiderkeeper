@@ -27,6 +27,8 @@ class Task(metaclass=SingletonMeta):
         # 任务中的调度器url
         self.scheduler_executor_url = self.settings.SCHEDULER_BASE_URL + self.settings.SCHEDULER_EXECUTOR_SUFFIX
         self.scheduler_task_url = self.settings.SCHEDULER_BASE_URL + self.settings.SCHEDULER_TASK_SUFFIX
+        self.scheduler_task_count_url = self.settings.SCHEDULER_BASE_URL + self.settings.SCHEDULER_TASK_COUNT_SUFFIX
+        self.max_active_task_count = self.settings.MAX_ACTIVE_TASK_COUNT
 
     @property
     def request_session(self):
@@ -46,6 +48,10 @@ class Task(metaclass=SingletonMeta):
         task_name = params.pop('task_name')
         job_id = kwargs.get('job_id')
 
+        # 1.5. 获取当前job对应的任务个数，以便进行任务个数上限的控制
+        active_task_count = self.get_active_task_count_by_job_id(job_id)
+        if active_task_count >= self.max_active_task_count:
+            return
         # 2. 获取执行器的相关信息，根据策略确定需要调度的位置，并在执行器的计数中加1
         executor = self.choose_executor(params.pop('executor_type'), params.pop('executor_selector'))
 
@@ -71,7 +77,7 @@ class Task(metaclass=SingletonMeta):
         executor_params = kwargs.get('executor_params')
         # 1. 创建对应的task，生成task_name
         job_id = kwargs.get('job_id')
-        task_name = self.gen_task_name(job_id)
+        task_name = self.gen_task_name(job_id, kwargs.get('scheduler_type'))
         spider_params['TASK_NAME'] = task_name
 
         executor_type = executor_params.pop('executor_type')
@@ -91,8 +97,8 @@ class Task(metaclass=SingletonMeta):
         """
         # 通过接口触发获取
         resp = self.request_session.request('GET', self.scheduler_executor_url,
-                                            params={'filter_type': executor_type,
-                                                    'filter_status': status})
+                                            params={'query': [f'filter_type,{executor_type}',
+                                                              f'filter_status,{status}']})
         return [ExecutorSchema.parse_obj(i) for i in resp.get('data')]
 
     def run_task(self, url: str, params: dict) -> str:
@@ -123,6 +129,18 @@ class Task(metaclass=SingletonMeta):
                       task_start_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         resp = self.request_session.request('POST', self.scheduler_task_url, json=obj_in)
         return TaskSchema.parse_obj(resp.get('data'))
+
+    def get_active_task_count_by_job_id(self, job_id: str):
+        """
+        Get active task count with job
+        :param job_id:
+        :return:
+        """
+        # 通过接口调度，减少单任务中的依赖，filter_为数据库查询时的字段过滤前缀
+        resp = self.request_session.request('GET', self.scheduler_task_count_url,
+                                            params={'query': [f'filter_job_id,{job_id}',
+                                                              f'filter_status,{Status.RUNNING.value}']})
+        return resp.get('data', {}).get('count')
 
     def create_server_task_record(self, task_name: str, job_id: str) -> int:
         """
@@ -167,10 +185,11 @@ class Task(metaclass=SingletonMeta):
         return job_id + '-' + scheduler_type + '-' + datetime.now().strftime('%Y%m%d%H%M%S')
 
 
-def task_run(**kwargs):
+def task_run(scheduler_type: str = 'scheduled', **kwargs):
     """
     task run
+    :param scheduler_type: 调度类型，用于区分定时调度和手动调度
     :param kwargs:
     :return:
     """
-    Task(settings).run(**kwargs)
+    Task(settings).run(scheduler_type=scheduler_type, **kwargs)
