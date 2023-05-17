@@ -24,7 +24,7 @@ def settings():
     """settings fixture"""
     executor_settings.HEARTBEAT_TIMEOUT = 5
     executor_settings.HEARTBEAT_INTERVAL = 3
-    executor_settings.EXECUTOR_REMOTE_URL = 'tcp://192.168.186.128:2376'
+    executor_settings.EXECUTOR_REMOTE_URL = 'tcp://192.168.6.12:2376'
     return executor_settings
 
 

@@ -8,6 +8,7 @@ MYSQL_PATTERN = re.compile(
     r'^.*:\/\/(?P<user>.*):(?P<password>.*)@(?P<host>.*):(?P<port>.*)\/(?P<database>.*)\?(charset=)+(?P<charset>.*)$')
 MONGO_PATTERN = re.compile(r'.*\/(?P<database>.*)\?.*')
 S3_PATTERN = re.compile(r'^(?P<type>.*):\/\/(?P<access_key>.*):(?P<secret_key>.*)@(?P<host>.*)\/(?P<bucket>.*)')
+PULSAR_PATTERN = re.compile(r'^(?P<url>.*?)(\?.*)?token=(?P<token>.+)&topic_prefix=(?P<topic_prefix>.+)?$')
 
 
 def transform_mysql_db_str(url: str) -> dict:
@@ -35,6 +36,16 @@ def transform_s3_url(url: str) -> dict:
     # 定义s3的连接规则
     # s3://access_key:secret_key@example.com:port/bucket
     matcher = S3_PATTERN.match(url)
+    if matcher:
+        return matcher.groupdict()
+    return {}
+
+
+def transform_pulsar_url(url: str) -> dict:
+    """Transform a pulsar url"""
+    # pulsar://localhost:6650?token=aaa.bbb.ccc&topic_prefix=clusterId/namespace
+    # clusterId/namespace/Topic 为创建topic所需要的内容,除topic外,其余指定
+    matcher = PULSAR_PATTERN.match(url)
     if matcher:
         return matcher.groupdict()
     return {}

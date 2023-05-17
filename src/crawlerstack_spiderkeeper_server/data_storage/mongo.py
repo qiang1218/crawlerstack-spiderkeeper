@@ -43,14 +43,6 @@ class MongoStorage(Storage):
         db_url = config.get('url')
         return database, db_url
 
-    @staticmethod
-    def concat_data(fields: list, datas: list) -> list:
-        """Concat data"""
-        data = []
-        for i in datas:
-            data.append(dict(zip(fields, i)))
-        return data
-
     @property
     def conn_db(self):
         """Conn db"""

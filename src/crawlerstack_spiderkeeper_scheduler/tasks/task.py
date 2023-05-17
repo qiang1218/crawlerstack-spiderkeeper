@@ -6,8 +6,8 @@ from crawlerstack_spiderkeeper_scheduler.config import settings
 from crawlerstack_spiderkeeper_scheduler.schemas.executor import ExecutorSchema
 from crawlerstack_spiderkeeper_scheduler.schemas.task import TaskSchema
 from crawlerstack_spiderkeeper_scheduler.utils import SingletonMeta
-from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
-    RemoteTaskRunError
+from crawlerstack_spiderkeeper_scheduler.utils.exceptions import (
+    ObjectDoesNotExist, RemoteTaskRunError)
 from crawlerstack_spiderkeeper_scheduler.utils.request import \
     RequestWithSession
 from crawlerstack_spiderkeeper_scheduler.utils.status import Status
@@ -59,7 +59,8 @@ class Task(metaclass=SingletonMeta):
         # 3.1 任务执行
         container_id = self.run_task(executor.url, params)
         # 3.2 创建schedule中task表
-        self.create_scheduler_task_record(task_name=task_name, container_id=container_id, executor=executor)
+        self.create_scheduler_task_record(task_name=task_name, container_id=container_id, executor=executor,
+                                          job_id=job_id)
         # 3.3 创建server中task表
         self.create_server_task_record(task_name, job_id)
         # 后续功能由外部后台任务统一管理
@@ -124,8 +125,9 @@ class Task(metaclass=SingletonMeta):
         task_name = kwargs.pop('task_name')
         container_id = kwargs.pop('container_id')
         executor = kwargs.pop('executor')
+        job_id = kwargs.pop('job_id')
         obj_in = dict(name=task_name, url=executor.url, type=executor.type, executor_id=executor.id,
-                      container_id=container_id, status=Status.RUNNING.value,  # noqa
+                      container_id=container_id, status=Status.RUNNING.value, job_id=job_id,  # noqa
                       task_start_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         resp = self.request_session.request('POST', self.scheduler_task_url, json=obj_in)
         return TaskSchema.parse_obj(resp.get('data'))
@@ -170,8 +172,10 @@ class Task(metaclass=SingletonMeta):
         # 3. 如果没有对应执行器的，则获取全部执行器任务调度个数最少的一个
 
         # 4. 如果有对应的执行器，则获取对应执行器中任务调度个数最少的一个
-        choose_executor = active_executors[0]
-        return choose_executor
+        if active_executors:
+            choose_executor = active_executors[0]
+            return choose_executor
+        raise ObjectDoesNotExist('No active executors')
 
     @staticmethod
     def gen_task_name(job_id: str, scheduler_type: str = 'scheduled') -> str:
