@@ -42,20 +42,21 @@ class TestMongoStorage:
         result = storage.concat_data(fields, datas)
         assert result == expect_value
 
-    # @pytest.mark.parametrize(
-    #     'url',
-    #     [
-    #         'mongodb://root:g0tKTzUbNEH0h541@localhost:27017/test?authSource=admin&authMechanism=DEFAULT',
-    #     ]
-    # )
-    # def test_create_conn(self, storage, url):
-    #     """test create db conn"""
-    #     db, db_config = storage.transform_url(url)
-    #     conn = storage.create_conn(db_config)
-    #     assert conn
-    #     conn[db]['foo'].drop()
-    #     conn[db]['foo'].insert_many([{'name': 'foo'}])
-    #     result = list(conn[db]['foo'].find())
-    #     assert len(result) == 1
-    #     conn[db]['foo'].drop()
-    #     conn.close()
+    @pytest.mark.skip(reason="Skipping integration tests")
+    @pytest.mark.parametrize(
+        'url',
+        [
+            'mongodb://root:g0tKTzUbNEH0h541@localhost:27017/test?authSource=admin&authMechanism=DEFAULT',
+        ]
+    )
+    def test_create_conn(self, storage, url):
+        """test create db conn"""
+        db, db_config = storage.transform_url(url)
+        conn = storage.create_conn(db_config)
+        assert conn
+        conn[db]['foo'].drop()
+        conn[db]['foo'].insert_many([{'name': 'foo'}])
+        result = list(conn[db]['foo'].find())
+        assert len(result) == 1
+        conn[db]['foo'].drop()
+        conn.close()
