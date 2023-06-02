@@ -98,6 +98,8 @@ class TestTask:
         run_task = mocker.patch.object(TaskRun, 'run_task', return_value='container_id')
         create_scheduler_task_record = mocker.patch.object(TaskRun, 'create_scheduler_task_record')
         create_server_task_record = mocker.patch.object(TaskRun, 'create_server_task_record')
+        get_active_task_count_by_job_id = mocker.patch.object(TaskRun, 'get_active_task_count_by_job_id',
+                                                              return_value=1)
 
         task.run(**kwargs)
 
@@ -105,3 +107,4 @@ class TestTask:
         run_task.assert_called_once()
         create_scheduler_task_record.assert_called_once()
         create_server_task_record.assert_called_once()
+        get_active_task_count_by_job_id.assert_called_once()

@@ -39,13 +39,12 @@ class TestPulsarStorage:
     async def test_save(self, storage, name, url, data, topic, expect_value):
         """Test save"""
         storage.start(name=name, url=url)
-        await storage.save(data)
-
         # 消费
         consumer = storage.default_connector.conn.subscribe(topic, 'test', schema=schema.StringSchema(),
                                                             start_message_id_inclusive=False)
-
+        await storage.save(data)
         for _ in range(1):
             msg = consumer.receive()
             consumer.acknowledge(msg)
             assert msg.value() == expect_value
+        consumer.close()

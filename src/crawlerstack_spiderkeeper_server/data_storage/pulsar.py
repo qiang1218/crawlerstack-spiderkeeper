@@ -4,7 +4,8 @@ import json
 import logging
 from datetime import datetime, timedelta
 
-from pulsar import AuthenticationToken, Client, exceptions, schema
+from pulsar import (AuthenticationToken, Client, ConsoleLogger, LoggerLevel,
+                    exceptions, schema)
 
 from crawlerstack_spiderkeeper_server.data_storage import Storage
 from crawlerstack_spiderkeeper_server.data_storage.utils import (
@@ -28,8 +29,13 @@ class PulsarStorage(Storage):
         token = config.get('token')
         logger.debug("Create mysql connection with url: %s", config)
         try:
-            conn = Client(service_url=url, authentication=AuthenticationToken(token), connection_timeout_ms=3000,
-                          operation_timeout_seconds=1)
+            conn = Client(service_url=url,
+                          authentication=AuthenticationToken(token),
+                          connection_timeout_ms=3000,
+                          operation_timeout_seconds=1,
+                          logger=ConsoleLogger(LoggerLevel.Warn)
+                          )
+
             producer = conn.create_producer('test')
             producer.close()
             return conn
@@ -44,7 +50,7 @@ class PulsarStorage(Storage):
         topic_prefix = config.get('topic_prefix')
         return topic_prefix, config
 
-    def publish_data(self, topic_name: str, data: list):
+    async def publish_data(self, topic_name: str, data: list):
         """
         Publish data
         :param topic_name:
@@ -58,7 +64,8 @@ class PulsarStorage(Storage):
             schema=schema.StringSchema())
         for i in data:
             producer.send(content=json.dumps(i))
-
+        producer.flush()
+        await asyncio.sleep(0.5)
         if producer.is_connected():
             producer.close()
 
@@ -71,11 +78,12 @@ class PulsarStorage(Storage):
 
         # 2. 数据转发到topic, 转发前数据格式的转换
         try:
-            self.publish_data(topic_name, data)
+            logger.debug('Saving data to pulsar topic %s', topic_name)
+            await self.publish_data(topic_name, data)
         except exceptions.PulsarException as ex:
             logger.error('Failed Send data to topic: %s, exception info: %s', topic_name, ex)
             self.start(name=self.default_connector.name, url=self.default_connector.url)
-            self.publish_data(topic_name, data)
+            await self.publish_data(topic_name, data)
 
         self.default_connector.expire_date = datetime.now() + timedelta(self.expire_day)
         return True

@@ -142,7 +142,7 @@ class Task(metaclass=SingletonMeta):
         resp = self.request_session.request('GET', self.scheduler_task_count_url,
                                             params={'query': [f'filter_job_id,{job_id}',
                                                               f'filter_status,{Status.RUNNING.value}']})
-        return resp.get('data', {}).get('count')
+        return resp.get('data', {}).get('count', 0)
 
     def create_server_task_record(self, task_name: str, job_id: str) -> int:
         """

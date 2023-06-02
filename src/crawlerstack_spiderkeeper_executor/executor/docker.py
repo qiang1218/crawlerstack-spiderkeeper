@@ -177,5 +177,5 @@ class DockerExecutor(BaseExecutor):
         """Resource"""
         info = await DockerSystem(self.client).info()
         # cpu 单位:核心 默认: 4核心, memery 单位：Mb, 默认：4096Mb
-        return {'cpu': info.get('NCPU', 4),
+        return {'cpu': info.get('NCPU', 4) * 1000,
                 'memory': int(info.get('MemTotal', 1024 * 1024 * 1024 * 4) / (1024 * 1024))}
