@@ -140,6 +140,7 @@ async def spiderkeeper_server(migrate, db_url, settings, mocker):
     _spiderkeeper_server = SpiderKeeperServer(settings)
     await _spiderkeeper_server.start()
     yield _spiderkeeper_server
+    await _spiderkeeper_server.otel_stop()
     await _spiderkeeper_server.stop()
     logger.debug('Stopping spiderkeeper!!!')
 

@@ -2,11 +2,11 @@
 Router.
 """
 from fastapi import APIRouter, FastAPI
-from starlette_exporter import handle_metrics
 
+from crawlerstack_spiderkeeper_server.config import settings
 from crawlerstack_spiderkeeper_server.rest_api.routers import (artifact,
                                                                executor, job,
-                                                               log, project,
+                                                               project,
                                                                storage_server,
                                                                task,
                                                                task_detail)
@@ -24,7 +24,6 @@ def router_v1():
     router.include_router(job.router, tags=['job'])
     router.include_router(task.router, tags=['task'])
     router.include_router(task_detail.router, tags=['task_detail'])
-    router.include_router(log.router, tags=['log'])
     router.include_router(executor.router, tags=['executor'])
     return router
 
@@ -35,5 +34,4 @@ def init_router(app: FastAPI):
     :param app:
     :return:
     """
-    app.add_route("/metrics", handle_metrics)
-    app.include_router(router_v1(), prefix='/api/v1')
+    app.include_router(router_v1(), prefix=settings.ROUTER_PREFIX)

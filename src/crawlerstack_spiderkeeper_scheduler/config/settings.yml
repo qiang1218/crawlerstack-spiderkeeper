@@ -24,6 +24,10 @@ LOGLEVEL: INFO
 DATABASE: mysql+aiomysql://root:1qazZAQ!@192.168.6.15:3306/spiderkeeper_scheduler?charset=UTF8MB4
 
 ##########################################################
+# router
+ROUTER_PREFIX: /api/v1
+
+##########################################################
 # pagination
 PAGE: 0
 SIZE: 10

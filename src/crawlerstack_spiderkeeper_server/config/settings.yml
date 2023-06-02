@@ -8,10 +8,7 @@ PORT: 8080
 cors_origins:
   - http://localhost:8080
   - http://127.0.0.1:8080
-  - http://172.*.*.*:*
-  - http://192.168.6.18:9090
-  - http://192.168.6.18:80
-  - http://192.168.6.18:3001
+
 ##########################################################
 # Log
 # default log path is `/home/<user>/.local/spiderkeeper/log`
@@ -29,6 +26,10 @@ LOG_TASK_PATH_SEPARATOR: '-'
 # eg: sqlite:///tmp/spiderkeeper.db
 # eg: postgresql://scott:tiger@localhost:5432/mydatabase
 DATABASE: mysql+aiomysql://root:1qazZAQ!@192.168.6.15:3306/spiderkeeper_server?charset=UTF8MB4
+
+##########################################################
+# router
+ROUTER_PREFIX: /api/v1
 
 ##########################################################
 # Kombu
@@ -68,3 +69,10 @@ ARCHIVE_MINUTES: 30
 ##########################################################
 # storage data task
 DATA_TASK_INTERVAL: 30
+
+##########################################################
+# apm
+SERVICE_NAME: spiderkeeper-server
+EXPORTER_TRACES_ENDPOINT: http://localhost:4318/v1/traces
+EXPORTER_METRICS_ENDPOINT: http://localhost:4318/v1/metrics
+EXPORTER_LOGS_ENDPOINT: http://localhost:4318/v1/logs
