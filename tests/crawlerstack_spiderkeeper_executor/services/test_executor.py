@@ -31,7 +31,9 @@ def task_params():
             image='image',
             cmdline=['cmdline'],
             volume=None,
-            environment=None
+            environment=None,
+            cpu_limit=1000,
+            memory_limit=1024
         ))
 
 

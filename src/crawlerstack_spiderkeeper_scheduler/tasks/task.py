@@ -78,7 +78,7 @@ class Task(metaclass=SingletonMeta):
         executor_params = kwargs.get('executor_params')
         # 1. 创建对应的task，生成task_name
         job_id = kwargs.get('job_id')
-        task_name = self.gen_task_name(job_id, kwargs.get('scheduler_type'))
+        task_name = self.gen_task_name(job_id, kwargs.get('scheduler_type', 'scheduled'))
         spider_params['TASK_NAME'] = task_name
 
         executor_type = executor_params.pop('executor_type')

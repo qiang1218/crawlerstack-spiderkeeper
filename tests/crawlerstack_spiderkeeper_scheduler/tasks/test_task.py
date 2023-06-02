@@ -86,12 +86,12 @@ class TestTask:
             volume=None,
             environment=None,
             executor_type='docker',
-            executor_selector=''
+            executor_selector='',
         )
         kwargs = {
             'spider_params': spider_params.dict(),
             'executor_params': executor_params.dict(),
-            'job_id': '1'
+            'job_id': '1',
         }
         executors = await executor_server.get()
         get_active_executor = mocker.patch.object(TaskRun, 'get_active_executors', return_value=executors)
