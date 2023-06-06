@@ -51,6 +51,11 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
         return settings.SCHEDULER_URL + settings.SCHEDULER_START_SUFFIX
 
     @property
+    def run_url(self):
+        """Run url"""
+        return settings.SCHEDULER_URL + settings.SCHEDULER_RUN_SUFFIX
+
+    @property
     def stop_url(self):
         """Stop url"""
         return settings.SCHEDULER_URL + settings.SCHEDULER_STOP_SUFFIX
@@ -105,6 +110,20 @@ class JobService(EntityService[Job, JobCreate, JobUpdate, JobSchema]):
         if storage_server_id is not None:
             await self.storage_server_repository.exists(obj_in.storage_server_id)
         return await self.repository.update_by_id(pk=pk, obj_in=obj_in)
+
+    async def run_by_id(self, pk: int) -> None:
+        """
+        Run by id
+        :param pk:
+        :return:
+        """
+        # 临时执行指定id的任务,不受job状态控制
+        job = await self.repository.get_by_id(pk=pk)
+        if job:
+            resp = await self.request_session.request('GET', self.run_url % pk)
+            if resp.get('message') == 'success':
+                return resp
+            raise JobRunError(detail='The task manually triggered failed')
 
     async def start_by_id(self, pk: int):
         """

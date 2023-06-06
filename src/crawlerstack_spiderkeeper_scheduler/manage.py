@@ -72,9 +72,9 @@ class SpiderKeeperScheduler:
     async def run(self):
         """Run"""
         try:
-            await self.rest_api.start()
             self.install_signal_handlers()
             await self.start()
+            await self.rest_api.start()
             await self.start_background_task()
             while not self.should_exit:
                 # 暂时不做任何处理。

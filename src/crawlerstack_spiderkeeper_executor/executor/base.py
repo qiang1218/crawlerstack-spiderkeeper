@@ -81,7 +81,7 @@ class BaseExecutor(metaclass=SingletonMeta):
         """
         raise NotImplementedError
 
-    async def resource(self, *args, **kwargs):
+    async def resource(self, *args, **kwargs) -> dict:
         """
         Get executor resource
         :param args:

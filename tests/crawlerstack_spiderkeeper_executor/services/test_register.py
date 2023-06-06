@@ -19,7 +19,6 @@ async def test_register(register_service, mocker):
     request.assert_called_once()
 
 
-# todo 本方法和下面的方法需要进一步的优化，考虑事件触发方式变动
 # async def test_heartbeat_success(register_service, mocker):
 #     """test heartbeat"""
 #     request = mocker.patch.object(RequestWithSession, 'request', return_value={'message': 'ok'})

@@ -120,9 +120,9 @@ async def init_task(init_executor):
     async with db():
         tasks = [
             Task(name="1_scheduler_", url="http://localhost:2375", type="docker", executor_id=1, status=1,
-                 container_id='d343j4er'),
+                 container_id='d343j4er', job_id=1),
             Task(name="2_scheduler_", url="http://localhost:2375", type="docker", executor_id=1, status=1,
-                 container_id='d343j4er'),
+                 container_id='d343j4er', job_id=1),
         ]
         db.session.add_all(tasks)
         await db.session.flush()

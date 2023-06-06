@@ -1,6 +1,7 @@
 """test log"""
 
 import pytest
+from opentelemetry.sdk._logs import Logger
 
 from crawlerstack_spiderkeeper_server.services import LogService
 
@@ -12,45 +13,27 @@ def service():
 
 
 @pytest.mark.parametrize(
-    'task_name, return_value',
+    'data, job_id, task_name, task_time',
     [
-        ('2-scheduled-20191215152202', '2/scheduled/20191215152202'),
+        ('test log', '2', '2-scheduled-20191215152202', 20191215152202)
     ]
 )
-def test_gen_log_path_str(settings, service, task_name, return_value):
-    """test get log path str"""
-    log_path = service.gen_log_path_str(task_name)
-    assert log_path.match(return_value + settings.LOG_TASK_PATH_SUFFIX)
+def test_upload_data(service, mocker, data, job_id, task_name, task_time):
+    """Test upload data"""
+    emit = mocker.patch.object(Logger, 'emit', return_value=None)
+    service.upload_data(data, job_id, task_name, task_time)
+    emit.assert_called_once()
 
 
 @pytest.mark.parametrize(
-    'task_name, rows',
+    'data',
     [
-        ('', 5),
+        ({'task_name': '2-scheduled-20191215152202',
+          'data': ['log1', 'log1']})
     ]
 )
-async def test_get(service, mocker, demo_file, task_name, rows):
-    """test get"""
-    gen_log_path_str = mocker.patch.object(LogService, 'gen_log_path_str', return_value=demo_file)
-    result = await service.get({'task_name': task_name, 'rows': rows})
-    assert len(result) == rows
-    assert gen_log_path_str.called
-
-
-@pytest.mark.parametrize(
-    'task_name, rows',
-    [
-        ('', 5),
-    ]
-)
-async def test_create(service, mocker, demo_create_file, task_name, rows):
-    """test create"""
-    gen_log_path_str = mocker.patch.object(LogService, 'gen_log_path_str', return_value=demo_create_file)
-    result = await service.get({'task_name': task_name, 'rows': rows})
-    before_count = len(result)
-    await service.create({'data': ['test1', 'test2']})
-
-    result = await service.get({'task_name': task_name, 'rows': rows})
-    after_count = len(result)
-    assert before_count == after_count - 2
-    assert gen_log_path_str.called
+async def test_create(service, mocker, data):
+    """Test create"""
+    upload_data = mocker.patch.object(LogService, 'upload_data', return_value=None)
+    await service.create(data)
+    upload_data.assert_called()

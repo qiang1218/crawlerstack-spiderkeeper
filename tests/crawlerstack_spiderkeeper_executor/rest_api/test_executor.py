@@ -17,7 +17,11 @@ async def test_run(client, api_url, mocker):
             'executor_params': {'image': '',
                                 'cmdline': [],
                                 'volume': None,
-                                'environment': None}}
+                                'environment': None,
+                                'cpu_limit': 1000,
+                                'memory_limit': 1024
+                                }
+            }
     run = mocker.patch.object(ExecutorService, 'run', return_value='container_id')
     response = client.post(api, json=data)
     assert_status_code(response)

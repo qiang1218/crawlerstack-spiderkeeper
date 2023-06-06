@@ -1,8 +1,9 @@
-"""test utils"""
+"""Test utils"""
 import pytest
 
 from crawlerstack_spiderkeeper_server.data_storage.utils import (
-    transform_mongo_db_str, transform_mysql_db_str, transform_s3_url)
+    transform_mongo_db_str, transform_mysql_db_str, transform_pulsar_url,
+    transform_s3_url)
 
 key_list = ['user', 'password', 'host', 'port', 'database', 'charset']
 
@@ -16,7 +17,7 @@ key_list = ['user', 'password', 'host', 'port', 'database', 'charset']
     ]
 )
 def test_transform_mysql_db_str(url, expect_value):
-    """test transform mysql db str"""
+    """Test transform mysql db str"""
     result = transform_mysql_db_str(url)
     assert result
     for key in key_list:
@@ -31,7 +32,7 @@ def test_transform_mysql_db_str(url, expect_value):
     ]
 )
 def test_transform_mongo_db_str(url, expect_value):
-    """test transform mongo db str"""
+    """Test transform mongo db str"""
     result = transform_mongo_db_str(url)
     assert result == expect_value
 
@@ -44,6 +45,19 @@ def test_transform_mongo_db_str(url, expect_value):
     ]
 )
 def test_transform_s3_url(url, expect_value):
-    """test transform s3 url"""
+    """Test transform s3 url"""
     result = transform_s3_url(url)
+    assert result == expect_value
+
+
+@pytest.mark.parametrize(
+    'url, expect_value',
+    [
+        ('pulsar://localhost:6650?token=aaa.bbb.ccc&topic_prefix=clusterId/namespace',
+         {'url': 'pulsar://localhost:6650', 'token': 'aaa.bbb.ccc', 'topic_prefix': 'clusterId/namespace'})
+    ]
+)
+def test_transform_pulsar_url(url, expect_value):
+    """Test transform pulsar url"""
+    result = transform_pulsar_url(url)
     assert result == expect_value

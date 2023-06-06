@@ -20,6 +20,8 @@ class JobBase(BaseModel):
     snapshot_enable: bool = False
     snapshot_server_id: int = None
     executor_type: constr(max_length=100) = None
+    cpu_limit: int = 1000
+    memory_limit: int = 1024
     enabled: bool = False
     pause: bool = False
     executor_selector: constr(max_length=100) = None

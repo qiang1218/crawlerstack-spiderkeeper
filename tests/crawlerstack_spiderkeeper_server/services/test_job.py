@@ -109,6 +109,26 @@ async def test_get_storage_server_from_job_id(init_job, session, service, pk, st
 )
 async def test_run_by_id(init_job, session, service, mocker, pk, expect_value):
     """test run by id"""
+    if inspect.isclass(expect_value):
+        mocker.patch.object(RequestWithHttpx, 'request', return_value={'detail': 'failure'})
+        with pytest.raises(expect_value):
+            await service.run_by_id(pk)
+    else:
+        request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'success'})
+        await service.run_by_id(pk)
+        request.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    'pk, expect_value',
+    [
+        (1, 'True'),
+        (2, JobRunError),
+        (100, ObjectDoesNotExist)
+    ]
+)
+async def test_start_by_id(init_job, session, service, mocker, pk, expect_value):
+    """test run by id"""
     request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'success'})
     if inspect.isclass(expect_value):
         with pytest.raises(expect_value):

@@ -2,9 +2,11 @@
 Docker executor.
 """
 import logging
+import math
 from typing import Any
 
 from aiodocker import Docker
+from aiodocker.system import DockerSystem
 
 from crawlerstack_spiderkeeper_executor.executor.base import BaseExecutor
 from crawlerstack_spiderkeeper_executor.schemas.base import (ExecutorSchema,
@@ -69,7 +71,7 @@ class DockerExecutor(BaseExecutor):
         environment = executor_params.environment if executor_params.environment else []
         # 爬虫新加参数与页面传递的环境变量参数一起合并
         environment.extend(self._convert_env(spider_params.dict()))
-
+        volumes = executor_params.volume
         config = {'Image': image_name,
                   'Cmd': cmd,
                   'Env': environment,
@@ -83,10 +85,16 @@ class DockerExecutor(BaseExecutor):
                   'HostConfig': {
                       'NetworkMode': self.settings.DOCKER_NETWORK,
                       'Init': True,
-                      'Binds': executor_params.volume,
-                      'AutoRemove': False},
+                      'AutoRemove': False,
+                      # 仅对资源上限进行限制，memory单位字节，int, cpuCount单位个数，int
+                      # 前端传递，稍后调整 memory_limit 兆Mi cpu_limit 微核，结合docker的设置，转换数据类型，最小1核心
+                      'Memory': 1024 * 1024 * executor_params.memory_limit,
+                      'CpuCount': math.ceil(executor_params.cpu_limit / 1000) or 1,
+                  },
                   'NetworkingConfig': {self.settings.Docker_NETWORK: None}
                   }
+        if volumes:
+            config['HostConfig']['Binds'] = volumes  # noqa
         return config
 
     @staticmethod
@@ -165,5 +173,9 @@ class DockerExecutor(BaseExecutor):
         """Close"""
         await self.client.close()
 
-    async def resource(self, *args, **kwargs):
+    async def resource(self, *args, **kwargs) -> dict:
         """Resource"""
+        info = await DockerSystem(self.client).info()
+        # cpu 单位:核心 默认: 4核心, memery 单位：Mb, 默认：4096Mb
+        return {'cpu': info.get('NCPU', 4) * 1000,
+                'memory': int(info.get('MemTotal', 1024 * 1024 * 1024 * 4) / (1024 * 1024))}

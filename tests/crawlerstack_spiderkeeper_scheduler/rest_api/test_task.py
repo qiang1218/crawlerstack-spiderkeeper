@@ -28,7 +28,7 @@ def test_create(client, init_executor, api_url):
     """test create"""
     api = api_url + '/tasks'
     data = dict(name="3_scheduler_", url="http://localhost:2375", type="docker", executor_id=1, status=1,
-                container_id='fad343j4er')
+                container_id='fad343j4er', job_id=3)
     response = client.post(api, json=data)
     assert_status_code(response)
     assert response.json().get('data').get('name') == data.get('name')

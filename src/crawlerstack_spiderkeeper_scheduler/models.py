@@ -54,6 +54,7 @@ class Task(BaseModel):
     """
 
     name = Column(String(200), nullable=False, comment='任务名称', unique=True)
+    job_id = Column(Integer, nullable=False, comment='job id')
     url = Column(String(200), nullable=False, comment='任务调度位置')
     type = Column(String(200), nullable=False, comment='任务类型')
     status = Column(Integer, default=Status.CREATED.value, comment='任务状态')

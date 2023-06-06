@@ -4,6 +4,7 @@ import logging
 from crawlerstack_spiderkeeper_scheduler.config import settings
 from crawlerstack_spiderkeeper_scheduler.services.scheduler import \
     SchedulerServer
+from crawlerstack_spiderkeeper_scheduler.signals import task_manual_trigger
 from crawlerstack_spiderkeeper_scheduler.tasks.task import task_run
 from crawlerstack_spiderkeeper_scheduler.utils.exceptions import \
     ObjectDoesNotExist
@@ -52,6 +53,29 @@ class JobService:
         """request session"""
         return RequestWithHttpx()
 
+    async def run_by_id(self, job_id: str) -> dict:
+        """
+        Run by id
+        :param job_id:
+        :return:
+        """
+        job = await self.get_job(job_id)
+        artifact = await self.get_artifact(job_id)
+
+        if not (job and artifact):
+            raise ObjectDoesNotExist()
+
+        # 进行任务参数处理，组装
+        spider_params = self.spider_params(job)
+        executor_params = self.executor_params(job, artifact)
+        # 发送信号
+        await task_manual_trigger.send(spider_params=spider_params,
+                                       executor_params=executor_params,
+                                       job_id=job_id,
+                                       scheduler_type='manual')
+
+        return {'message': 'success'}
+
     async def start_by_id(self, job_id: str) -> dict:
         """Start job_id"""
         # 任务的单次触发
@@ -68,7 +92,6 @@ class JobService:
         executor_params = self.executor_params(job, artifact)
 
         # 任务调用
-        # todo 后续添加对同一job的更新操作,如果已经存在,则进行更新,不存在则插入,由start接口控制
         try:
             self.scheduler.add_job(task_run,
                                    trigger_expression=trigger_expression,
@@ -111,18 +134,21 @@ class JobService:
         :return:
         """
         # 执行器变量，统一小写
-        images = artifact.get('image') + ':' + (artifact.get('version') if artifact.get('version') else 'latest')
+        images = artifact.get('image') + ':' + (artifact.get('version') or 'latest')
         # cmdline 字符串 空格链接
         cmdline = job.get('cmdline', '').split(' ')
         executor_selector = job.get('executor_selector')
         executor_type = job.get('executor_type')
+        cpu_limit = job.get('cpu_limit')
+        memory_limit = job.get('memory_limit')
         # volume ; 切割
         volume = job.get('volume', '').split(';')
         # environment  字符串 ;切割 ['FOO=bar', 'BAZ=q']
         environment = job.get('environment', '').split(';')
 
         return {'image': images, 'cmdline': cmdline, 'executor_selector': executor_selector,
-                'executor_type': executor_type, 'volume': volume, 'environment': environment}
+                'executor_type': executor_type, 'volume': volume, 'environment': environment,
+                'cpu_limit': cpu_limit, 'memory_limit': memory_limit}
 
     async def stop_by_id(self, job_id: str) -> dict:
         """Stop job_id"""

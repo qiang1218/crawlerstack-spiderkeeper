@@ -93,10 +93,21 @@ class K8SExecutor(BaseExecutor):
         """
         environment = executor_params.environment or []
         environment.extend(self._convert_env(spider_params.dict()))
-        volume = executor_params.volume
-        # 集群下的volume挂载不同于docker,需要单独处理，默认不挂载，如果挂载推荐configMap或者pv，后续实现
-        if volume:
-            logger.warning('K8s executor does not implement volume mount')
+        volumes = executor_params.volume
+        # 针对多组volume时，基于task_name与源volume进行组装，生成多组的volume_mount进行挂载，防止多个job同时访问同一路径下的pvc导致冲突
+        if volumes:
+            claim_name = self.settings.PVC_CLAIM_NAME
+            volume_mounts = [client.V1VolumeMount(name="my-pvc",
+                                                  mount_path=volume.split(':')[1],
+                                                  sub_path=f'./{spider_params.TASK_NAME}' + volume.split(':')[0],
+                                                  read_only=False
+                                                  ) for volume in volumes]
+            volume_pvc = client.V1Volume(name="my-pvc",
+                                         persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                                             claim_name=claim_name))
+        else:
+            volume_mounts = None
+            volume_pvc = None
 
         pod = client.V1Pod()
         pod.metadata = client.V1ObjectMeta(
@@ -111,8 +122,15 @@ class K8SExecutor(BaseExecutor):
                     image_pull_policy='IfNotPresent',
                     args=executor_params.cmdline,
                     env=[client.V1EnvVar(name=item.split('=')[0], value=item.split('=')[1]) for item in environment],
+                    volume_mounts=volume_mounts if volume_mounts else None,
+                    # 参数传递，控制上限，下限默认
+                    resources=client.V1ResourceRequirements(
+                        limits={"cpu": f"{executor_params.cpu_limit}m", "memory": f"{executor_params.memory_limit}Mi"},
+                        requests={"cpu": "200m", "memory": "100Mi"}
+                    )
                 )
             ],
+            volumes=[volume_pvc] if volume_pvc else None,
             restart_policy="Never",
         )
         return pod
@@ -179,5 +197,6 @@ class K8SExecutor(BaseExecutor):
     async def close(self, *args, **kwargs):
         """Close"""
 
-    async def resource(self, *args, **kwargs):
+    async def resource(self, *args, **kwargs) -> dict:
         """Resource"""
+        return {'cpu': -1, 'memory': -1}
