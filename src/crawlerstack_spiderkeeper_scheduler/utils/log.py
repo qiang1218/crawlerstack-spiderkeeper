@@ -102,6 +102,7 @@ def init_logging_config() -> Dict:
             # },
             # 'amqp.connection.Connection.heartbeat_tick': {'level': 'INFO'}
             'aiosqlite': {'level': 'INFO'},
+            'httpx': {'level': 'WARN'},
             'apscheduler': {'level': 'INFO', 'handlers': ['apscheduler_file'], 'propagate': False},
         }
     }

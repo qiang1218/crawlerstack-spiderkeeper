@@ -92,8 +92,10 @@ class RegisterService(metaclass=SingletonMeta):
         """
         # 添加资源的获取，主要为当前节点的任务个数
         task_count = await self.executor.get()
-        # TODO: 后续实现, 方法为实例方法
-        return {'memory': 0, 'cpu': 100, 'task_count': len(task_count)}
+        # 获取节点的资源使用情况
+        resource = await self.executor.resource()
+        resource.setdefault('task_count', len(task_count))
+        return resource
 
     async def _heartbeat(self, executor_id: int):
         """

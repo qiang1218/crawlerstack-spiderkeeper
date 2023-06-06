@@ -1,7 +1,9 @@
 """tasks"""
 from crawlerstack_spiderkeeper_scheduler.signals import (server_start,
-                                                         server_stop)
+                                                         server_stop,
+                                                         task_manual_trigger)
 from crawlerstack_spiderkeeper_scheduler.tasks.executor import ExecutorTask
+from crawlerstack_spiderkeeper_scheduler.tasks.task import task_run
 from crawlerstack_spiderkeeper_scheduler.tasks.task_life_cycle import LifeCycle
 
 server_start.connect(ExecutorTask().server_start)
@@ -13,3 +15,5 @@ server_stop.connect(ExecutorTask().server_stop)
 server_start.connect(LifeCycle().server_start)
 server_start.connect(LifeCycle().check_executor_task)
 server_stop.connect(LifeCycle().server_stop)
+# 手动调度任务
+task_manual_trigger.connect(task_run)

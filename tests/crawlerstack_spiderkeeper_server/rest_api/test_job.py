@@ -53,10 +53,19 @@ async def test_delete(client, init_job, api_url, session):
     assert result == 2
 
 
+def test_run(client, init_job, api_url, mocker):
+    """test run"""
+    api = api_url + '/jobs/1/_run'
+    request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'success'})
+    response = client.get(api)
+    assert_status_code(response)
+    request.assert_called_once()
+
+
 def test_start(client, init_job, api_url, mocker):
     """test start"""
     api = api_url + '/jobs/1/_start'
-    request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'ok'})
+    request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'success'})
     response = client.get(api)
     assert_status_code(response)
     request.assert_called_once()
@@ -65,7 +74,7 @@ def test_start(client, init_job, api_url, mocker):
 def test_pause(client, init_job, api_url, mocker):
     """test pause"""
     api = api_url + '/jobs/2/_pause'
-    request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'ok'})
+    request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'success'})
     response = client.get(api)
     assert_status_code(response)
     request.assert_called_once()
@@ -74,7 +83,7 @@ def test_pause(client, init_job, api_url, mocker):
 def test_unpause(client, init_job, api_url, mocker):
     """test unpause"""
     api = api_url + '/jobs/3/_unpause'
-    request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'ok'})
+    request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'success'})
     response = client.get(api)
     assert_status_code(response)
     request.assert_called_once()
@@ -83,7 +92,7 @@ def test_unpause(client, init_job, api_url, mocker):
 def test_stop(client, init_job, api_url, mocker):
     """test stop"""
     api = api_url + '/jobs/2/_stop'
-    request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'ok'})
+    request = mocker.patch.object(RequestWithHttpx, 'request', return_value={'message': 'success'})
     response = client.get(api)
     assert_status_code(response)
     request.assert_called_once()

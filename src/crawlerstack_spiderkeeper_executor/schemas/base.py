@@ -20,6 +20,8 @@ class ExecutorSchema(BaseModel):
     cmdline: list
     volume: list | None
     environment: list | None
+    cpu_limit: int
+    memory_limit: int
 
 
 class TaskSchema(BaseModel):

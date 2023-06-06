@@ -2,21 +2,22 @@
 import logging
 from typing import Any
 
-from prometheus_client import Histogram
-
+from crawlerstack_spiderkeeper_server.config import settings
 from crawlerstack_spiderkeeper_server.services.base import ICRUD
+from crawlerstack_spiderkeeper_server.utils.otel import meter_provider
 
 logger = logging.getLogger(__name__)
 
 labels = ('Job_id', 'Task_name', 'Category')
 metrics = {}
+meter = meter_provider.get_meter(settings.SERVICE_NAME)
 
 
 class MetricService(ICRUD):
     """Metric service"""
 
     async def get(self, task_name):
-        """Get metric from prometheus with task_name"""
+        """Get"""
 
     async def create(self, data: dict) -> None:
         """Create metric by task name"""
@@ -32,7 +33,7 @@ class MetricService(ICRUD):
     @staticmethod
     def set_metric(task_name: str, data: dict[str, Any]):
         """
-        将数据写入 prometheus 指标
+        将数据写入 otel 指标
         :param task_name:
         :param data:
         :return:
@@ -42,11 +43,17 @@ class MetricService(ICRUD):
             for name, value in data.items():
                 if name.startswith('spiderkeeper_'):
                     # 初始化后动态添加
-                    metric: Histogram = metrics.get(name) if name in metrics \
-                        else metrics.setdefault(name, Histogram(name, name, labels))
+                    metric = metrics.get(name) if name in metrics \
+                        else metrics.setdefault(name,
+                                                meter.create_histogram(name=name, description=name))
                     category = name.split('_')[1]
                     if metric:
-                        metric.labels(job_id, task_name, category).observe(value)
+                        metric.record(value,
+                                      attributes={
+                                          'job_id': job_id,
+                                          'task_name': task_name,
+                                          'category': category
+                                      })
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
                 'Metric task: %s data parser error. data: %s. %s',

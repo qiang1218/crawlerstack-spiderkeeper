@@ -33,7 +33,8 @@ async def test_create(init_executor, session, service, executor_id, exist):
                         type="docker",
                         executor_id=executor_id,
                         status=1,
-                        container_id='d343j4er')
+                        container_id='d343j4er',
+                        job_id=1)
     if exist:
         await service.create(obj_in=obj_in)
         count = await service.count()

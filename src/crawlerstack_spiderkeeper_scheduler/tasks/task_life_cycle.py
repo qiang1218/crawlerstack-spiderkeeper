@@ -142,7 +142,7 @@ class LifeCycle(metaclass=SingletonMeta):
         """
         # 先根据task_name获取id
         resp = await self.request_session.request('GET', self.server_task_url,
-                                                  params={'query': 'filter_name=' + task_name})
+                                                  params={'query': f'filter_name,{task_name}'})
         # 再进行更新
         task = resp.get('data')
         if task:

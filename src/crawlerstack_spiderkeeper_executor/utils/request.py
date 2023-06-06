@@ -1,4 +1,5 @@
 """request api"""
+import asyncio
 import logging
 import time
 
@@ -95,7 +96,7 @@ class RequestWithHttpx(BaseAsyncRequest):
         """request"""
         try:
             for _ in range(self.MAX_RETRY):
-                time.sleep(self.DELAY)
+                await asyncio.sleep(self.DELAY)
                 response = await self._request(method, url, **kwargs)
                 status_code = response.status_code
                 if status_code == 200:

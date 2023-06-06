@@ -15,8 +15,11 @@ cors_origins:
 LOGPATH: logs
 LOGLEVEL: INFO
 
-
 ##########################################################
 # Kombu
 #  mq: 'amqp://guest:guest@localhost:5672//'
 MQ: memory://localhost
+
+##########################################################
+# router
+ROUTER_PREFIX: /api/v1

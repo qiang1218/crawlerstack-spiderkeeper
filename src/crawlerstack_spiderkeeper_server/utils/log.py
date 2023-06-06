@@ -93,7 +93,8 @@ def init_logging_config() -> Dict:
             # },
             'amqp': {'level': 'INFO'},
             'crawlerstack_spiderkeeper_server.collector.utils': {'level': 'INFO'},
-            'aiosqlite': {'level': 'INFO'}
+            'aiosqlite': {'level': 'INFO'},
+            'httpx': {'level': 'WARN'},
         }
     }
     return default_logging

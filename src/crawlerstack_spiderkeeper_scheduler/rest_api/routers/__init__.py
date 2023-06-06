@@ -3,6 +3,7 @@ Router.
 """
 from fastapi import APIRouter, FastAPI
 
+from crawlerstack_spiderkeeper_scheduler.config import settings
 from crawlerstack_spiderkeeper_scheduler.rest_api.routers import (executor,
                                                                   heartbeat,
                                                                   job, task)
@@ -27,4 +28,4 @@ def init_router(app: FastAPI):
     :param app:
     :return:
     """
-    app.include_router(router_v1(), prefix='/api/v1')
+    app.include_router(router_v1(), prefix=settings.ROUTER_PREFIX)

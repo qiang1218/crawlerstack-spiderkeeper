@@ -1,51 +1,43 @@
 """log"""
-import logging
-from pathlib import Path
-from typing import Any, List
+from typing import Any
 
-from crawlerstack_spiderkeeper_server.config import data_path, settings
+from opentelemetry.sdk._logs import LogRecord  # noqa
+
+from crawlerstack_spiderkeeper_server.config import settings
+from crawlerstack_spiderkeeper_server.schemas.otel_log import LogRecordSchema
 from crawlerstack_spiderkeeper_server.services.base import ICRUD
-from crawlerstack_spiderkeeper_server.utils import File
+from crawlerstack_spiderkeeper_server.utils.otel import log_provider, resource
 
-logger = logging.getLogger(__name__)
+otel_logger = log_provider.get_logger(settings.SERVICE_NAME)
 
 
 class LogService(ICRUD):
     """Log service"""
 
+    async def get(self, *args, **kwargs) -> Any:
+        """Get"""
+
     @staticmethod
-    def gen_log_path_str(task_name: str) -> Path:
-        """
-        Gen log path str with task name
-
-        task_name: job_id-trigger_type-datetime_str
-        example: 2-manual-20191215152202
-        2-scheduled-20191215152202
-        :param task_name:
-        :return:
-        """
-        task_name += settings.LOG_TASK_PATH_SUFFIX
-        return Path(data_path, settings.LOG_TASK_PATH_PREFIX, *task_name.split(settings.LOG_TASK_PATH_SEPARATOR))
-
-    async def get(self, query: dict) -> List[str]:
-        """
-        Get log by task name
-        :param query:
-        :return:
-        """
-        filename = self.gen_log_path_str(query.get('task_name'))
-        rows = query.get('rows')
-        try:
-            return await File(filename).last(line=rows)
-        except FileNotFoundError as ex:
-            logger.error('No such file or directory, filename: %s', filename)
-            logger.error('%s', ex)
+    def upload_data(data: str, job_id: str, task_name: str, task_time: int):
+        """Upload data"""
+        record = LogRecord(
+            **LogRecordSchema(
+                body=data,
+                attributes={'task_name': task_name,
+                            'job_id': job_id,
+                            'task_time': task_time
+                            }).dict(),
+            resource=resource
+        )
+        otel_logger.emit(record)
 
     async def create(self, data: dict) -> None:
         """Create log by task name"""
         task_name = data.get('task_name')
-        filename = self.gen_log_path_str(task_name)
-        await File(filename).write(datas=data.get('data'))
+        job_id, _, task_time = task_name.split('-')
+        datas = data.get('data')
+        for row in datas:
+            self.upload_data(row, job_id=job_id, task_name=task_name, task_time=task_time)
 
     async def update(self, *args, **kwargs) -> Any:
         """Update"""

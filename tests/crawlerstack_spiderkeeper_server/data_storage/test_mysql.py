@@ -1,12 +1,11 @@
 """test mysql storage"""
-# from datetime import datetime, timedelta
+from datetime import datetime, timedelta
 
 import pytest
+from pymysql import Connection
 
 from crawlerstack_spiderkeeper_server.data_storage import MysqlStorage
-
-# from pymysql import Connection
-# from crawlerstack_spiderkeeper_server.data_storage.base import Connector
+from crawlerstack_spiderkeeper_server.data_storage.base import Connector
 
 
 class TestMysqlStorage:
@@ -57,58 +56,59 @@ class TestMysqlStorage:
         result = storage.format_datas(data)
         assert result == expect_value
 
-    # @pytest.mark.parametrize(
-    #     'url, name, data, insert_sql, table_sql, drop_sql, select_sql, expect_value',
-    #     [
-    #         ('mysql://root:1qazZAQ!@localhost:3306/spiderkeeper_server?charset=utf8', 'mysql1',
-    #          {'datas': [['row1'], ['row2']]}, 'INSERT IGNORE INTO test1(column1) VALUES (%s)',
-    #          'create table if not exists test1(column1 varchar(100) not null)',
-    #          'drop table test1', 'select count(*) from test1', 2),
-    #     ]
-    # )
-    # async def test_save(self, mocker, storage, url, name, data, insert_sql, table_sql,
-    #                     drop_sql, select_sql, expect_value):
-    #     """test save"""
-    #     sql = mocker.patch.object(MysqlStorage, 'sql', return_value=insert_sql)
-    #     # 初始化连接
-    #     db, db_config = storage.transform_url(url)
-    #     storage.default_connector = Connector(
-    #         name=name, url=url, db=db,
-    #         conn=storage.create_conn(db_config),
-    #         expire_date=datetime.now() + timedelta(storage.expire_day)
-    #     )
-    #     # 创建表
-    #     cursor = storage.default_connector.conn.cursor()
-    #     cursor.execute(table_sql)
-    #     storage.default_connector.conn.commit()
-    #     # 核心逻辑
-    #     status = await storage.save(data)
-    #     assert status
-    #     # 判断
-    #     cursor.execute(select_sql)
-    #     result = cursor.fetchone()
-    #     assert result[0] == expect_value
-    #     # 删除表
-    #     cursor.execute(drop_sql)
-    #     storage.default_connector.conn.commit()
-    #     cursor.close()
-    #     sql.assert_called_once()
-    #
-    # # 考虑本地测试，提交时需注释
-    # @pytest.mark.parametrize(
-    #     'url, expect_value',
-    #     [
-    #         ('mysql://root:1qazZAQ!@localhost:3306/spiderkeeper_server?charset=utf8', 5),
-    #     ]
-    # )
-    # def test_create_conn(self, storage, url, expect_value):
-    #     """test create db conn"""
-    #     _, db_config = storage.transform_url(url)
-    #     conn: Connection = storage.create_conn(db_config)
-    #     assert conn
-    #     cursor = conn.cursor()
-    #     cursor.execute(f'select {expect_value}')
-    #     result = cursor.fetchone()
-    #     cursor.close()
-    #     conn.close()
-    #     assert result[0] == expect_value
+    @pytest.mark.skip(reason="Skipping integration tests")
+    @pytest.mark.parametrize(
+        'url, name, data, insert_sql, table_sql, drop_sql, select_sql, expect_value',
+        [
+            ('mysql://root:1qazZAQ!@localhost:3306/spiderkeeper_server?charset=utf8', 'mysql1',
+             {'datas': [['row1'], ['row2']]}, 'INSERT IGNORE INTO test1(column1) VALUES (%s)',
+             'create table if not exists test1(column1 varchar(100) not null)',
+             'drop table test1', 'select count(*) from test1', 2),
+        ]
+    )
+    async def test_save(self, mocker, storage, url, name, data, insert_sql, table_sql,
+                        drop_sql, select_sql, expect_value):
+        """test save"""
+        sql = mocker.patch.object(MysqlStorage, 'sql', return_value=insert_sql)
+        # 初始化连接
+        db, db_config = storage.transform_url(url)
+        storage.default_connector = Connector(
+            name=name, url=url, db=db,
+            conn=storage.create_conn(db_config),
+            expire_date=datetime.now() + timedelta(storage.expire_day)
+        )
+        # 创建表
+        cursor = storage.default_connector.conn.cursor()
+        cursor.execute(table_sql)
+        storage.default_connector.conn.commit()
+        # 核心逻辑
+        status = await storage.save(data)
+        assert status
+        # 判断
+        cursor.execute(select_sql)
+        result = cursor.fetchone()
+        assert result[0] == expect_value
+        # 删除表
+        cursor.execute(drop_sql)
+        storage.default_connector.conn.commit()
+        cursor.close()
+        sql.assert_called_once()
+
+    @pytest.mark.skip(reason="Skipping integration tests")
+    @pytest.mark.parametrize(
+        'url, expect_value',
+        [
+            ('mysql://root:1qazZAQ!@localhost:3306/spiderkeeper_server?charset=utf8', 5),
+        ]
+    )
+    def test_create_conn(self, storage, url, expect_value):
+        """test create db conn"""
+        _, db_config = storage.transform_url(url)
+        conn: Connection = storage.create_conn(db_config)
+        assert conn
+        cursor = conn.cursor()
+        cursor.execute(f'select {expect_value}')
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        assert result[0] == expect_value

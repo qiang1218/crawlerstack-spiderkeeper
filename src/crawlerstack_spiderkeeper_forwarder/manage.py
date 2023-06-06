@@ -50,9 +50,9 @@ class SpiderKeeperForwarder:
     async def run(self):
         """Run"""
         try:
-            await self.rest_api.start()
             self.install_signal_handlers()
             await self.start()
+            await self.rest_api.start()
             while not self.should_exit:
                 # 暂时不做任何处理。
                 await asyncio.sleep(0.001)

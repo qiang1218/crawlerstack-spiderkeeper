@@ -16,6 +16,10 @@ LOGPATH: logs
 LOGLEVEL: INFO
 
 ##########################################################
+# router
+ROUTER_PREFIX: /api/v1
+
+##########################################################
 # scheduler
 SCHEDULER_BASE_URL: http://localhost:8081/api/v1
 SCHEDULER_HEARTBEATS_SUFFIX: /heartbeats/%s
@@ -32,6 +36,7 @@ EXECUTOR_SELECTOR: 'local'
 DOCKER_NETWORK: app
 EXECUTOR_CONFIG: '~/.kube/config'
 NAMESPACE: default
+PVC_CLAIM_NAME: spiderkeeper-executor-pod-pvc
 
 ##########################################################
 # local

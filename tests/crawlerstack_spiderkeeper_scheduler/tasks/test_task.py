@@ -86,18 +86,20 @@ class TestTask:
             volume=None,
             environment=None,
             executor_type='docker',
-            executor_selector=''
+            executor_selector='',
         )
         kwargs = {
             'spider_params': spider_params.dict(),
             'executor_params': executor_params.dict(),
-            'job_id': '1'
+            'job_id': '1',
         }
         executors = await executor_server.get()
         get_active_executor = mocker.patch.object(TaskRun, 'get_active_executors', return_value=executors)
         run_task = mocker.patch.object(TaskRun, 'run_task', return_value='container_id')
         create_scheduler_task_record = mocker.patch.object(TaskRun, 'create_scheduler_task_record')
         create_server_task_record = mocker.patch.object(TaskRun, 'create_server_task_record')
+        get_active_task_count_by_job_id = mocker.patch.object(TaskRun, 'get_active_task_count_by_job_id',
+                                                              return_value=1)
 
         task.run(**kwargs)
 
@@ -105,3 +107,4 @@ class TestTask:
         run_task.assert_called_once()
         create_scheduler_task_record.assert_called_once()
         create_server_task_record.assert_called_once()
+        get_active_task_count_by_job_id.assert_called_once()

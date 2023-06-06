@@ -6,16 +6,33 @@ import logging
 from fastapi import APIRouter, Depends
 
 from crawlerstack_spiderkeeper_scheduler.messages.base import BaseMessage
-from crawlerstack_spiderkeeper_scheduler.messages.task import (TaskMessage,
-                                                               TaskMessages)
+from crawlerstack_spiderkeeper_scheduler.messages.task import (
+    TaskCountMessage, TaskMessage, TaskMessages)
 from crawlerstack_spiderkeeper_scheduler.schemas.task import (TaskCreate,
                                                               TaskUpdate)
 from crawlerstack_spiderkeeper_scheduler.services.task import TaskService
-from crawlerstack_spiderkeeper_scheduler.utils.extractor import query_extractor
+from crawlerstack_spiderkeeper_scheduler.utils.extractor import (
+    query_count_extractor, query_extractor)
 
 router = APIRouter()
 
 logger = logging.getLogger(__name__)
+
+
+@router.get("/tasks/count", response_model=TaskCountMessage)
+async def get_task_count(
+        *,
+        query: dict = Depends(query_count_extractor),
+        service: TaskService = Depends(),
+):
+    """
+    Get tasks
+    :param query:
+    :param service:
+    :return:
+    """
+    total_count = await service.count(search_fields=query.get('search_fields'))
+    return {'data': {'count': total_count}}
 
 
 @router.get("/tasks", response_model=TaskMessages)
