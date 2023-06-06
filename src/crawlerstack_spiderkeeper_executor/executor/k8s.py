@@ -199,4 +199,4 @@ class K8SExecutor(BaseExecutor):
 
     async def resource(self, *args, **kwargs) -> dict:
         """Resource"""
-        return {'cpu': 1000 * 48, 'memory': 1024 * 8}
+        return {'cpu': -1, 'memory': -1}
