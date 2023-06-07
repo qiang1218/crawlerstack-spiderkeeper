@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from pulsar import (AuthenticationToken, Client, ConsoleLogger, LoggerLevel,
                     exceptions, schema)
 
-from crawlerstack_spiderkeeper_server.data_storage import Storage
+from crawlerstack_spiderkeeper_server.data_storage.base import Storage
 from crawlerstack_spiderkeeper_server.data_storage.utils import (
     Connector, transform_pulsar_url)
 

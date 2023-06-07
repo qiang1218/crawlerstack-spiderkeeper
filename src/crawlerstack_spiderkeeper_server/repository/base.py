@@ -56,7 +56,11 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Mode
         if sorting_fields:
             stmt = self._sort(stmt, sorting_fields)
         if search_fields:
-            stmt = self._search(stmt, search_fields)
+            _fields = search_fields.copy()
+            if 'ids' in _fields:
+                stmt = self._in(stmt, _fields.pop('ids'))
+            if _fields:
+                stmt = self._search(stmt, _fields)
         stmt = self._paginate_by_limit_offset(stmt, limit, offset)
         objs = await self.session.execute(stmt)
         results = objs.scalars().all()
@@ -103,6 +107,15 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Mode
         :return:
         """
         return stmt.filter_by(**search_fields)
+
+    def _in(self, stmt: Select, ids: list[Any]) -> Select:
+        """
+        构造in逻辑
+        :param stmt:
+        :param ids:
+        :return:
+        """
+        return stmt.filter(self.model.id.in_(ids))
 
     @staticmethod
     def _paginate_by_limit_offset(stmt: Select, limit: int, offset: int) -> Select:
@@ -167,14 +180,18 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType, Mode
         await self.delete(db_obj=obj)
         return self.model_schema.from_orm(obj)
 
-    async def count(self, search_fields: dict[str, str] = None) -> int:
+    async def count(self, search_fields: dict[str, Any] = None) -> int:
         """
         Get total .
         :return:
         """
         stmt = select(func.count()).select_from(self.model)
         if search_fields:
-            stmt = self._search(stmt, search_fields)
+            _fields = search_fields.copy()
+            if 'ids' in _fields:
+                stmt = self._in(stmt, _fields.pop('ids'))
+            if _fields:
+                stmt = self._search(stmt, _fields)
         return await self.session.scalar(stmt)
 
     async def exists(self, pk: int) -> bool:
