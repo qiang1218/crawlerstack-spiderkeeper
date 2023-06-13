@@ -354,8 +354,8 @@ class Kombu(metaclass=SingletonMeta):
                 break
             try:
                 logger.debug('Kombu draining event 1 seconds.')
-                await asyncio.sleep(0.3)
-                self.connect.drain_events(timeout=1)
+                await asyncio.sleep(1)
+                self.connect.drain_events(timeout=0.2)
             except socket.timeout:
                 self.connect.heartbeat_check()
                 # 超时计时，如果超时时间 elapsed 大于给定的超时时间 timeout 则退出
