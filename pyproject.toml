@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "crawlerstack-spiderkeeper"
-version = "4.0.0"
+version = "4.0.1"
 description = "spider keeper"
 authors = ["whg517 <huagang517@126.com>"]
 readme = "README.md"
@@ -10,11 +10,6 @@ packages = [
     { include = "crawlerstack_spiderkeeper_scheduler", from = "src" },
     { include = "crawlerstack_spiderkeeper_server", from = "src" },
 ]
-
-[[tool.poetry.source]]
-name = "tsinghua"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-default = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -36,7 +31,7 @@ starlette-exporter = "^0.14.0"
 kombu = "^5.2.4"
 furl = "^2.1.3"
 toml = "^0.10.2"
-virtualenv = "^20.16.7"
+virtualenv = "^20.23.0"
 uvicorn = "0.21.1"
 fastapi = "0.95.0"
 python-multipart = "^0.0.5"
@@ -100,7 +95,8 @@ disable = [
     "no-name-in-module",
     "fixme",
     "duplicate-code",
-    "arguments-differ"
+    "arguments-differ",
+    "use-dict-literal"
 ]
 good-names = [
     "e",

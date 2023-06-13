@@ -46,8 +46,7 @@ class K8SExecutor(BaseExecutor):
         except Exception as ex:
             logger.warning('Failed to connect to k8s api, exception info: %s', ex)
             raise SpiderkeeperError(detail='K8s client Init Failed, exit') from ex
-        else:
-            return api
+        return api
 
     async def get(self, *args, **kwargs):
         """
