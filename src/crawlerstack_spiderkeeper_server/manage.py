@@ -4,9 +4,11 @@ Manager.
 import asyncio
 import logging
 import signal as system_signal
-from typing import Optional
+import threading
+from pathlib import Path
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from alembic import command
+from alembic.config import Config
 
 from crawlerstack_spiderkeeper_server.collector import Kombu
 from crawlerstack_spiderkeeper_server.rest_api import RestAPI
@@ -33,9 +35,6 @@ class SpiderKeeperServer:
         log_config = configure_logging()
 
         self.logger = logging.getLogger(f'{__name__}.{self.__class__.__name__}')
-
-        self._engine: Optional[AsyncEngine] = None
-        self._session_factory: Optional[AsyncSession] = None
 
         self.settings = settings
 
@@ -72,10 +71,27 @@ class SpiderKeeperServer:
         """Otel start"""
         await otel_register_app(self._rest_api.app)
 
+    @staticmethod
+    def migrate_db():
+        """
+        Migrates the database
+        :return:
+        """
+        alembic_cfg = Config(Path(Path(__file__).parent, 'alembic/alembic.ini'))
+        alembic_cfg.set_main_option("script_location", "crawlerstack_spiderkeeper_server:alembic")
+        command.upgrade(alembic_cfg, 'head')
+
+    def auto_migrate(self):
+        """Auto migrate"""
+        thread = threading.Thread(target=self.migrate_db)
+        thread.start()
+
     async def run(self):
         """Run"""
         try:
+            # 初始化
             self.install_signal_handlers()
+            self.auto_migrate()
             await self.start()
             await self.otel_register()
             await self.rest_api.start()

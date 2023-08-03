@@ -1,0 +1,35 @@
+[
+    {
+        "id": "base",
+        "routes": [
+            "add-headers:enabled",
+            "get-users:success",
+            "get-user:success",
+            "get-projects:success",
+            "get-one-project:success",
+            "get-artifacts:success",
+            "get-one-artifact:real",
+            "get-jobs:success",
+            "get-tasks:success",
+            "create-task:success",
+            "get-one-task:real",
+            "create-task:success",
+            "get-one-job:real",
+            "get-one-project:real",
+            "get-storage-server:success",
+            "get-job-run:real",
+            "get-job-pause:real",
+            "get-job-stop:real",
+            "get-job-unpause:real",
+            "get-storage-server:success",
+            "get-logs:success",
+            "get-one-storage:real",
+            "get-executors:success"
+        ]
+    },
+    {
+        "id": "no-headers",
+        "from": "base",
+        "routes": ["add-headers:disabled"]
+    }
+]

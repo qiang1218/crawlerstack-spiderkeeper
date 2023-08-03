@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "spiderkeeper-executor.fullname" . }}
+  labels:
+    {{- include "spiderkeeper.labels" . | nindent 4 }}
+    component: "{{ .Values.executor.name }}"
+    app.kubernetes.io/component: "{{ .Values.executor.component }}"
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.executor.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "spiderkeeper.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.executor.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "spiderkeeper.selectorLabels" . | nindent 8 }}
+        component: "{{ .Values.executor.name }}"
+        app.kubernetes.io/component: "{{ .Values.executor.component }}"
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "spiderkeeper-executor.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.executor.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.executor.securityContext | nindent 12 }}
+          image: "{{ .Values.executor.image.repository }}:{{ .Values.executor.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.executor.image.pullPolicy }}
+          {{- if .Values.executor.image.command }}
+          command:
+            {{- toYaml .Values.executor.image.command | nindent 12}}
+          {{- end}}
+          {{- if .Values.executor.image.args }}
+          args:
+            {{- toYaml .Values.executor.image.args | nindent 12}}
+          {{- end}}
+          ports:
+            - name: http
+              containerPort: {{ .Values.executor.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.executor.resources | nindent 12 }}
+          {{- if .Values.executor.extraEnvVars.enabled}}
+          env:
+            {{- toYaml .Values.executor.extraEnvVars.vars | nindent 12 }}
+          {{- end}}
+          volumeMounts:
+            - name: executor-default-conf
+              mountPath: /usr/local/etc/SPIDERKEEPER/executor/
+              readOnly: true
+            {{- if .Values.executor.extraVolumes }}
+            {{- toYaml .Values.executor.extraVolumes | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: executor-default-conf
+          configMap:
+            name: {{ include "spiderkeeper-executor.configMapName" . }}
+        - name: events-dir
+          {{- if .Values.executor.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.executor.persistence.existingClaim | default (printf "%s-%s" (include "spiderkeeper.fullname" .) "pvc" ) }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- if .Values.executor.extraVolumeMounts }}
+        {{- toYaml .Values.executor.extraVolumeMounts | nindent 8 }}
+        {{- end}}
+      {{- with .Values.executor.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.executor.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.executor.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

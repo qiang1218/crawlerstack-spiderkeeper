@@ -1,7 +1,6 @@
 """
 Service API
 """
-from asyncio import Task
 from typing import Any, Dict, Optional, Union
 
 from fastapi import FastAPI
@@ -46,7 +45,6 @@ class RestAPI:
 
         uvicorn_config = Config(self.app, host=self.host, port=self.port, log_config=self.log_config)
         self._uvicorn_server = Server(uvicorn_config)
-        self._server_task: Optional[Task] = None
 
     @property
     def app(self) -> FastAPI:

@@ -32,7 +32,8 @@ def register_tracer_exporter() -> TracerProvider:
     ))
     provider = TracerProvider(resource=resource)
     trace.set_tracer_provider(provider)
-    trace.get_tracer_provider().add_span_processor(processor)  # noqa
+    if settings.APM_ENABLE:
+        trace.get_tracer_provider().add_span_processor(processor)  # noqa
     return provider
 
 
@@ -41,7 +42,10 @@ def register_meter_exporter() -> MeterProvider:
     reader = PeriodicExportingMetricReader(OTLPMetricExporter(
         endpoint=settings.EXPORTER_METRICS_ENDPOINT,
     ))
-    provider = MeterProvider(resource=resource, metric_readers=[reader])
+    if settings.APM_ENABLE:
+        provider = MeterProvider(resource=resource, metric_readers=[reader])
+    else:
+        provider = MeterProvider(resource=resource)
     return provider
 
 
@@ -51,7 +55,8 @@ def register_log_exporter() -> LoggerProvider:
         endpoint=settings.EXPORTER_LOGS_ENDPOINT,
     ))
     provider = LoggerProvider(resource=resource)
-    provider.add_log_record_processor(processor)
+    if settings.APM_ENABLE:
+        provider.add_log_record_processor(processor)
     return provider
 
 

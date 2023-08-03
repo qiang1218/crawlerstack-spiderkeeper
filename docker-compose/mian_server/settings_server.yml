@@ -1,0 +1,20 @@
+LOGLEVEL: INFO
+
+# 根据修改调整为外部消息队列
+MQ: amqp://rabbitmq:rabbitmq@rabbitmq:5673/
+
+cors_origins:
+  - "*"
+
+DATA_TASK_INTERVAL: 15
+
+SCHEDULER_URL: http://crawlerstack-spiderkeeper-scheduler:8081/api/v1
+
+DATABASE: mysql+aiomysql://root:password@192.168.6.146:3306/spiderkeeper_server?charset=UTF8MB4
+
+# apm开发，如果有外部连接，建议开启
+APM_ENABLE: false
+SERVICE_NAME: spiderkeeper-server
+EXPORTER_TRACES_ENDPOINT: http://localhost:4318/v1/traces
+EXPORTER_METRICS_ENDPOINT: http://localhost:4318/v1/metrics
+EXPORTER_LOGS_ENDPOINT: http://localhost:4318/v1/logs

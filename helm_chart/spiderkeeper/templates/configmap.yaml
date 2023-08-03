@@ -1,0 +1,71 @@
+{{- if .Values.web.configMap.create -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "spiderkeeper-web.configMapName" . }}
+  labels:
+    {{- include "spiderkeeper.labels" . | nindent 4 }}
+    component: "{{ .Values.web.name }}"
+    app.kubernetes.io/component: spiderkeeper-web
+data:
+  {{- range .Values.web.configMap.configOverrides }}
+  {{ .name }}:
+    {{- toYaml .data | indent 2}}
+  {{- end }}
+{{- end}}
+
+---
+
+{{- if .Values.server.configMap.create -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "spiderkeeper-server.configMapName" . }}
+data:
+  {{- range .Values.server.configMap.configOverrides }}
+  {{ .name }}:
+    {{- toYaml .data | indent 2}}
+  {{- end }}
+{{- end}}
+
+---
+
+{{- if .Values.scheduler.configMap.create -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "spiderkeeper-scheduler.configMapName" . }}
+data:
+  {{- range .Values.scheduler.configMap.configOverrides }}
+  {{ .name }}:
+    {{- toYaml .data | indent 2}}
+  {{- end }}
+{{- end}}
+
+---
+
+{{- if .Values.forwarder.configMap.create -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "spiderkeeper-forwarder.configMapName" . }}
+data:
+  {{- range .Values.forwarder.configMap.configOverrides }}
+  {{ .name }}:
+    {{- toYaml .data | indent 2}}
+  {{- end }}
+{{- end}}
+
+---
+
+{{- if .Values.executor.configMap.create -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "spiderkeeper-executor.configMapName" . }}
+data:
+  {{- range .Values.executor.configMap.configOverrides }}
+  {{ .name }}:
+    {{- toYaml .data | indent 2}}
+  {{- end }}
+{{- end}}

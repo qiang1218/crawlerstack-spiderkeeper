@@ -1,0 +1,22 @@
+# 执行器为docker时
+EXECUTOR_TYPE: docker
+# docker的远程连接，可通过套接字或者tcp的形式
+EXECUTOR_REMOTE_URL: 'tcp://192.168.6.146:2376'
+EXECUTOR_NAME: 'docker-local'
+EXECUTOR_SELECTOR: 'local'
+DOCKER_NETWORK: app
+
+# 执行器为k8s时，pvc需要提前创建
+#EXECUTOR_TYPE: k8s
+#EXECUTOR_NAME: 'k8s-local'
+#EXECUTOR_SELECTOR: 'local'
+#EXECUTOR_CONFIG: '~/.kube/config'
+#NAMESPACE: default
+#PVC_CLAIM_NAME: spiderkeeper-executor-pod-pvc
+
+
+SCHEDULER_BASE_URL: http://crawlerstack-spiderkeeper-scheduler:8081/api/v1
+
+LOCAL_URL: http://crawlerstack-spiderkeeper-executor:8082/api/v1
+
+HEARTBEAT_INTERVAL: 20

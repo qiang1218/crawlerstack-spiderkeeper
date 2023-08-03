@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "spiderkeeper-scheduler.fullname" . }}
+  labels:
+    {{- include "spiderkeeper.labels" . | nindent 4 }}
+    component: "{{ .Values.scheduler.name }}"
+    app.kubernetes.io/component: "{{ .Values.scheduler.component }}"
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.scheduler.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "spiderkeeper.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.scheduler.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "spiderkeeper.selectorLabels" . | nindent 8 }}
+        component: "{{ .Values.scheduler.name }}"
+        app.kubernetes.io/component: "{{ .Values.scheduler.component }}"
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "spiderkeeper.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.scheduler.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.scheduler.securityContext | nindent 12 }}
+          image: "{{ .Values.scheduler.image.repository }}:{{ .Values.scheduler.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.scheduler.image.pullPolicy }}
+          {{- if .Values.scheduler.image.command }}
+          command:
+            {{- toYaml .Values.scheduler.image.command | nindent 12}}
+          {{- end}}
+          {{- if .Values.scheduler.image.args }}
+          args:
+            {{- toYaml .Values.scheduler.image.args | nindent 12}}
+          {{- end}}
+          ports:
+            - name: http
+              containerPort: {{ .Values.scheduler.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.scheduler.resources | nindent 12 }}
+          {{- if .Values.scheduler.extraEnvVars.enabled}}
+          env:
+            {{- toYaml .Values.scheduler.extraEnvVars.vars | nindent 12 }}
+          {{- end}}
+          volumeMounts:
+            - name: scheduler-default-conf
+              mountPath: /usr/local/etc/SPIDERKEEPER/scheduler/
+              readOnly: true
+            {{- if .Values.scheduler.extraVolumes }}
+            {{- toYaml .Values.scheduler.extraVolumes | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: scheduler-default-conf
+          configMap:
+            name: {{ include "spiderkeeper-scheduler.configMapName" . }}
+        - name: events-dir
+          {{- if .Values.scheduler.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.scheduler.persistence.existingClaim | default (printf "%s-%s" (include "spiderkeeper.fullname" .) "pvc" ) }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- if .Values.scheduler.extraVolumeMounts }}
+        {{- toYaml .Values.scheduler.extraVolumeMounts | nindent 8 }}
+        {{- end}}
+      {{- with .Values.scheduler.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.scheduler.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.scheduler.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

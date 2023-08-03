@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "spiderkeeper-web.fullname" . }}
+  labels:
+    {{- include "spiderkeeper.labels" . | nindent 4 }}
+    component: "{{ .Values.web.name }}"
+    app.kubernetes.io/component: "{{ .Values.web.component }}"
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.web.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "spiderkeeper.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.web.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "spiderkeeper.selectorLabels" . | nindent 8 }}
+        component: "{{ .Values.web.name }}"
+        app.kubernetes.io/component: "{{ .Values.web.component }}"
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "spiderkeeper.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.web.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.web.securityContext | nindent 12 }}
+          image: "{{ .Values.web.image.repository }}:{{ .Values.web.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.web.image.pullPolicy }}
+          {{- if .Values.web.extraEnvVars.enabled}}
+          env:
+            {{- toYaml .Values.web.extraEnvVars.vars | nindent 12 }}
+          {{- end}}
+          ports:
+            - name: http
+              containerPort: {{ .Values.web.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.web.resources | nindent 12 }}
+          {{- if .Values.web.configMap.create -}}
+          volumeMounts:
+            - name: web-config
+              mountPath: /etc/caddy/Caddyfile
+              readOnly: true
+          {{- end}}
+      {{- if .Values.web.configMap.create -}}
+      volumes:
+        - name: web-config
+          configMap:
+            name: {{ include "spiderkeeper-web.configMapName" . }}
+      {{- end}}
+      {{- with .Values.web.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.web.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.web.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

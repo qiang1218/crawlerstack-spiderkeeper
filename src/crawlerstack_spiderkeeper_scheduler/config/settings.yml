@@ -21,7 +21,7 @@ LOGLEVEL: INFO
 # eg: mysql://root:root@127.0.0.1:3306/spiderkeeper?charset=utf8
 # eg: sqlite:///tmp/spiderkeeper.db
 # eg: postgresql://scott:tiger@localhost:5432/mydatabase
-DATABASE: mysql+aiomysql://root:1qazZAQ!@192.168.6.15:3306/spiderkeeper_scheduler?charset=UTF8MB4
+DATABASE: mysql+aiomysql://root:password@localhost:3306/spiderkeeper_scheduler?charset=UTF8MB4
 
 ##########################################################
 # router
@@ -34,7 +34,7 @@ SIZE: 10
 
 ##########################################################
 # scheduler
-SCHEDULER_JOB_STORE_DEFAULT: mysql://root:1qazZAQ!@192.168.6.15:3306/spiderkeeper_scheduler
+SCHEDULER_JOB_STORE_DEFAULT: mysql://root:password@localhost:3306/spiderkeeper_scheduler
 SCHEDULER_EXECUTORS_DEFAULT_COUNT: 20
 SCHEDULER_JOB_DEFAULTS_COALESCE: false
 SCHEDULER_JOB_DEFAULTS_MAX_INSTANCES: 3

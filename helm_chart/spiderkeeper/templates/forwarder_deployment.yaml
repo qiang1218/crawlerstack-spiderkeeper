@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "spiderkeeper-forwarder.fullname" . }}
+  labels:
+    {{- include "spiderkeeper.labels" . | nindent 4 }}
+    component: "{{ .Values.forwarder.name }}"
+    app.kubernetes.io/component: "{{ .Values.forwarder.component }}"
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.forwarder.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "spiderkeeper.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.forwarder.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "spiderkeeper.selectorLabels" . | nindent 8 }}
+        component: "{{ .Values.forwarder.name }}"
+        app.kubernetes.io/component: "{{ .Values.forwarder.component }}"
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "spiderkeeper.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.forwarder.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.forwarder.securityContext | nindent 12 }}
+          image: "{{ .Values.forwarder.image.repository }}:{{ .Values.forwarder.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.forwarder.image.pullPolicy }}
+          {{- if .Values.forwarder.image.command }}
+          command:
+            {{- toYaml .Values.forwarder.image.command | nindent 12}}
+          {{- end}}
+          {{- if .Values.forwarder.image.args }}
+          args:
+            {{- toYaml .Values.forwarder.image.args | nindent 12}}
+          {{- end}}
+          ports:
+            - name: http
+              containerPort: {{ .Values.forwarder.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.forwarder.resources | nindent 12 }}
+          {{- if .Values.forwarder.extraEnvVars.enabled}}
+          env:
+            {{- toYaml .Values.forwarder.extraEnvVars.vars | nindent 12 }}
+          {{- end}}
+          volumeMounts:
+            - name: forwarder-default-conf
+              mountPath: /usr/local/etc/SPIDERKEEPER/forwarder/
+              readOnly: true
+            {{- if .Values.forwarder.extraVolumes }}
+            {{- toYaml .Values.forwarder.extraVolumes | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: forwarder-default-conf
+          configMap:
+            name: {{ include "spiderkeeper-forwarder.configMapName" . }}
+        - name: events-dir
+          {{- if .Values.forwarder.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.forwarder.persistence.existingClaim | default (printf "%s-%s" (include "spiderkeeper.fullname" .) "pvc" ) }}
+          {{- else }}
+          emptyDir: { }
+          {{- end }}
+        {{- if .Values.forwarder.extraVolumeMounts }}
+        {{- toYaml .Values.forwarder.extraVolumeMounts | nindent 8 }}
+        {{- end}}
+      {{- with .Values.forwarder.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.forwarder.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.forwarder.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

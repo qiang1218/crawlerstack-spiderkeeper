@@ -1,0 +1,96 @@
+version: "3.7"
+
+services:
+  scheduler:
+    image: spiderkeeper:v4.0.1
+    restart: always
+    volumes:
+      - ${PWD}/settings_scheduler.yml:/usr/local/etc/SPIDERKEEPER/scheduler/settings.yml:ro
+    entrypoint: [ "crawlerstack_spiderkeeper_scheduler" ]
+    command: [ "api", "-h", "0.0.0.0", "-p", "8081" ]
+    container_name: crawlerstack-spiderkeeper-scheduler
+    ports:
+      - "8081:8081"
+    logging:
+      options:
+        max-size: "200M"
+        max-file: "3"
+    networks:
+      - app
+
+  executor:
+    image: spiderkeeper:v4.0.1
+    restart: always
+    volumes:
+      - ${PWD}/settings_executor.yml:/usr/local/etc/SPIDERKEEPER/executor/settings.yml:ro
+    entrypoint: [ "crawlerstack_spiderkeeper_executor" ]
+    command: [ "api", "-h", "0.0.0.0", "-p", "8082" ]
+    container_name: crawlerstack-spiderkeeper-executor
+    ports:
+      - "8082:8082"
+    logging:
+      options:
+        max-size: "200M"
+        max-file: "3"
+    networks:
+      - app
+    depends_on:
+      - server
+
+  server:
+    image: spiderkeeper:v4.0.1
+    restart: always
+    volumes:
+      - ${PWD}/settings_server.yml:/usr/local/etc/SPIDERKEEPER/server/settings.yml:ro
+      - /tmp/spiderkeeper:/tmp/spiderkeeper
+    entrypoint: [ "crawlerstack_spiderkeeper_server" ]
+    command: [ "api", "-h", "0.0.0.0", "-p", "8080" ]
+    container_name: crawlerstack-spiderkeeper-server
+    ports:
+      - "8080:8080"
+    logging:
+      options:
+        max-size: "200M"
+        max-file: "3"
+    networks:
+      - app
+    depends_on:
+      - scheduler
+
+  forwarder:
+    image: spiderkeeper:v4.0.1
+    restart: always
+    volumes:
+      - ${PWD}/settings_forwarder.yml:/usr/local/etc/SPIDERKEEPER/forwarder/settings.yml:ro
+    entrypoint: [ "crawlerstack_spiderkeeper_forwarder" ]
+    command: [ "api", "-h", "0.0.0.0", "-p", "8083" ]
+    container_name: crawlerstack-spiderkeeper-forwarder
+    ports:
+      - "8083:8083"
+    logging:
+      options:
+        max-size: "200M"
+        max-file: "3"
+    networks:
+      - app
+    depends_on:
+      - server
+
+  web:
+    image: spiderkeeper-web:v4.0.1
+    restart: always
+    ports:
+      - "5000:80"
+    environment:
+      SITE_ADDRESS: http://crawlerstack-spiderkeeper-server:8080
+    container_name: crawlerstack-spiderkeeper-web
+    # volumes:
+    #   - "${PWD}/Caddyfile:/etc/caddy/Caddyfile"
+    networks:
+      - app
+    depends_on:
+      - server
+
+networks:
+  app:
+    external: true

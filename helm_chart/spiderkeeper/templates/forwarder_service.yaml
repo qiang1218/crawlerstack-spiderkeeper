@@ -1,0 +1,20 @@
+{{- if .Values.forwarder.service.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "spiderkeeper-forwarder.fullname" . }}
+  labels:
+    {{- include "spiderkeeper.labels" . | nindent 4 }}
+    component: "{{ .Values.forwarder.name }}"
+    app.kubernetes.io/component: "{{ .Values.forwarder.component }}"
+spec:
+  type: {{ .Values.forwarder.service.type }}
+  ports:
+    - port: {{ .Values.forwarder.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "spiderkeeper.selectorLabels" . | nindent 4 }}
+    component: "{{ .Values.forwarder.name }}"
+{{- end}}

@@ -4,9 +4,11 @@ Manager.
 import asyncio
 import logging
 import signal as system_signal
-from typing import Optional
+import threading
+from pathlib import Path
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from alembic import command
+from alembic.config import Config
 
 from crawlerstack_spiderkeeper_scheduler.rest_api import RestAPI
 from crawlerstack_spiderkeeper_scheduler.services.scheduler import \
@@ -32,10 +34,6 @@ class SpiderKeeperScheduler:
         log_config = configure_logging()
 
         self.logger = logging.getLogger(f'{__name__}.{self.__class__.__name__}')
-
-        self._engine: Optional[AsyncEngine] = None
-        self._session_factory: Optional[AsyncSession] = None
-
         self.settings = settings
 
         self._rest_api = RestAPI(
@@ -69,10 +67,26 @@ class SpiderKeeperScheduler:
         """stop background task"""
         self.scheduler.stop()
 
+    @staticmethod
+    def migrate_db():
+        """
+        Migrates the database
+        :return:
+        """
+        alembic_cfg = Config(Path(Path(__file__).parent, 'alembic/alembic.ini'))
+        alembic_cfg.set_main_option("script_location", "crawlerstack_spiderkeeper_scheduler:alembic")
+        command.upgrade(alembic_cfg, 'head')
+
+    def auto_migrate(self):
+        """Auto migrate"""
+        thread = threading.Thread(target=self.migrate_db)
+        thread.start()
+
     async def run(self):
         """Run"""
         try:
             self.install_signal_handlers()
+            self.auto_migrate()
             await self.start()
             await self.rest_api.start()
             await self.start_background_task()

@@ -22,10 +22,10 @@ LOG_TASK_PATH_SEPARATOR: '-'
 ##########################################################
 # database uri
 # ref https://docs.sqlalchemy.org/en/13/core/engines.html
-# eg: mysql://root:root@127.0.0.1:3306/spiderkeeper?charset=utf8
-# eg: sqlite:///tmp/spiderkeeper.db
+# eg: mysql+aiomysql://root:root@127.0.0.1:3306/spiderkeeper?charset=utf8
+# eg: sqlite+aiosqlite:///tmp/spiderkeeper.db
 # eg: postgresql://scott:tiger@localhost:5432/mydatabase
-DATABASE: mysql+aiomysql://root:1qazZAQ!@192.168.6.15:3306/spiderkeeper_server?charset=UTF8MB4
+DATABASE: mysql+aiomysql://root:password@localhost:3306/spiderkeeper_server?charset=UTF8MB4
 
 ##########################################################
 # router
@@ -72,6 +72,8 @@ DATA_TASK_INTERVAL: 30
 
 ##########################################################
 # apm
+# Production environment needs to be true
+APM_ENABLE: false
 SERVICE_NAME: spiderkeeper-server
 EXPORTER_TRACES_ENDPOINT: http://localhost:4318/v1/traces
 EXPORTER_METRICS_ENDPOINT: http://localhost:4318/v1/metrics

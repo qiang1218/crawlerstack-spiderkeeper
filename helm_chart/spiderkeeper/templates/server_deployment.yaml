@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "spiderkeeper-server.fullname" . }}
+  labels:
+    {{- include "spiderkeeper.labels" . | nindent 4 }}
+    component: "{{ .Values.server.name }}"
+    app.kubernetes.io/component: "{{ .Values.server.component }}"
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.server.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "spiderkeeper.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.server.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "spiderkeeper.selectorLabels" . | nindent 8 }}
+        component: "{{ .Values.server.name }}"
+        app.kubernetes.io/component: "{{ .Values.server.component }}"
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "spiderkeeper.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.server.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.server.securityContext | nindent 12 }}
+          image: "{{ .Values.server.image.repository }}:{{ .Values.server.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.server.image.pullPolicy }}
+          {{- if .Values.server.image.command }}
+          command:
+            {{- toYaml .Values.server.image.command | nindent 12}}
+          {{- end}}
+          {{- if .Values.server.image.args }}
+          args:
+            {{- toYaml .Values.server.image.args | nindent 12}}
+          {{- end}}
+          ports:
+            - name: http
+              containerPort: {{ .Values.server.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.server.resources | nindent 12 }}
+          {{- if .Values.server.extraEnvVars.enabled}}
+          env:
+            {{- toYaml .Values.server.extraEnvVars.vars | nindent 12 }}
+          {{- end}}
+          volumeMounts:
+            - name: server-default-conf
+              mountPath: /usr/local/etc/SPIDERKEEPER/server/
+              readOnly: true
+            - name: events-dir
+              mountPath: /tmp/spiderkeeper/
+            {{- if .Values.server.extraVolumes }}
+            {{- toYaml .Values.server.extraVolumes | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: server-default-conf
+          configMap:
+            name: {{ include "spiderkeeper-server.configMapName" . }}
+        - name: events-dir
+          {{- if .Values.server.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.server.persistence.existingClaim | default (printf "%s-%s" (include "spiderkeeper.fullname" .) "pvc" ) }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- if .Values.server.extraVolumeMounts }}
+        {{- toYaml .Values.server.extraVolumeMounts | nindent 8 }}
+        {{- end}}
+      {{- with .Values.server.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.server.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.server.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
