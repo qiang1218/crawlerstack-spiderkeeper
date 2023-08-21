@@ -11,6 +11,7 @@ from crawlerstack_spiderkeeper_scheduler.schemas.base import InDBMixin
 class TaskBase(BaseModel):
     """Task base schema."""
     name: constr(max_length=200) = None
+    job_id: int = None
     url: constr(max_length=200) = None
     type: constr(max_length=200) = None
     status: int = None
@@ -27,6 +28,7 @@ class TaskSchema(TaskBase, InDBMixin):
 class TaskCreate(TaskBase):
     """Task create schema."""
     name: constr(max_length=200)
+    job_id: int
     url: constr(max_length=200)
     type: constr(max_length=200)
     status: int
@@ -38,3 +40,8 @@ class TaskUpdate(TaskBase):
     """Task update schema."""
     status: int
     task_end_time: datetime
+
+
+class TaskCount(BaseModel):
+    """Task count schema."""
+    count: int = 0

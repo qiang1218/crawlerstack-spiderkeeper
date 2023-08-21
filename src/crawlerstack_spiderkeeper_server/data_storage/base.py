@@ -54,6 +54,14 @@ class Storage(metaclass=SingletonMeta):
         """create db connection"""
         raise NotImplementedError
 
+    @staticmethod
+    def concat_data(fields: list, datas: list) -> list:
+        """Concat data"""
+        data = []
+        for i in datas:
+            data.append(dict(zip(fields, i)))
+        return data
+
     @property
     def server_running(self) -> bool:
         """Server running"""

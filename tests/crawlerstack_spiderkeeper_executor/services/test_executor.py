@@ -29,9 +29,11 @@ def task_params():
     ),
         executor_params=ExecutorSchema(
             image='image',
-            cmdline='cmdline',
+            cmdline=['cmdline'],
             volume=None,
-            environment=None
+            environment=None,
+            cpu_limit=1000,
+            memory_limit=1024
         ))
 
 

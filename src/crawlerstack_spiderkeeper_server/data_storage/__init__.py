@@ -3,6 +3,7 @@
 from crawlerstack_spiderkeeper_server.data_storage.base import Storage
 from crawlerstack_spiderkeeper_server.data_storage.mongo import MongoStorage
 from crawlerstack_spiderkeeper_server.data_storage.mysql import MysqlStorage
+from crawlerstack_spiderkeeper_server.data_storage.pulsar import PulsarStorage
 from crawlerstack_spiderkeeper_server.data_storage.s3_file import FileStorage
 from crawlerstack_spiderkeeper_server.signals import server_start, server_stop
 
@@ -11,7 +12,7 @@ class StorageFactory:
     """
     保存工厂
     """
-    storage_classes = [MysqlStorage, MongoStorage, FileStorage]
+    storage_classes = [MysqlStorage, MongoStorage, FileStorage, PulsarStorage]
     storage_mapping = {i.name: i for i in storage_classes}
 
     def get_storage(self, storage_class: str, name: str, url: str) -> Storage:

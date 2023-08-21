@@ -1,0 +1,19 @@
+{{- if and .Values.server.persistence.enabled (not .Values.server.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "spiderkeeper.fullname" . }}-pvc
+  labels:
+    {{- include "spiderkeeper.labels" . | nindent 4 }}
+  {{- with .Values.server.persistence.annotations }}
+  annotations:
+    {{- toYaml . | nindent 6 }}
+  {{- end }}
+spec:
+  storageClassName: {{ .Values.server.persistence.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.server.persistence.size | quote }}
+  accessModes:
+    {{ .Values.server.persistence.accessModes }}
+{{- end }}

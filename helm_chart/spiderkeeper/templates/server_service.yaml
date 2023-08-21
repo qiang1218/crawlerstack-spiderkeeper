@@ -1,0 +1,20 @@
+{{- if .Values.server.service.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "spiderkeeper-server.fullname" . }}
+  labels:
+    {{- include "spiderkeeper.labels" . | nindent 4 }}
+    component: "{{ .Values.server.name }}"
+    app.kubernetes.io/component: "{{ .Values.server.component }}"
+spec:
+  type: {{ .Values.server.service.type }}
+  ports:
+    - port: {{ .Values.server.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "spiderkeeper.selectorLabels" . | nindent 4 }}
+    component: "{{ .Values.server.name }}"
+{{- end}}

@@ -1,0 +1,15 @@
+:80 {
+    reverse_proxy /api/* {$SITE_ADDRESS} {
+         header_up Host {upstream_hostport}
+    }
+    root * /usr/share/caddy
+    file_server
+    log {
+        output file /tmp/access.log {
+            roll_size 100mb
+            roll_keep 5
+            roll_keep_for 720h
+        }
+    }
+}
+

@@ -4,9 +4,11 @@ Manager.
 import asyncio
 import logging
 import signal as system_signal
-from typing import Optional
+import threading
+from pathlib import Path
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from alembic import command
+from alembic.config import Config
 
 from crawlerstack_spiderkeeper_server.collector import Kombu
 from crawlerstack_spiderkeeper_server.rest_api import RestAPI
@@ -15,6 +17,8 @@ from crawlerstack_spiderkeeper_server.signals import (kombu_start, kombu_stop,
                                                       server_stop)
 from crawlerstack_spiderkeeper_server.utils.exceptions import SpiderkeeperError
 from crawlerstack_spiderkeeper_server.utils.log import configure_logging
+from crawlerstack_spiderkeeper_server.utils.otel import (
+    otel_provider_shutdown, otel_register_app)
 
 HANDLED_SIGNALS = (
     system_signal.SIGINT,  # Unix signal 2. Sent by Ctrl+C.
@@ -31,9 +35,6 @@ class SpiderKeeperServer:
         log_config = configure_logging()
 
         self.logger = logging.getLogger(f'{__name__}.{self.__class__.__name__}')
-
-        self._engine: Optional[AsyncEngine] = None
-        self._session_factory: Optional[AsyncSession] = None
 
         self.settings = settings
 
@@ -66,19 +67,34 @@ class SpiderKeeperServer:
         await asyncio.sleep(0.01)
         await Kombu().start_consume(loop=asyncio.get_running_loop())
 
+    async def otel_register(self):
+        """Otel start"""
+        await otel_register_app(self._rest_api.app)
+
     @staticmethod
-    async def kombu_stop():
-        """Kombu stop"""
-        # 消费者事件信号处理,关闭对应的绑定
-        await kombu_stop.send()
-        await asyncio.sleep(2)
+    def migrate_db():
+        """
+        Migrates the database
+        :return:
+        """
+        alembic_cfg = Config(Path(Path(__file__).parent, 'alembic/alembic.ini'))
+        alembic_cfg.set_main_option("script_location", "crawlerstack_spiderkeeper_server:alembic")
+        command.upgrade(alembic_cfg, 'head')
+
+    def auto_migrate(self):
+        """Auto migrate"""
+        thread = threading.Thread(target=self.migrate_db)
+        thread.start()
 
     async def run(self):
         """Run"""
         try:
-            await self.rest_api.start()
+            # 初始化
             self.install_signal_handlers()
+            self.auto_migrate()
             await self.start()
+            await self.otel_register()
+            await self.rest_api.start()
             await self.kombu_start()
             while not self.should_exit:
                 # 暂时不做任何处理。
@@ -87,7 +103,20 @@ class SpiderKeeperServer:
             logging.exception(ex)
         finally:
             await self.kombu_stop()
+            await self.otel_stop()
             await self.stop()
+
+    @staticmethod
+    async def kombu_stop():
+        """Kombu stop"""
+        # 消费者事件信号处理,关闭对应的绑定
+        await kombu_stop.send()
+        await asyncio.sleep(2)
+
+    @staticmethod
+    async def otel_stop():
+        """Otel stop"""
+        await otel_provider_shutdown()
 
     async def stop(self):
         """Stop spiderkeeper"""

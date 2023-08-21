@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "spiderkeeper.fullname" . }}-test-connection"
+  labels:
+    {{- include "spiderkeeper.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "spiderkeeper.fullname" . }}:{{ .Values.web.service.port }}']
+  restartPolicy: Never

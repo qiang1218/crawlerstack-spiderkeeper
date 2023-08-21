@@ -16,6 +16,7 @@ class BaseExecutor(metaclass=SingletonMeta):
 
     def __init__(self, settings):
         self.settings = settings
+        self._prefix = 'spiderkeeper-'
 
     async def get(self, *args, **kwargs):
         """
@@ -74,6 +75,15 @@ class BaseExecutor(metaclass=SingletonMeta):
     async def close(self, *args, **kwargs):
         """
         Close connection
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        raise NotImplementedError
+
+    async def resource(self, *args, **kwargs) -> dict:
+        """
+        Get executor resource
         :param args:
         :param kwargs:
         :return:

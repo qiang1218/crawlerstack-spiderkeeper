@@ -106,9 +106,9 @@ async def init_executor():
     async with db():
         executors = [
             Executor(name="docker_executor_1", selector="test", url="http://localhost:2375", type="docker", memory=32,
-                     cpu=50, task_count=1),
+                     cpu=50, task_count=1, expired_time=1679463550),
             Executor(name="docker_executor_2", selector="test", url="http://localhost:2376", type="docker", memory=32,
-                     cpu=50, task_count=0),
+                     cpu=50, task_count=0, expired_time=1679463550),
         ]
         db.session.add_all(executors)
         await db.session.flush()
@@ -120,9 +120,9 @@ async def init_task(init_executor):
     async with db():
         tasks = [
             Task(name="1_scheduler_", url="http://localhost:2375", type="docker", executor_id=1, status=1,
-                 container_id='d343j4er'),
+                 container_id='d343j4er', job_id=1),
             Task(name="2_scheduler_", url="http://localhost:2375", type="docker", executor_id=1, status=1,
-                 container_id='d343j4er'),
+                 container_id='d343j4er', job_id=1),
         ]
         db.session.add_all(tasks)
         await db.session.flush()

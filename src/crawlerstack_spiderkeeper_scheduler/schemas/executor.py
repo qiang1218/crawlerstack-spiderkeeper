@@ -17,6 +17,7 @@ class ExecutorBase(BaseModel):
     memory: int = 0
     cpu: int = 0
     task_count: int = 0
+    expired_time: int = None
 
 
 class ExecutorSchema(ExecutorBase, InDBMixin):

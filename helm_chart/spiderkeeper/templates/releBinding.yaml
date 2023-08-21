@@ -1,0 +1,15 @@
+{{- if .Values.executor.releBinding.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Release.Name }}-rolebinding
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Release.Name }}-role
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "spiderkeeper-executor.serviceAccountName" . }}
+    namespace: {{.Release.Namespace}}
+{{- end }}

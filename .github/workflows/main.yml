@@ -43,4 +43,81 @@ jobs:
       - run: pip install tox
       - run: |
           tox -e isort
-          tox -e lint
+          tox -e pylint
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3.7.0
+        with:
+          node-version: "20"
+          cache: "yarn"
+          cache-dependency-path: 'frontend/yarn.lock'
+      - name: Install package
+        working-directory: frontend/
+        run: |
+          yarn install 
+          yarn global add eslint
+      - name: Test eslint
+        working-directory: frontend/
+        run: |
+          yarn test --collectCoverage
+          yarn eslint src
+  build-and-push-image:
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') && github.repository == 'crawlerstack/crawlerstack-spiderkeeper'
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      packages: write
+      contents: read
+
+    needs:
+      - test
+      - linting
+      - frontend
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Log in to quay io
+        uses: docker/login-action@v2
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_TOKEN }}
+
+      - name: Extract server's metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: quay.io/crawlerstack/spiderkeeper-web
+          tags: type=semver,pattern=v{{version}}
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Extract web's metadata (tags, labels) for Docker
+        id: meta_web
+        uses: docker/metadata-action@v4
+        with:
+          images: quay.io/crawlerstack/spiderkeeper-web
+          tags: type=semver,pattern=v{{version}}
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta_web.outputs.tags }}
+          labels: ${{ steps.meta_web.outputs.labels }}
+

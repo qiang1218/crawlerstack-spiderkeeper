@@ -27,7 +27,6 @@ class SchedulerServer(metaclass=SingletonMeta):
             'coalesce': self.settings.SCHEDULER_JOB_DEFAULTS_COALESCE,
             'max_instances': self.settings.SCHEDULER_JOB_DEFAULTS_MAX_INSTANCES
         }
-
         self.apscheduler = AsyncIOScheduler(jobstores=jobstores,
                                             job_defaults=job_defaults,
                                             timezone=pytz.timezone(self.settings.SCHEDULER_TIMEZONE))
@@ -48,7 +47,7 @@ class SchedulerServer(metaclass=SingletonMeta):
         logger.debug('Add job %s to scheduler', job_id)
         self.apscheduler.add_job(
             func=func,
-            trigger=CronTrigger.from_crontab(trigger_expression),
+            trigger=CronTrigger.from_crontab(trigger_expression, timezone=self.settings.SCHEDULER_TIMEZONE),
             kwargs=kwargs,
             id=job_id,
         )

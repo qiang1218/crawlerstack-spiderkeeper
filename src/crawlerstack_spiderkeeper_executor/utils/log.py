@@ -65,7 +65,7 @@ def init_logging_config() -> Dict:
                 'level': 'DEBUG',
                 'formatter': verbose_formatter(settings.VERBOSE),
                 'filename': os.path.join(settings.LOGPATH, 'server.log'),
-                'maxBytes': 1024 * 1024 * 1024 * 200,  # 200M
+                'maxBytes': 1024 * 1024 * 200,  # 200M
                 'backupCount': '5',
                 'encoding': 'utf-8'
             },
@@ -74,7 +74,7 @@ def init_logging_config() -> Dict:
                 'level': 'DEBUG',
                 'formatter': 'access',
                 'filename': os.path.join(settings.LOGPATH, 'access.log'),
-                'maxBytes': 1024 * 1024 * 1024 * 200,  # 200M
+                'maxBytes': 1024 * 1024 * 200,  # 200M
                 'backupCount': '5',
                 'encoding': 'utf-8'
             },
@@ -83,7 +83,7 @@ def init_logging_config() -> Dict:
                 'level': 'DEBUG',
                 'formatter': verbose_formatter(settings.VERBOSE),
                 'filename': os.path.join(settings.LOGPATH, 'register.log'),
-                'maxBytes': 1024 * 1024 * 1024 * 200,  # 200M
+                'maxBytes': 1024 * 1024 * 200,  # 200M
                 'backupCount': '5',
                 'encoding': 'utf-8'
             }
@@ -102,6 +102,7 @@ def init_logging_config() -> Dict:
             # },
             # 'amqp.connection.Connection.heartbeat_tick': {'level': 'INFO'}
             'aiosqlite': {'level': 'INFO'},
+            'httpx': {'level': 'WARN'},
             'crawlerstack_spiderkeeper_executor.services.register': {'level': 'INFO', 'handlers': ['register'],
                                                                      'propagate': False}},
 

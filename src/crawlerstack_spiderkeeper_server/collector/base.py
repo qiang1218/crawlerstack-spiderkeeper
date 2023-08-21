@@ -7,6 +7,7 @@ from asyncio import AbstractEventLoop
 
 import amqp.exceptions
 from kombu import Message
+from kombu.exceptions import MessageStateError
 
 from crawlerstack_spiderkeeper_server.collector.utils import Kombu
 from crawlerstack_spiderkeeper_server.utils import SingletonMeta
@@ -68,11 +69,27 @@ class BaseTask:
         """Callback"""
         raise NotImplementedError
 
+    async def _consuming(self, body: dict, message: Message, loop: AbstractEventLoop):
+        task = loop.create_task(self.callback(body))
+        try:
+            await task
+        except Exception as ex:
+            logger.error('Base task consume failed, exception: %s', ex)
+        finally:
+            try:
+                logger.debug('Ready to ack message, message delivery tag: %s', message.delivery_tag)
+                message.ack()
+            except MessageStateError as ex:
+                logger.error('Try ack message failed, exception info: %s', ex)
+
     def consuming(self, body: str, message: Message, loop: AbstractEventLoop):
         """consume on response"""
-        body = json.loads(body)
-        task = asyncio.run_coroutine_threadsafe(self.callback(body), loop)
-        task.add_done_callback(message.ack)  # 手动 ack
+        try:
+            body = json.loads(body)
+            logger.debug('Get message success, tag: %s', message.delivery_tag)
+            asyncio.run_coroutine_threadsafe(self._consuming(body, message, loop), loop)
+        except Exception as ex:
+            logger.error('Consuming error, exception info: %s', ex)
 
 
 class StorageBaseTask(metaclass=SingletonMeta):
@@ -80,6 +97,17 @@ class StorageBaseTask(metaclass=SingletonMeta):
     NAME: str
     kombu = Kombu()
     _storage_background_tasks: dict[str, asyncio.Task] = {}
+    dead_letter_queue = 'spiderkeeper-dead-queue'
+
+    @property
+    def dead_routing_key(self):
+        """Dead routing key"""
+        return self.dead_letter_queue
+
+    @property
+    def dead_exchange_name(self):
+        """Dead exchange name"""
+        return self.dead_letter_queue
 
     def routing_key(self, task_name: str):
         """Routing key."""
@@ -193,8 +221,39 @@ class StorageBaseTask(metaclass=SingletonMeta):
         """
         raise NotImplementedError
 
+    async def _consuming(self, body: dict, message: Message, loop: AbstractEventLoop):
+        task = loop.create_task(self.callback(body))
+        try:
+            await task
+        except Exception as ex:
+            try:
+                logger.warning(
+                    'Storage consume failed, exception info: %s, try publish queue: %s',
+                    ex,
+                    self.dead_letter_queue
+                )
+                body.update({'exception': str(ex)})
+                await self.kombu.publish(
+                    self.dead_letter_queue,
+                    self.dead_routing_key,
+                    self.dead_exchange_name,
+                    json.dumps(body)
+                )
+            except Exception as e:
+                logger.error('Try publish failed, exception info: %s, message delivery tag: %s', e,
+                             message.delivery_tag)
+        finally:
+            try:
+                logger.debug('Ready to ack message, message delivery tag: %s', message.delivery_tag)
+                message.ack()
+            except MessageStateError as ex:
+                logger.error('Try ack message failed, exception info: %s', ex)
+
     def consuming(self, body: str, message: Message, loop: AbstractEventLoop):
         """consume on response"""
-        body = json.loads(body)
-        task = asyncio.run_coroutine_threadsafe(self.callback(body), loop)
-        task.add_done_callback(message.ack)  # 手动 ack
+        try:
+            body = json.loads(body)
+            logger.debug('Get message success, tag: %s', message.delivery_tag)
+            asyncio.run_coroutine_threadsafe(self._consuming(body, message, loop), loop)
+        except Exception as ex:
+            logger.error('Consuming error, exception info: %s', ex)

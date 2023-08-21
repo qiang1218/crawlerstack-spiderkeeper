@@ -9,10 +9,11 @@ from typing import Any, Callable, List, Optional
 
 from kombu import Connection, Consumer, Exchange, Queue, producers
 
-from crawlerstack_spiderkeeper_server.config import settings
-from crawlerstack_spiderkeeper_server.utils import (SingletonMeta,
-                                                    run_in_executor)
-from crawlerstack_spiderkeeper_server.utils.exceptions import SpiderkeeperError
+from crawlerstack_spiderkeeper_forwarder.config import settings
+from crawlerstack_spiderkeeper_forwarder.utils import (SingletonMeta,
+                                                       run_in_executor)
+from crawlerstack_spiderkeeper_forwarder.utils.exceptions import \
+    SpiderkeeperError
 
 logger = logging.getLogger(__name__)
 

@@ -34,3 +34,9 @@ class ContainerStatus(Enum):
     paused = 'PAUSED'
     exited = 'EXITED'
     dead = 'DEAD'
+    # k8s 中 status=(Pending Running Succeeded Failed Unknown)
+    Pending = 'CREATED'
+    Running = 'RUNNING'
+    Succeeded = 'EXITED'
+    Failed = 'DEAD'
+    Unknown = 'DEAD'

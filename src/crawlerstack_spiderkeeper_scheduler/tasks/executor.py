@@ -1,7 +1,7 @@
 """check executor task"""
 import asyncio
 import logging
-from datetime import datetime, timedelta
+import time
 
 from fastapi_sa.database import session_ctx
 
@@ -63,12 +63,10 @@ class ExecutorTask(metaclass=SingletonMeta):
         except ObjectDoesNotExist:
             # 定时任务添加一次，持续执行
             return
-        current_time = datetime.now() + timedelta(seconds=self.heartbeat_interval * 3)
-        if executors:
-            for executor in executors:
-                if executor.update_time < current_time:
-                    await asyncio.sleep(1)
-                    await self.executor_service.update(executor.id, obj_in={'status': Status.OFFLINE.value})
+        for executor in executors:
+            # 默认3倍心跳的时间作为过期判断,考虑数据库时区和服务的不一致，故添加字段，进行判断
+            if executor.expired_time + self.heartbeat_interval * 3 < int(time.time()):
+                await self.executor_service.update(executor.id, obj_in={'status': Status.OFFLINE.value})
 
     async def check_executor_task(self, **_):
         """task"""

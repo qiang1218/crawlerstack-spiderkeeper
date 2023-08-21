@@ -17,9 +17,11 @@ class SpiderSchema(BaseModel):
 class ExecutorSchema(BaseModel):
     """Executor"""
     image: str
-    cmdline: str | list
+    cmdline: list
     volume: list | None
     environment: list | None
+    cpu_limit: int
+    memory_limit: int
 
 
 class TaskSchema(BaseModel):

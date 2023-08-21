@@ -111,6 +111,8 @@ class Job(BaseModel):
         comment='快照服务id'
     )
     executor_type = Column(String(100), nullable=False, comment='执行器类型')
+    cpu_limit = Column(Integer, default=1000, nullable=False, comment='资源上限cpu核心数millicores微核')
+    memory_limit = Column(Integer, default=1024, nullable=False, comment='资源上限内存大小Mi')
     enabled = Column(Boolean, default=False, comment='job状态')
     pause = Column(Boolean, default=False, comment='任务暂停状态')
     executor_selector = Column(String(100), nullable=True, comment='执行器选择器')

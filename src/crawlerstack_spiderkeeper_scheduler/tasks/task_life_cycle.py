@@ -63,39 +63,45 @@ class LifeCycle(metaclass=SingletonMeta):
             if not self._server_running:
                 break
             try:
-                executors = await self.get_executors()
+                executors = await self.get_active_executors()
             except ObjectDoesNotExist:
-                logger.info('No active executors')
+                logger.debug('No active executors')
             else:
                 for executor in executors:
-                    # 遍历获取每一个执行器的信息
-                    if executor.status != Status.ONLINE.value:
+                    # 判断现有任务个数
+                    if executor.task_count == 0:
                         continue
-                    task_count = 0
                     # 请求
-                    containers = await self.get_all_containers(executor.url)
+                    try:
+                        containers = await self.get_all_containers(executor.url)
+                    except Exception as ex:
+                        logger.warning('Failed to get container for executor, executor id: %s, exception info: %s',
+                                       executor.id, ex)
+                        continue
                     for container in containers:
                         if container.status == Status.RUNNING.name:
-                            task_count += 1
-                        else:
-                            # 数据更新
-                            status = Status[container.status].value
+                            continue
+                        # 数据更新
+                        status = Status[container.status].value
+                        try:
                             await self.update_task_record(task_name=container.task_name,
                                                           status=status,  # noqa
                                                           task_end_time=datetime.now())
                             await self.update_server_task_record(task_name=container.task_name,
                                                                  task_status=status)  # noqa
                             await self.remove_container(url=executor.url, container_id=container.container_id)
-                            logger.info("Completed task %s life cycle", container.task_name)
-                    await self.update_task_count(pk=executor.id, task_count=task_count)
-                    logger.debug("Executor %s task count is %d", executor.id, task_count)
+                        except Exception as ex:
+                            logger.warning('Failed to update task record, exception info: %s', ex)
+                        else:
+                            logger.info("Completed task %s life cycle management, container removal",
+                                        container.task_name)
             await asyncio.sleep(20)
         logger.info('Check life cycle task is stopped')
 
     @session_ctx
-    async def get_executors(self) -> list[ExecutorSchema]:
+    async def get_active_executors(self) -> list[ExecutorSchema]:
         """
-        Get all executors
+        Get all active executors
         获取保持心跳的执行器
         :return:
         """
@@ -127,16 +133,6 @@ class LifeCycle(metaclass=SingletonMeta):
         obj_in = dict(status=status, task_end_time=task_end_time.strftime('%Y-%m-%d %H:%M:%S'))
         return await self.task_service.update_by_name(name=task_name, obj_in=obj_in)
 
-    @session_ctx
-    async def update_task_count(self, pk: int, task_count: int):
-        """
-        Update executor task count
-        :param pk:
-        :param task_count:
-        :return:
-        """
-        await self.executor_service.update(pk=pk, obj_in={'task_count': task_count})
-
     async def update_server_task_record(self, task_name: str, task_status: int) -> dict:
         """
         Update server task record
@@ -146,7 +142,7 @@ class LifeCycle(metaclass=SingletonMeta):
         """
         # 先根据task_name获取id
         resp = await self.request_session.request('GET', self.server_task_url,
-                                                  params={'query': 'filter_name=' + task_name})
+                                                  params={'query': f'filter_name,{task_name}'})
         # 再进行更新
         task = resp.get('data')
         if task:

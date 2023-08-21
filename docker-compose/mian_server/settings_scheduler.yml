@@ -1,0 +1,7 @@
+DATABASE: mysql+aiomysql://root:password@192.168.6.146:3306/spiderkeeper_scheduler?charset=UTF8MB4
+
+SCHEDULER_JOB_STORE_DEFAULT: mysql://root:password@192.168.6.146:3306/spiderkeeper_scheduler
+
+SERVER_BASE_URL: http://crawlerstack-spiderkeeper-server:8080/api/v1
+FORWARDER_BASE_URL: http://crawlerstack-spiderkeeper-forwarder:8083/api/v1
+SCHEDULER_BASE_URL: http://crawlerstack-spiderkeeper-scheduler:8081/api/v1

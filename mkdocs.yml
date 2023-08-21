@@ -1,0 +1,75 @@
+site_name: crawlerstack-spiderkeeper
+
+theme:
+  name: material
+  langage: zh
+  features:
+    - search.highlight
+    - navigation.sections
+    - navigation.top
+    - navigation.tabs
+    - navigation.tracking # 锚点导航
+  #    - content.tabs.link     # 链接的内容选项卡
+  palette: # 主题模式切换。
+    - media: "(prefers-color-scheme: light)" # 跟随系统主题模式
+      scheme: default
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - footnotes
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.tilde
+  - attr_list
+  - md_in_html
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+
+repo_url: https://github.com/crawlerstack/crawlerstack-spiderkeeper
+repo_name: crawlerstack/crawlerstack-spiderkeeper
+site_url: https://github.com/crawlerstack/crawlerstack-spiderkeeper
+
+plugins:
+  - search
+
+nav:
+  - 文档:
+    - 概述: overview.md
+    - 安装:
+        - docker-compose: installation/compose.md
+        - k8s: installation/k8s.md
+    - 核心:
+        - 项目架构: core/architecture.md
+        - 核心服务: core/core_services.md
+        - 调度器: core/scheduler.md
+        - 转发器: core/forwarder.md
+        - 执行器: core/executor.md
+        - sdk: core/sdk.md
+    - 快速开始:
+        - 页面操作指南: quick_start/user_guide.md
+    - 任务开发:
+        - 集成sdk任务: task_development/integration_of_sdk.md
+        - 普通任务: task_development/regular_task.md
+  - 最佳实践: best_practices.md
+  - 计划: future_plan.md
