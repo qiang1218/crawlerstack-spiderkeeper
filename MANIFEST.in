@@ -1,8 +1,0 @@
-include MANIFEST.in
-include LICENSE
-include *.md
-graft docs
-graft tests
-graft src/crawlerstack_spiderkeeper/alembic
-global-exclude __pycache__
-global-exclude *.py[co]

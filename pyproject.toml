@@ -63,6 +63,9 @@ pylint = "^2.15.6"
 pylint-pytest = "^1.1.2"
 atomicwrites = "^1.4.1"
 
+[tool.poetry.group.docs.dependencies]
+mkdocs-material = "^9.2.3"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
